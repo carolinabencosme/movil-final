@@ -5,9 +5,16 @@ import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 
 class DetailScreen extends StatelessWidget {
-  const DetailScreen({super.key, required this.pokemonId});
+  const DetailScreen({
+    super.key,
+    required this.pokemonId,
+    this.initialPokemon,
+    this.heroTag,
+  });
 
   final int pokemonId;
+  final PokemonListItem? initialPokemon;
+  final String? heroTag;
 
   String _capitalize(String value) {
     if (value.isEmpty) {
@@ -18,9 +25,14 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedHeroTag = heroTag ?? 'pokemon-image-$pokemonId';
+    final previewName =
+        initialPokemon != null ? _capitalize(initialPokemon!.name) : null;
+    final previewImage = initialPokemon?.imageUrl ?? '';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalles del Pokémon'),
+        title: Text(previewName ?? 'Detalles del Pokémon'),
       ),
       body: Query(
         options: QueryOptions(
@@ -28,6 +40,14 @@ class DetailScreen extends StatelessWidget {
           variables: {'id': pokemonId},
         ),
         builder: (result, {fetchMore, refetch}) {
+          if (result.isLoading && result.data == null) {
+            return _LoadingDetailView(
+              heroTag: resolvedHeroTag,
+              imageUrl: previewImage,
+              name: previewName,
+            );
+          }
+
           if (result.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -74,22 +94,10 @@ class DetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Center(
-                    child: pokemon.imageUrl.isNotEmpty
-                        ? Image.network(
-                            pokemon.imageUrl,
-                            height: 200,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => const Icon(
-                              Icons.catching_pokemon_outlined,
-                              size: 80,
-                              color: Colors.redAccent,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.catching_pokemon_outlined,
-                            size: 80,
-                            color: Colors.redAccent,
-                          ),
+                    child: _HeroPokemonImage(
+                      heroTag: resolvedHeroTag,
+                      imageUrl: pokemon.imageUrl,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   _SectionTitle(title: 'Tipos'),
@@ -200,6 +208,80 @@ class _SectionTitle extends StatelessWidget {
           .textTheme
           .titleLarge
           ?.copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+class _HeroPokemonImage extends StatelessWidget {
+  const _HeroPokemonImage({required this.heroTag, required this.imageUrl});
+
+  final String heroTag;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholderColor = Theme.of(context).colorScheme.surfaceVariant;
+    return Hero(
+      tag: heroTag,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: 200,
+          height: 200,
+          color: placeholderColor,
+          child: imageUrl.isNotEmpty
+              ? Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.catching_pokemon_outlined,
+                    size: 80,
+                    color: Colors.redAccent,
+                  ),
+                )
+              : const Icon(
+                  Icons.catching_pokemon_outlined,
+                  size: 80,
+                  color: Colors.redAccent,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadingDetailView extends StatelessWidget {
+  const _LoadingDetailView({
+    required this.heroTag,
+    required this.imageUrl,
+    this.name,
+  });
+
+  final String heroTag;
+  final String imageUrl;
+  final String? name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _HeroPokemonImage(heroTag: heroTag, imageUrl: imageUrl),
+            if (name != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                name!,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ],
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }

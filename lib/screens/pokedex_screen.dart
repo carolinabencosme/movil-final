@@ -6,6 +6,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
+import 'detail_screen.dart';
 
 class PokedexScreen extends StatefulWidget {
   const PokedexScreen({
@@ -457,42 +458,61 @@ class _PokemonListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final heroTag = 'pokemon-image-${pokemon.id}';
     return Card(
       elevation: 2,
       shadowColor: theme.shadowColor.withOpacity(0.2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            _PokemonImage(imageUrl: pokemon.imageUrl),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${_formatPokemonNumber(pokemon.id)} ${_capitalize(pokemon.name)}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  if (pokemon.types.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: pokemon.types
-                          .map((type) => _PokemonTypeChip(type: type))
-                          .toList(),
-                    ),
-                ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailScreen(
+                pokemonId: pokemon.id,
+                initialPokemon: pokemon,
+                heroTag: heroTag,
               ),
             ),
-            const Icon(Icons.chevron_right),
-          ],
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Hero(
+                tag: heroTag,
+                child: _PokemonImage(imageUrl: pokemon.imageUrl),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_formatPokemonNumber(pokemon.id)} ${_capitalize(pokemon.name)}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    if (pokemon.types.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: pokemon.types
+                            .map((type) => _PokemonTypeChip(type: type))
+                            .toList(),
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
       ),
     );
