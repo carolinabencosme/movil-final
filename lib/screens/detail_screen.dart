@@ -5,6 +5,27 @@ import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../widgets/pokemon_artwork.dart';
 
+const Map<String, Color> _pokemonTypeColors = {
+  'normal': Color(0xFFA8A77A),
+  'fire': Color(0xFFEE8130),
+  'water': Color(0xFF6390F0),
+  'electric': Color(0xFFF7D02C),
+  'grass': Color(0xFF7AC74C),
+  'ice': Color(0xFF96D9D6),
+  'fighting': Color(0xFFC22E28),
+  'poison': Color(0xFFA33EA1),
+  'ground': Color(0xFFE2BF65),
+  'flying': Color(0xFFA98FF3),
+  'psychic': Color(0xFFF95587),
+  'bug': Color(0xFFA6B91A),
+  'rock': Color(0xFFB6A136),
+  'ghost': Color(0xFF735797),
+  'dragon': Color(0xFF6F35FC),
+  'dark': Color(0xFF705746),
+  'steel': Color(0xFFB7B7CE),
+  'fairy': Color(0xFFD685AD),
+};
+
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
     super.key,
@@ -12,6 +33,8 @@ class DetailScreen extends StatelessWidget {
     this.initialPokemon,
     this.heroTag,
   });
+
+  static const int _defaultLanguageId = 7;
 
   final int pokemonId;
   final PokemonListItem? initialPokemon;
@@ -38,7 +61,10 @@ class DetailScreen extends StatelessWidget {
       body: Query(
         options: QueryOptions(
           document: gql(getPokemonDetailsQuery),
-          variables: {'id': pokemonId},
+          variables: {
+            'id': pokemonId,
+            'languageId': _defaultLanguageId,
+          },
         ),
         builder: (result, {fetchMore, refetch}) {
           if (result.isLoading && result.data == null) {
@@ -117,12 +143,50 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
     });
   }
 
+  String _formatHeight(int height) {
+    if (height <= 0) return '—';
+    final meters = height / 10.0;
+    return '${_stripTrailingZeros(meters)} m';
+  }
+
+  String _formatWeight(int weight) {
+    if (weight <= 0) return '—';
+    final kilograms = weight / 10.0;
+    return '${_stripTrailingZeros(kilograms)} kg';
+  }
+
+  String _stripTrailingZeros(double value) {
+    final fixed = value.toStringAsFixed(value >= 10 ? 1 : 2);
+    return fixed
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
+  }
+
+  String _formatLabel(String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+    final sanitized = value.replaceAll('-', ' ');
+    return widget.capitalize(sanitized);
+  }
+
+  Color _resolveTypeColor(String type, ColorScheme colorScheme) {
+    final color = _pokemonTypeColors[type.toLowerCase()];
+    return color ?? colorScheme.primary;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
+    final characteristics = pokemon.characteristics;
+    final mainAbilityDetail =
+        pokemon.abilities.isNotEmpty ? pokemon.abilities.first : null;
     final mainAbility =
-        pokemon.abilities.isNotEmpty ? widget.capitalize(pokemon.abilities.first) : null;
+        mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
+    final abilitySubtitle = mainAbilityDetail == null
+        ? null
+        : (mainAbilityDetail.isHidden ? 'Habilidad oculta' : 'Habilidad principal');
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -160,17 +224,19 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                     spacing: 10,
                     runSpacing: 10,
                     children: pokemon.types
-                        .map(
-                          (type) => Chip(
-                            label: Text(widget.capitalize(type)),
-                            backgroundColor: theme.colorScheme.secondaryContainer,
+                        .map((type) {
+                          final typeColor = _resolveTypeColor(type, theme.colorScheme);
+                          return Chip(
+                            label: Text(_formatLabel(type)),
+                            backgroundColor: typeColor.withOpacity(0.18),
                             labelStyle: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer,
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
+                            side: BorderSide(color: typeColor.withOpacity(0.45)),
                             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        )
+                          );
+                        })
                         .toList(),
                   )
                 : const Text('Sin información de tipos disponible.'),
@@ -187,7 +253,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                       child: _InfoCard(
                         icon: Icons.height,
                         label: 'Altura',
-                        value: '${pokemon.height}',
+                        value: _formatHeight(characteristics.height),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -195,14 +261,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                       child: _InfoCard(
                         icon: Icons.monitor_weight_outlined,
                         label: 'Peso',
-                        value: '${pokemon.weight}',
+                        value: _formatWeight(characteristics.weight),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Card(
-                  color: theme.colorScheme.surfaceVariant,
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.45),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -210,6 +276,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
                           Icons.auto_awesome,
@@ -217,12 +284,27 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            mainAbility ?? 'Sin habilidad principal disponible.',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                mainAbility ?? 'Sin habilidad principal disponible.',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (abilitySubtitle != null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  abilitySubtitle,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withOpacity(0.75),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
@@ -251,23 +333,26 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
               children: [
                 const SizedBox(height: 16),
                 _InfoSectionCard(
+                  title: 'Características',
+                  child: _CharacteristicsSection(
+                    characteristics: characteristics,
+                    formatHeight: _formatHeight,
+                    formatWeight: _formatWeight,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _InfoSectionCard(
                   title: 'Habilidades',
                   child: pokemon.abilities.isNotEmpty
-                      ? Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
+                      ? Column(
                           children: pokemon.abilities
                               .map(
-                                (ability) => Chip(
-                                  label: Text(widget.capitalize(ability)),
-                                  backgroundColor:
-                                      theme.colorScheme.tertiaryContainer,
-                                  labelStyle: theme.textTheme.labelLarge?.copyWith(
-                                    color: theme.colorScheme.onTertiaryContainer,
-                                    fontWeight: FontWeight.w600,
+                                (ability) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  child: _AbilityTile(
+                                    ability: ability,
+                                    formatLabel: _formatLabel,
                                   ),
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               )
                               .toList(),
@@ -282,15 +367,21 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                           children: pokemon.stats
                               .map(
                                 (stat) => _StatBar(
-                                  label: widget.capitalize(
-                                    stat.name.replaceAll('-', ' '),
-                                  ),
+                                  label: _formatLabel(stat.name.replaceAll('-', ' ')),
                                   value: stat.baseStat,
                                 ),
                               )
                               .toList(),
                         )
                       : const Text('Sin información de estadísticas disponible.'),
+                ),
+                const SizedBox(height: 16),
+                _InfoSectionCard(
+                  title: 'Debilidades y resistencias',
+                  child: _TypeMatchupSection(
+                    matchups: pokemon.typeMatchups,
+                    formatLabel: _formatLabel,
+                  ),
                 ),
               ],
             ),
@@ -327,8 +418,15 @@ class _InfoSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Card(
       margin: EdgeInsets.zero,
+      color: colorScheme.surfaceVariant.withOpacity(0.4),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(26),
+        side: BorderSide(color: colorScheme.outline.withOpacity(0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -342,6 +440,374 @@ class _InfoSectionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CharacteristicsSection extends StatelessWidget {
+  const _CharacteristicsSection({
+    required this.characteristics,
+    required this.formatHeight,
+    required this.formatWeight,
+  });
+
+  final PokemonCharacteristics characteristics;
+  final String Function(int) formatHeight;
+  final String Function(int) formatWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final items = <_CharacteristicData>[
+      _CharacteristicData(
+        icon: Icons.height,
+        label: 'Altura',
+        value: formatHeight(characteristics.height),
+      ),
+      _CharacteristicData(
+        icon: Icons.monitor_weight_outlined,
+        label: 'Peso',
+        value: formatWeight(characteristics.weight),
+      ),
+      _CharacteristicData(
+        icon: Icons.category_outlined,
+        label: 'Categoría',
+        value: characteristics.category.isNotEmpty
+            ? characteristics.category
+            : 'Sin categoría',
+      ),
+      _CharacteristicData(
+        icon: Icons.catching_pokemon,
+        label: 'Ratio de captura',
+        value: characteristics.captureRate > 0
+            ? characteristics.captureRate.toString()
+            : '—',
+      ),
+      _CharacteristicData(
+        icon: Icons.star_border_rounded,
+        label: 'Experiencia base',
+        value: characteristics.baseExperience > 0
+            ? characteristics.baseExperience.toString()
+            : '—',
+      ),
+    ];
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: items
+          .map(
+            (item) => _CharacteristicTile(
+              icon: item.icon,
+              label: item.label,
+              value: item.value,
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _CharacteristicTile extends StatelessWidget {
+  const _CharacteristicTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Container(
+      width: 165,
+      constraints: const BoxConstraints(minHeight: 88),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colorScheme.primary, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.75),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AbilityTile extends StatelessWidget {
+  const _AbilityTile({
+    required this.ability,
+    required this.formatLabel,
+  });
+
+  final PokemonAbilityDetail ability;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final subtitle = ability.isHidden ? 'Habilidad oculta' : 'Habilidad principal';
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.08)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_fix_high_outlined,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    formatLabel(ability.name),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.primary.withOpacity(0.75),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              ability.description,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.85),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeMatchupSection extends StatelessWidget {
+  const _TypeMatchupSection({
+    required this.matchups,
+    required this.formatLabel,
+  });
+
+  final List<TypeMatchup> matchups;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (matchups.isEmpty) {
+      return const Text('Sin información de debilidades o resistencias disponible.');
+    }
+
+    final weaknesses = matchups
+        .where((matchup) => matchup.multiplier > 1.01)
+        .toList()
+      ..sort((a, b) => b.multiplier.compareTo(a.multiplier));
+    final resistances = matchups
+        .where((matchup) => matchup.multiplier > 0 && matchup.multiplier < 0.99)
+        .toList()
+      ..sort((a, b) => a.multiplier.compareTo(b.multiplier));
+    final immunities = matchups
+        .where((matchup) => matchup.multiplier <= 0.01)
+        .toList();
+
+    final hasContent =
+        weaknesses.isNotEmpty || resistances.isNotEmpty || immunities.isNotEmpty;
+
+    if (!hasContent) {
+      return const Text('Sin información de debilidades o resistencias disponible.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (weaknesses.isNotEmpty) ...[
+          _MatchupGroup(
+            title: 'Debilidades',
+            matchups: weaknesses,
+            formatLabel: formatLabel,
+          ),
+          if (resistances.isNotEmpty || immunities.isNotEmpty)
+            const SizedBox(height: 12),
+        ],
+        if (resistances.isNotEmpty) ...[
+          _MatchupGroup(
+            title: 'Resistencias',
+            matchups: resistances,
+            formatLabel: formatLabel,
+          ),
+          if (immunities.isNotEmpty) const SizedBox(height: 12),
+        ],
+        if (immunities.isNotEmpty)
+          _MatchupGroup(
+            title: 'Inmunidades',
+            matchups: immunities,
+            formatLabel: formatLabel,
+          ),
+      ],
+    );
+  }
+}
+
+class _MatchupGroup extends StatelessWidget {
+  const _MatchupGroup({
+    required this.title,
+    required this.matchups,
+    required this.formatLabel,
+  });
+
+  final String title;
+  final List<TypeMatchup> matchups;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: matchups
+              .map(
+                (matchup) => _TypeMatchupChip(
+                  matchup: matchup,
+                  formatLabel: formatLabel,
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _TypeMatchupChip extends StatelessWidget {
+  const _TypeMatchupChip({
+    required this.matchup,
+    required this.formatLabel,
+  });
+
+  final TypeMatchup matchup;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final typeColor =
+        _pokemonTypeColors[matchup.type.toLowerCase()] ?? colorScheme.primary;
+    final background = Color.alphaBlend(
+      typeColor.withOpacity(0.16),
+      colorScheme.surface.withOpacity(0.95),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: typeColor.withOpacity(0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: typeColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            formatLabel(matchup.type),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _formatMultiplier(matchup.multiplier),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: typeColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatMultiplier(double multiplier) {
+    if (multiplier <= 0) {
+      return '0×';
+    }
+    if ((multiplier - multiplier.round()).abs() < 0.01) {
+      return '${multiplier.round()}×';
+    }
+    final text = multiplier.toStringAsFixed(2)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'\.$'), '');
+    return '$text×';
+  }
+}
+
+class _CharacteristicData {
+  const _CharacteristicData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
 }
 
 class _StatBar extends StatelessWidget {
