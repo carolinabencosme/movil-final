@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'pokedex_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -78,13 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   return _HomeSectionCard(
                     info: section,
                     onTap: () {
+                      final destination = section.title == 'Pokédex'
+                          ? PokedexScreen(
+                              heroTag: section.heroTag,
+                              accentColor: section.color,
+                              title: section.title,
+                            )
+                          : SectionPlaceholderScreen(info: section);
+
                       Navigator.of(context).push(
                         PageRouteBuilder(
                           transitionDuration: const Duration(milliseconds: 450),
                           pageBuilder: (_, animation, secondaryAnimation) =>
                               FadeTransition(
                             opacity: animation,
-                            child: SectionPlaceholderScreen(info: section),
+                            child: destination,
                           ),
                         ),
                       );

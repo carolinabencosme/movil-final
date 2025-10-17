@@ -1,0 +1,603 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+
+import '../models/pokemon_model.dart';
+import '../queries/get_pokemon_list.dart';
+import '../queries/get_pokemon_types.dart';
+
+class PokedexScreen extends StatefulWidget {
+  const PokedexScreen({
+    super.key,
+    this.heroTag,
+    this.accentColor,
+    this.title = 'Pokédex',
+  });
+
+  final String? heroTag;
+  final Color? accentColor;
+  final String title;
+
+  @override
+  State<PokedexScreen> createState() => _PokedexScreenState();
+}
+
+class _PokedexScreenState extends State<PokedexScreen> {
+  static const int _pageSize = 30;
+
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final Set<String> _selectedTypes = <String>{};
+
+  Timer? _debounce;
+  List<PokemonListItem> _pokemons = <PokemonListItem>[];
+  List<String> _availableTypes = <String>[];
+
+  bool _isFetching = false;
+  bool _isInitialLoading = true;
+  bool _hasMore = true;
+  bool _typesLoading = false;
+  bool _didInit = false;
+
+  int _totalCount = 0;
+  String _searchTerm = '';
+  String _debouncedSearch = '';
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInit) return;
+    _didInit = true;
+    _fetchTypes();
+    _fetchPokemons(reset: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_hasMore || _isFetching) {
+      return;
+    }
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _fetchPokemons();
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _searchTerm = value);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      _debouncedSearch = value.trim();
+      _resetAndFetch();
+    });
+  }
+
+  void _toggleType(String type) {
+    setState(() {
+      if (_selectedTypes.contains(type)) {
+        _selectedTypes.remove(type);
+      } else {
+        _selectedTypes.add(type);
+      }
+    });
+    _resetAndFetch();
+  }
+
+  void _resetAndFetch() {
+    setState(() {
+      _hasMore = true;
+      _totalCount = 0;
+      _errorMessage = '';
+    });
+    _fetchPokemons(reset: true);
+  }
+
+  Future<void> _fetchTypes() async {
+    setState(() => _typesLoading = true);
+    final client = GraphQLProvider.of(context).value;
+    try {
+      final result = await client.query(
+        QueryOptions(
+          document: gql(getPokemonTypesQuery),
+          fetchPolicy: FetchPolicy.cacheFirst,
+        ),
+      );
+      if (!mounted) return;
+      if (result.hasException) {
+        setState(() => _typesLoading = false);
+        return;
+      }
+      final types = (result.data?['pokemon_v2_type'] as List<dynamic>? ?? [])
+          .map((dynamic entry) => (entry as Map<String, dynamic>)['name'])
+          .whereType<String>()
+          .toList();
+      setState(() {
+        _availableTypes = types;
+        _typesLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _typesLoading = false);
+    }
+  }
+
+  Future<void> _fetchPokemons({bool reset = false}) async {
+    if (_isFetching || (!_hasMore && !reset)) {
+      return;
+    }
+
+    final offset = reset ? 0 : _pokemons.length;
+    setState(() {
+      _isFetching = true;
+      if (_pokemons.isEmpty) {
+        _isInitialLoading = true;
+      }
+    });
+
+    final client = GraphQLProvider.of(context).value;
+    final searchValue = _debouncedSearch.toLowerCase();
+    final numericId = int.tryParse(_debouncedSearch);
+    final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
+    final includeTypeFilter = _selectedTypes.isNotEmpty;
+
+    final document = gql(
+      buildPokemonListQuery(
+        includeIdFilter: includeIdFilter,
+        includeTypeFilter: includeTypeFilter,
+      ),
+    );
+
+    final variables = <String, dynamic>{
+      'limit': _pageSize,
+      'offset': offset,
+      'search': searchValue.isEmpty ? '%' : '%$searchValue%',
+    };
+
+    if (includeIdFilter && numericId != null) {
+      variables['id'] = numericId;
+    }
+    if (includeTypeFilter) {
+      variables['typeNames'] = _selectedTypes.toList();
+    }
+
+    try {
+      final result = await client.query(
+        QueryOptions(
+          document: document,
+          variables: variables,
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (result.hasException) {
+        _handleError(result.exception!, reset: reset);
+        return;
+      }
+
+      final results =
+          (result.data?['pokemon_v2_pokemon'] as List<dynamic>? ?? [])
+              .map((dynamic entry) =>
+                  PokemonListItem.fromGraphQL(entry as Map<String, dynamic>))
+              .toList();
+      final aggregateMap =
+          result.data?['pokemon_v2_pokemon_aggregate'] as Map<String, dynamic>?;
+      final count =
+          (aggregateMap?['aggregate'] as Map<String, dynamic>?)?['count'] as int?;
+
+      setState(() {
+        if (reset) {
+          _pokemons = results;
+        } else {
+          _pokemons = <PokemonListItem>[..._pokemons, ...results];
+        }
+        _totalCount = count ?? _pokemons.length;
+        _hasMore = _pokemons.length < _totalCount;
+        _errorMessage = '';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      _handleGenericError(error, reset: reset);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isFetching = false;
+        _isInitialLoading = false;
+      });
+    }
+  }
+
+  void _handleError(OperationException exception, {required bool reset}) {
+    final rawMessage = exception.graphqlErrors.isNotEmpty
+        ? exception.graphqlErrors.first.message
+        : exception.linkException?.originalException?.toString() ??
+            exception.toString();
+    final friendlyMessage = rawMessage.isEmpty
+        ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
+        : rawMessage;
+    _showTransientMessage(friendlyMessage);
+    setState(() {
+      if (reset) {
+        _pokemons = <PokemonListItem>[];
+        _hasMore = false;
+      }
+      _errorMessage = friendlyMessage;
+      if (!reset) {
+        _hasMore = true;
+      }
+    });
+  }
+
+  void _handleGenericError(Object error, {required bool reset}) {
+    final rawMessage = error.toString();
+    final friendlyMessage = rawMessage.isEmpty
+        ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
+        : rawMessage;
+    _showTransientMessage(friendlyMessage);
+    setState(() {
+      if (reset) {
+        _pokemons = <PokemonListItem>[];
+        _hasMore = false;
+      }
+      _errorMessage = friendlyMessage;
+      if (!reset) {
+        _hasMore = true;
+      }
+    });
+  }
+
+  void _showTransientMessage(String message) {
+    if (!mounted || message.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _onRefresh() async {
+    _debounce?.cancel();
+    _debouncedSearch = _searchTerm.trim();
+    await _fetchPokemons(reset: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accentColor = widget.accentColor;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: accentColor,
+        foregroundColor: accentColor != null ? Colors.white : null,
+        title: widget.heroTag != null
+            ? Hero(
+                tag: widget.heroTag!,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Text(
+                    widget.title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: accentColor != null ? Colors.white : null,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+            : Text(
+                widget.title,
+                style: theme.textTheme.titleLarge,
+              ),
+      ),
+      body: Column(
+        children: [
+          _buildSearchBar(theme),
+          _buildTypeFilters(theme),
+          if (_isFetching && !_isInitialLoading)
+            const LinearProgressIndicator(minHeight: 2),
+          _buildSummary(theme),
+          Expanded(child: _buildPokemonList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _onSearchChanged,
+        decoration: InputDecoration(
+          hintText: 'Buscar por nombre o número',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchTerm.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                  icon: const Icon(Icons.clear),
+                ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        textInputAction: TextInputAction.search,
+      ),
+    );
+  }
+
+  Widget _buildTypeFilters(ThemeData theme) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: _typesLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: LinearProgressIndicator(),
+            )
+          : _availableTypes.isEmpty
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _availableTypes
+                        .map(
+                          (type) => FilterChip(
+                            label: Text(_capitalize(type)),
+                            selected: _selectedTypes.contains(type),
+                            onSelected: (_) => _toggleType(type),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildSummary(ThemeData theme) {
+    if (_pokemons.isEmpty && !_isFetching) {
+      return const SizedBox.shrink();
+    }
+    final countText = _totalCount == 0
+        ? 'Mostrando ${_pokemons.length} Pokémon'
+        : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(
+          countText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPokemonList() {
+    if (_isInitialLoading && _pokemons.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage.isNotEmpty && _pokemons.isEmpty) {
+      return _ErrorView(
+        message: _errorMessage,
+        onRetry: () => _fetchPokemons(reset: true),
+      );
+    }
+
+    if (_pokemons.isEmpty) {
+      return const Center(
+        child: Text('No se encontraron Pokémon para los filtros actuales.'),
+      );
+    }
+
+    final showLoadingMore =
+        _isFetching && !_isInitialLoading && _pokemons.isNotEmpty;
+
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      child: ListView.separated(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        itemCount: _pokemons.length + (showLoadingMore ? 1 : 0),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          if (index >= _pokemons.length) {
+            return const _LoadingTile();
+          }
+          final pokemon = _pokemons[index];
+          return _PokemonListTile(pokemon: pokemon);
+        },
+      ),
+    );
+  }
+}
+
+class _PokemonListTile extends StatelessWidget {
+  const _PokemonListTile({required this.pokemon});
+
+  final PokemonListItem pokemon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 2,
+      shadowColor: theme.shadowColor.withOpacity(0.2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            _PokemonImage(imageUrl: pokemon.imageUrl),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_formatPokemonNumber(pokemon.id)} ${_capitalize(pokemon.name)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  if (pokemon.types.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: pokemon.types
+                          .map((type) => _PokemonTypeChip(type: type))
+                          .toList(),
+                    ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PokemonImage extends StatelessWidget {
+  const _PokemonImage({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholderColor = Theme.of(context).colorScheme.surfaceVariant;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 72,
+        height: 72,
+        color: placeholderColor,
+        child: imageUrl.isEmpty
+            ? const Icon(Icons.catching_pokemon, size: 36)
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.hide_image, size: 32),
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}
+
+class _PokemonTypeChip extends StatelessWidget {
+  const _PokemonTypeChip({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(_capitalize(type)),
+      padding: EdgeInsets.zero,
+    );
+  }
+}
+
+class _LoadingTile extends StatelessWidget {
+  const _LoadingTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: onRetry,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _capitalize(String value) {
+  if (value.isEmpty) return value;
+  return value[0].toUpperCase() + value.substring(1);
+}
+
+String _formatPokemonNumber(int id) {
+  return '#${id.toString().padLeft(3, '0')}';
+}
