@@ -120,30 +120,40 @@ String _extractSpriteUrl(dynamic spriteEntries) {
     return '';
   }
 
-  final firstEntry = sprites.first;
-  if (firstEntry is! Map<String, dynamic>) {
-    return '';
-  }
-
-  final rawSprites = firstEntry['sprites'];
-  if (rawSprites is! String || rawSprites.isEmpty) {
-    return '';
-  }
-
-  Map<String, dynamic>? decoded;
-  try {
-    final parsed = json.decode(rawSprites);
-    if (parsed is Map<String, dynamic>) {
-      decoded = parsed;
+  for (final entry in sprites) {
+    if (entry is! Map<String, dynamic>) {
+      continue;
     }
-  } catch (_) {
-    return '';
+
+    final rawSprites = entry['sprites'];
+    if (rawSprites is! String || rawSprites.isEmpty) {
+      continue;
+    }
+
+    Map<String, dynamic>? decoded;
+    try {
+      final parsed = json.decode(rawSprites);
+      if (parsed is Map<String, dynamic>) {
+        decoded = parsed;
+      }
+    } catch (_) {
+      continue;
+    }
+
+    if (decoded == null) {
+      continue;
+    }
+
+    final candidate = _selectSpriteFromMap(decoded);
+    if (candidate != null) {
+      return candidate;
+    }
   }
 
-  if (decoded == null) {
-    return '';
-  }
+  return '';
+}
 
+String? _selectSpriteFromMap(Map<String, dynamic> decoded) {
   final candidates = <String?>[
     _asNonEmptyString(decoded['front_default']),
     _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
@@ -160,7 +170,7 @@ String _extractSpriteUrl(dynamic spriteEntries) {
     }
   }
 
-  return '';
+  return null;
 }
 
 String? _getNestedString(
