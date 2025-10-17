@@ -67,6 +67,25 @@ void main() {
 
       expect(item.imageUrl, '');
     });
+
+    test('falls back to the first valid sprite entry', () {
+      final item = PokemonListItem.fromGraphQL({
+        'id': 5,
+        'name': 'charmeleon',
+        'pokemon_v2_pokemonsprites': [
+          {
+            'sprites': '{invalid json}',
+          },
+          {
+            'sprites': jsonEncode({
+              'front_default': 'https://example.com/fallback.png',
+            }),
+          },
+        ],
+      });
+
+      expect(item.imageUrl, 'https://example.com/fallback.png');
+    });
   });
 }
 
