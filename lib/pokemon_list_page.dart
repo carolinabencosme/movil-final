@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import 'queries/get_pokemon_list.dart';
+
 class PokemonListPage extends StatelessWidget {
-  final String query = """
-    query GetPokemons {
-      pokemon_v2_pokemon(limit: 10) {
-        id
-        name
-        height
-        weight
-      }
-    }
-  """;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Pokédex GraphQL")),
       body: Query(
-        options: QueryOptions(document: gql(query)),
+        options: QueryOptions(document: gql(getPokemonListQuery)),
         builder: (result, {fetchMore, refetch}) {
           if (result.isLoading) {
             return const Center(child: CircularProgressIndicator());
