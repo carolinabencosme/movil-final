@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import 'graphql_config.dart';
-import 'pokemon_list_page.dart';
+import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +23,12 @@ class MyApp extends StatelessWidget {
       client: clientNotifier,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'PokeDex GraphQL',
-        home: PokemonListPage(),
+        title: 'Pokédex GraphQL',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
+          useMaterial3: true,
+        ),
+        home: const HomeScreen(),
       ),
     );
   }
