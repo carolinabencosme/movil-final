@@ -3,6 +3,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
+import '../widgets/pokemon_artwork.dart';
 
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
@@ -76,114 +77,136 @@ class DetailScreen extends StatelessWidget {
 
           final pokemon = PokemonDetail.fromGraphQL(data);
 
+          final theme = Theme.of(context);
+
           return RefreshIndicator(
             onRefresh: () async {
               await refetch?.call();
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Text(
-                      _capitalize(pokemon.name),
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    child: Column(
+                      children: [
+                        Text(
+                          _capitalize(pokemon.name),
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Hero(
+                          tag: resolvedHeroTag,
+                          child: PokemonArtwork(
+                            imageUrl: pokemon.imageUrl,
+                            size: 220,
+                            borderRadius: 36,
+                            padding: const EdgeInsets.all(24),
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  _InfoSectionCard(
+                    title: 'Tipos',
+                    child: pokemon.types.isNotEmpty
+                        ? Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: pokemon.types
+                                .map(
+                                  (type) => Chip(
+                                    label: Text(_capitalize(type)),
+                                    backgroundColor:
+                                        theme.colorScheme.secondaryContainer,
+                                    labelStyle:
+                                        theme.textTheme.labelLarge?.copyWith(
+                                      color: theme
+                                          .colorScheme.onSecondaryContainer,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                )
+                                .toList(),
+                          )
+                        : const Text('Sin información de tipos disponible.'),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: _HeroPokemonImage(
-                      heroTag: resolvedHeroTag,
-                      imageUrl: pokemon.imageUrl,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _SectionTitle(title: 'Tipos'),
-                  const SizedBox(height: 8),
-                  if (pokemon.types.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: pokemon.types
-                          .map((type) => Chip(label: Text(_capitalize(type))))
-                          .toList(),
-                    )
-                  else
-                    const Text('Sin información de tipos disponible.'),
-                  const SizedBox(height: 24),
-                  _SectionTitle(title: 'Habilidades'),
-                  const SizedBox(height: 8),
-                  if (pokemon.abilities.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: pokemon.abilities
-                          .map((ability) => Chip(
-                                label: Text(_capitalize(ability)),
-                              ))
-                          .toList(),
-                    )
-                  else
-                    const Text('Sin información de habilidades disponible.'),
-                  const SizedBox(height: 24),
-                  _SectionTitle(title: 'Estadísticas'),
-                  const SizedBox(height: 8),
-                  if (pokemon.stats.isNotEmpty)
-                    Column(
-                      children: pokemon.stats
-                          .map(
-                            (stat) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _capitalize(stat.name.replaceAll('-', ' ')),
-                                      style:
-                                          Theme.of(context).textTheme.titleMedium,
+                  _InfoSectionCard(
+                    title: 'Habilidades',
+                    child: pokemon.abilities.isNotEmpty
+                        ? Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: pokemon.abilities
+                                .map(
+                                  (ability) => Chip(
+                                    label: Text(_capitalize(ability)),
+                                    backgroundColor:
+                                        theme.colorScheme.tertiaryContainer,
+                                    labelStyle:
+                                        theme.textTheme.labelLarge?.copyWith(
+                                      color: theme
+                                          .colorScheme.onTertiaryContainer,
+                                      fontWeight: FontWeight.w600,
                                     ),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    stat.baseStat.toString(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
+                                )
+                                .toList(),
                           )
-                          .toList(),
-                    )
-                  else
-                    const Text('Sin información de estadísticas disponible.'),
-                  const SizedBox(height: 24),
-                  _SectionTitle(title: 'Medidas'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoCard(
-                          icon: Icons.height,
-                          label: 'Altura',
-                          value: '${pokemon.height}',
+                        : const Text(
+                            'Sin información de habilidades disponible.'),
+                  ),
+                  const SizedBox(height: 16),
+                  _InfoSectionCard(
+                    title: 'Estadísticas',
+                    child: pokemon.stats.isNotEmpty
+                        ? Column(
+                            children: pokemon.stats
+                                .map(
+                                  (stat) => _StatBar(
+                                    label: _capitalize(
+                                      stat.name.replaceAll('-', ' '),
+                                    ),
+                                    value: stat.baseStat,
+                                  ),
+                                )
+                                .toList(),
+                          )
+                        : const Text(
+                            'Sin información de estadísticas disponible.'),
+                  ),
+                  const SizedBox(height: 16),
+                  _InfoSectionCard(
+                    title: 'Medidas',
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _InfoCard(
+                            icon: Icons.height,
+                            label: 'Altura',
+                            value: '${pokemon.height}',
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoCard(
-                          icon: Icons.monitor_weight_outlined,
-                          label: 'Peso',
-                          value: '${pokemon.weight}',
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _InfoCard(
+                            icon: Icons.monitor_weight_outlined,
+                            label: 'Peso',
+                            value: '${pokemon.weight}',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -212,39 +235,76 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _HeroPokemonImage extends StatelessWidget {
-  const _HeroPokemonImage({required this.heroTag, required this.imageUrl});
+class _InfoSectionCard extends StatelessWidget {
+  const _InfoSectionCard({required this.title, required this.child});
 
-  final String heroTag;
-  final String imageUrl;
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final placeholderColor = Theme.of(context).colorScheme.surfaceVariant;
-    return Hero(
-      tag: heroTag,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: 200,
-          height: 200,
-          color: placeholderColor,
-          child: imageUrl.isNotEmpty
-              ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.catching_pokemon_outlined,
-                    size: 80,
-                    color: Colors.redAccent,
-                  ),
-                )
-              : const Icon(
-                  Icons.catching_pokemon_outlined,
-                  size: 80,
-                  color: Colors.redAccent,
-                ),
+    final theme = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionTitle(title: title),
+            const SizedBox(height: 12),
+            child,
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatBar extends StatelessWidget {
+  const _StatBar({required this.label, required this.value});
+
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final double normalized = (value / 200).clamp(0.0, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              Text(
+                value.toString(),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: normalized,
+              minHeight: 8,
+              color: theme.colorScheme.primary,
+              backgroundColor:
+                  theme.colorScheme.primary.withOpacity(0.18),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -263,18 +323,27 @@ class _LoadingDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _HeroPokemonImage(heroTag: heroTag, imageUrl: imageUrl),
+            Hero(
+              tag: heroTag,
+              child: PokemonArtwork(
+                imageUrl: imageUrl,
+                size: 180,
+                borderRadius: 32,
+                padding: const EdgeInsets.all(20),
+              ),
+            ),
             if (name != null) ...[
               const SizedBox(height: 16),
               Text(
                 name!,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: theme.textTheme.titleLarge,
               ),
             ],
             const SizedBox(height: 24),
@@ -299,29 +368,33 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    final colorScheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
+            Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
             const SizedBox(height: 8),
             Text(
               label,
-              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onPrimaryContainer.withOpacity(0.85),
+                  ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               value,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
             ),
           ],
         ),
