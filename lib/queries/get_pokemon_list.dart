@@ -4,22 +4,22 @@ String buildPokemonListQuery({
   bool includePagination = true,
 }) {
   final variableDefinitions = <String>[
-    if (includePagination) r'\$limit: Int!',
-    if (includePagination) r'\$offset: Int!',
-    r'\$search: String!',
+    if (includePagination) r'$limit: Int!',
+    if (includePagination) r'$offset: Int!',
+    r'$search: String!',
   ];
   if (includeIdFilter) {
-    variableDefinitions.add(r'\$id: Int');
+    variableDefinitions.add(r'$id: Int');
   }
   if (includeTypeFilter) {
-    variableDefinitions.add(r'\$typeNames: [String!]!');
+    variableDefinitions.add(r'$typeNames: [String!]!');
   }
 
   final orConditions = <String>[
-    r'{name: {_ilike: \$search}}',
+    r'{name: {_ilike: $search}}',
   ];
   if (includeIdFilter) {
-    orConditions.add(r'{id: {_eq: \$id}}');
+    orConditions.add(r'{id: {_eq: $id}}');
   }
 
   final bufferOrConditions = orConditions.join(',\n            ');
@@ -36,14 +36,14 @@ String buildPokemonListQuery({
 
   if (includeTypeFilter) {
     andConditions.add(
-      r'{pokemon_v2_pokemontypes: {pokemon_v2_type: {name: {_in: \$typeNames}}}}',
+      r'{pokemon_v2_pokemontypes: {pokemon_v2_type: {name: {_in: $typeNames}}}}',
     );
   }
 
   final bufferAndConditions = andConditions.join(',\n        ');
 
   final paginationBlock = includePagination
-      ? '      limit: \$limit\n      offset: \$offset\n'
+      ? '      limit: $limit\n      offset: $offset\n'
       : '';
 
   return '''
