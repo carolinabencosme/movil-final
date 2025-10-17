@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'pokedex_screen.dart';
@@ -65,38 +67,55 @@ class _HomeScreenState extends State<HomeScreen> {
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         child: _showGrid
-            ? GridView.builder(
-                key: const ValueKey('home-grid'),
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 0.9,
-                ),
-                itemCount: _sections.length,
-                itemBuilder: (context, index) {
-                  final section = _sections[index];
-                  return _HomeSectionCard(
-                    info: section,
-                    onTap: () {
-                      final destination = section.title == 'Pokédex'
-                          ? PokedexScreen(
-                              heroTag: section.heroTag,
-                              accentColor: section.color,
-                              title: section.title,
-                            )
-                          : SectionPlaceholderScreen(info: section);
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  const double horizontalPadding = 16 * 2;
+                  const double columnSpacing = 16;
+                  final double availableWidth =
+                      constraints.maxWidth - horizontalPadding - columnSpacing;
+                  final double tileWidth = math.max(0, availableWidth / 2);
+                  var tileHeight = tileWidth + 80;
+                  tileHeight = math.max(tileHeight, 220);
+                  final double childAspectRatio = tileWidth > 0
+                      ? tileWidth / tileHeight
+                      : 1;
 
-                      Navigator.of(context).push(
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 450),
-                          pageBuilder: (_, animation, secondaryAnimation) =>
-                              FadeTransition(
-                            opacity: animation,
-                            child: destination,
-                          ),
-                        ),
+                  return GridView.builder(
+                    key: const ValueKey('home-grid'),
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: childAspectRatio,
+                    ),
+                    itemCount: _sections.length,
+                    itemBuilder: (context, index) {
+                      final section = _sections[index];
+                      return _HomeSectionCard(
+                        info: section,
+                        onTap: () {
+                          final destination = section.title == 'Pokédex'
+                              ? PokedexScreen(
+                                  heroTag: section.heroTag,
+                                  accentColor: section.color,
+                                  title: section.title,
+                                )
+                              : SectionPlaceholderScreen(info: section);
+
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              transitionDuration:
+                                  const Duration(milliseconds: 450),
+                              pageBuilder:
+                                  (_, animation, secondaryAnimation) =>
+                                      FadeTransition(
+                                opacity: animation,
+                                child: destination,
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );
@@ -156,6 +175,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       widget.info.icon,
@@ -169,6 +189,8 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -176,6 +198,8 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.white.withOpacity(0.9),
                           ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
