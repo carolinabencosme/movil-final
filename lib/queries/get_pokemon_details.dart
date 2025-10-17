@@ -20,9 +20,9 @@ const String getPokemonDetailsQuery = r'''
         pokemon_v2_type {
           id
           name
-          pokemon_v2_typeefficaciesByTargetTypeId {
+          pokemon_v2_typeefficaciesByTarget_type_id {
             damage_factor
-            pokemon_v2_typeByDamageTypeId {
+            pokemon_v2_typeByDamage_type_id {
               id
               name
             }

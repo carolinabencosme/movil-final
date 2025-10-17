@@ -70,13 +70,13 @@ class PokemonDetail {
       }
 
       final efficacies =
-          typeInfo['pokemon_v2_typeefficaciesByTargetTypeId']
+          typeInfo['pokemon_v2_typeefficaciesByTarget_type_id']
               as List<dynamic>? ??
               [];
 
       for (final dynamic efficacyEntry in efficacies) {
         final efficacy = efficacyEntry as Map<String, dynamic>?;
-        final damageTypeInfo = efficacy?['pokemon_v2_typeByDamageTypeId']
+        final damageTypeInfo = efficacy?['pokemon_v2_typeByDamage_type_id']
             as Map<String, dynamic>?;
         final damageTypeName = damageTypeInfo?['name'];
         final damageFactor = efficacy?['damage_factor'];
