@@ -4,7 +4,8 @@ import '../models/pokemon_model.dart';
 import '../services/pokeapi_service.dart';
 
 class PokemonScreen extends StatelessWidget {
-  PokemonScreen({super.key}) : _pokemonFuture = PokeApiService().fetchPokemon();
+  PokemonScreen({super.key, PokeApiService? pokeApiService})
+      : _pokemonFuture = (pokeApiService ?? PokeApiService()).fetchPokemon();
 
   final Future<Pokemon> _pokemonFuture;
 
