@@ -43,7 +43,7 @@ String buildPokemonListQuery({
   final bufferAndConditions = andConditions.join(',\n        ');
 
   final paginationBlock = includePagination
-      ? '      limit: \\$limit\n      offset: \\$offset\n'
+      ? '      limit: \$limit\n      offset: \$offset\n'
       : '';
 
   return '''
