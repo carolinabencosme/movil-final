@@ -156,19 +156,24 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final numericId = int.tryParse(_debouncedSearch);
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
+    final shouldPaginate = !includeIdFilter;
 
     final document = gql(
       buildPokemonListQuery(
         includeIdFilter: includeIdFilter,
         includeTypeFilter: includeTypeFilter,
+        includePagination: shouldPaginate,
       ),
     );
 
     final variables = <String, dynamic>{
-      'limit': _pageSize,
-      'offset': offset,
       'search': searchValue.isEmpty ? '%' : '%$searchValue%',
     };
+
+    if (shouldPaginate) {
+      variables['limit'] = _pageSize;
+      variables['offset'] = offset;
+    }
 
     if (includeIdFilter && numericId != null) {
       variables['id'] = numericId;
@@ -207,10 +212,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
         if (reset) {
           _pokemons = results;
         } else {
-          _pokemons = <PokemonListItem>[..._pokemons, ...results];
+          _pokemons = shouldPaginate
+              ? <PokemonListItem>[..._pokemons, ...results]
+              : results;
         }
         _totalCount = count ?? _pokemons.length;
-        _hasMore = _pokemons.length < _totalCount;
+        final expectedTotal = _totalCount == 0 ? _pokemons.length : _totalCount;
+        _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
         _errorMessage = '';
       });
     } catch (error) {

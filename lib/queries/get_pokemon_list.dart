@@ -1,10 +1,11 @@
 String buildPokemonListQuery({
   required bool includeIdFilter,
   required bool includeTypeFilter,
+  bool includePagination = true,
 }) {
   final variableDefinitions = <String>[
-    r'\$limit: Int!',
-    r'\$offset: Int!',
+    if (includePagination) r'\$limit: Int!',
+    if (includePagination) r'\$offset: Int!',
     r'\$search: String!',
   ];
   if (includeIdFilter) {
@@ -41,12 +42,14 @@ String buildPokemonListQuery({
 
   final bufferAndConditions = andConditions.join(',\n        ');
 
+  final paginationBlock = includePagination
+      ? '      limit: \\$limit\n      offset: \\$offset\n'
+      : '';
+
   return '''
   query GetPokemonList(${variableDefinitions.join(', ')}) {
     pokemon_v2_pokemon(
-      limit: \$limit
-      offset: \$offset
-      order_by: {id: asc}
+${paginationBlock}      order_by: {id: asc}
       where: {
         _and: [
         $bufferAndConditions
