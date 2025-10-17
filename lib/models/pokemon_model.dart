@@ -5,17 +5,30 @@ class PokemonListItem {
     required this.id,
     required this.name,
     required this.imageUrl,
+    this.types = const [],
   });
 
   final int id;
   final String name;
   final String imageUrl;
+  final List<String> types;
 
   factory PokemonListItem.fromGraphQL(Map<String, dynamic> json) {
+    final types = (json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
+        .map((dynamic typeEntry) {
+          final type = typeEntry as Map<String, dynamic>?;
+          final typeInfo = type?['pokemon_v2_type'] as Map<String, dynamic>?;
+          final name = typeInfo?['name'];
+          return name is String ? name : null;
+        })
+        .whereType<String>()
+        .toList();
+
     return PokemonListItem(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
+      types: types,
     );
   }
 }
