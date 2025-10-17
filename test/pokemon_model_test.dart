@@ -86,6 +86,34 @@ void main() {
 
       expect(item.imageUrl, 'https://example.com/fallback.png');
     });
+
+    test('handles sprites provided as a Map<String, dynamic>', () {
+      final item = PokemonListItem.fromGraphQL({
+        'id': 6,
+        'name': 'charizard',
+        'pokemon_v2_pokemonsprites': _buildSpriteEntriesFromMap({
+          'front_default': 'https://example.com/front_default_map.png',
+        }),
+      });
+
+      expect(item.imageUrl, 'https://example.com/front_default_map.png');
+    });
+
+    test('applies fallback priority when sprites is already a map', () {
+      final item = PokemonListItem.fromGraphQL({
+        'id': 7,
+        'name': 'squirtle',
+        'pokemon_v2_pokemonsprites': _buildSpriteEntriesFromMap({
+          'other': {
+            'official-artwork': {
+              'front_default': 'https://example.com/official-map.png',
+            },
+          },
+        }),
+      });
+
+      expect(item.imageUrl, 'https://example.com/official-map.png');
+    });
   });
 }
 
@@ -93,6 +121,16 @@ List<Map<String, dynamic>> _buildSpriteEntries(Map<String, dynamic> sprites) {
   return [
     {
       'sprites': jsonEncode(sprites),
+    }
+  ];
+}
+
+List<Map<String, dynamic>> _buildSpriteEntriesFromMap(
+  Map<String, dynamic> sprites,
+) {
+  return [
+    {
+      'sprites': sprites,
     }
   ];
 }
