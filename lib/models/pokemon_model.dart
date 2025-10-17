@@ -154,19 +154,20 @@ String _extractSpriteUrl(dynamic spriteEntries) {
 }
 
 String? _selectSpriteFromMap(Map<String, dynamic> decoded) {
-  final candidates = <String?>[
-    _asNonEmptyString(decoded['front_default']),
+  final rawCandidates = <String?>[
     _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
     _getNestedString(decoded, ['other', 'home', 'front_default']),
-    _getNestedString(decoded, ['other', 'dream_world', 'front_default']),
-    _asNonEmptyString(decoded['front_shiny']),
     _getNestedString(decoded, ['other', 'official-artwork', 'front_shiny']),
     _getNestedString(decoded, ['other', 'home', 'front_shiny']),
+    _getNestedString(decoded, ['other', 'dream_world', 'front_default']),
+    _asNonEmptyString(decoded['front_default']),
+    _asNonEmptyString(decoded['front_shiny']),
   ];
 
-  for (final candidate in candidates) {
-    if (candidate != null) {
-      return candidate;
+  for (final candidate in rawCandidates) {
+    final normalized = _normalizeSpriteUrl(candidate);
+    if (normalized != null) {
+      return normalized;
     }
   }
 
@@ -192,4 +193,14 @@ String? _asNonEmptyString(dynamic value) {
     return value;
   }
   return null;
+}
+
+String? _normalizeSpriteUrl(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  if (value.startsWith('http://')) {
+    return value.replaceFirst('http://', 'https://');
+  }
+  return value;
 }

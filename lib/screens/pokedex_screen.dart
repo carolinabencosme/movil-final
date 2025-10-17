@@ -6,6 +6,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
+import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 
 class PokedexScreen extends StatefulWidget {
@@ -340,6 +341,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
         decoration: InputDecoration(
           hintText: 'Buscar por nombre o número',
           prefixIcon: const Icon(Icons.search),
+          prefixIconColor: theme.colorScheme.primary,
           suffixIcon: _searchTerm.isEmpty
               ? null
               : IconButton(
@@ -349,9 +351,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
                   },
                   icon: const Icon(Icons.clear),
                 ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          suffixIconColor: theme.colorScheme.primary,
         ),
         textInputAction: TextInputAction.search,
       ),
@@ -372,16 +372,36 @@ class _PokedexScreenState extends State<PokedexScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 10,
+                    runSpacing: 10,
                     children: _availableTypes
-                        .map(
-                          (type) => FilterChip(
+                        .map((type) {
+                          final isSelected = _selectedTypes.contains(type);
+                          return FilterChip(
                             label: Text(_capitalize(type)),
-                            selected: _selectedTypes.contains(type),
+                            selected: isSelected,
+                            showCheckmark: false,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            backgroundColor: theme.colorScheme.surfaceVariant
+                                .withOpacity(0.6),
+                            selectedColor: theme.colorScheme.primaryContainer,
+                            labelStyle: theme.textTheme.labelLarge?.copyWith(
+                              color: isSelected
+                                  ? theme.colorScheme.onPrimaryContainer
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                      .withOpacity(0.45)
+                                  : Colors.transparent,
+                            ),
                             onSelected: (_) => _toggleType(type),
-                          ),
-                        )
+                          );
+                        })
                         .toList(),
                   ),
                 ),
@@ -395,14 +415,21 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final countText = _totalCount == 0
         ? 'Mostrando ${_pokemons.length} Pokémon'
         : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Text(
-          countText,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        color: theme.colorScheme.secondaryContainer.withOpacity(0.45),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              countText,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),
@@ -435,9 +462,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         itemCount: _pokemons.length + (showLoadingMore ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           if (index >= _pokemons.length) {
             return const _LoadingTile();
@@ -460,13 +487,8 @@ class _PokemonListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final heroTag = 'pokemon-image-${pokemon.id}';
     return Card(
-      elevation: 2,
-      shadowColor: theme.shadowColor.withOpacity(0.2),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         onTap: () {
           Navigator.push(
             context,
@@ -480,80 +502,85 @@ class _PokemonListTile extends StatelessWidget {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Hero(
                 tag: heroTag,
-                child: _PokemonImage(imageUrl: pokemon.imageUrl),
+                child: PokemonArtwork(
+                  imageUrl: pokemon.imageUrl,
+                  size: 86,
+                  borderRadius: 24,
+                  padding: const EdgeInsets.all(10),
+                  showShadow: false,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '${_formatPokemonNumber(pokemon.id)} ${_capitalize(pokemon.name)}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            _formatPokemonNumber(pokemon.id),
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _capitalize(pokemon.name),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 10),
                     if (pokemon.types.isNotEmpty)
                       Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: pokemon.types
                             .map((type) => _PokemonTypeChip(type: type))
                             .toList(),
+                      )
+                    else
+                      Text(
+                        'Tipo desconocido',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: theme.colorScheme.primary,
+                size: 18,
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PokemonImage extends StatelessWidget {
-  const _PokemonImage({required this.imageUrl});
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholderColor = Theme.of(context).colorScheme.surfaceVariant;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 72,
-        height: 72,
-        color: placeholderColor,
-        child: imageUrl.isEmpty
-            ? const Icon(Icons.catching_pokemon, size: 36)
-            : Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Icon(Icons.hide_image, size: 32),
-                  );
-                },
-              ),
       ),
     );
   }
@@ -566,9 +593,20 @@ class _PokemonTypeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Chip(
       label: Text(_capitalize(type)),
-      padding: EdgeInsets.zero,
+      backgroundColor:
+          theme.colorScheme.secondaryContainer.withOpacity(0.85),
+      labelStyle: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSecondaryContainer,
+        fontWeight: FontWeight.w600,
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
     );
   }
 }
