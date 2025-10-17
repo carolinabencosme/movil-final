@@ -1,13 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
-import '../services/pokeapi_service.dart';
+import '../queries/get_pokemon_details.dart';
 
 class PokemonScreen extends StatelessWidget {
-  PokemonScreen({super.key, PokeApiService? pokeApiService})
-      : _pokemonFuture = (pokeApiService ?? PokeApiService()).fetchPokemon();
+  PokemonScreen({super.key, this.pokemonName = 'ditto'});
 
-  final Future<Pokemon> _pokemonFuture;
+  final String pokemonName;
 
   String _capitalize(String value) {
     if (value.isEmpty) {
@@ -27,25 +29,65 @@ class PokemonScreen extends StatelessWidget {
         .join(', ');
   }
 
+  Pokemon? _mapToPokemon(Map<String, dynamic>? data) {
+    if (data == null) {
+      return null;
+    }
+
+    var spriteUrl = '';
+    final spriteEntries = data['pokemon_v2_pokemonsprites'] as List<dynamic>?;
+    if (spriteEntries != null && spriteEntries.isNotEmpty) {
+      final rawSprites = spriteEntries.first['sprites'];
+      if (rawSprites is String && rawSprites.isNotEmpty) {
+        try {
+          final spritesMap = json.decode(rawSprites) as Map<String, dynamic>;
+          spriteUrl = (spritesMap['front_default'] as String?) ?? '';
+        } catch (_) {
+          spriteUrl = '';
+        }
+      }
+    }
+
+    final types = (data['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
+        .map((typeEntry) {
+          final type = typeEntry['pokemon_v2_type'] as Map<String, dynamic>?;
+          final name = type?['name'];
+          return name is String ? name : null;
+        })
+        .whereType<String>()
+        .toList();
+
+    return Pokemon(
+      name: data['name'] as String? ?? '',
+      height: data['height'] as int? ?? 0,
+      weight: data['weight'] as int? ?? 0,
+      types: types,
+      spriteUrl: spriteUrl,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pokémon (REST)'),
+        title: const Text('Pokémon (GraphQL)'),
       ),
-      body: FutureBuilder<Pokemon>(
-        future: _pokemonFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Query(
+        options: QueryOptions(
+          document: gql(getPokemonDetailsQuery),
+          variables: {'name': pokemonName},
+        ),
+        builder: (result, {fetchMore, refetch}) {
+          if (result.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
+          if (result.hasException) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Ocurrió un error al cargar el Pokémon.\n${snapshot.error}',
+                  'Ocurrió un error al cargar el Pokémon.\n${result.exception}',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
@@ -53,13 +95,24 @@ class PokemonScreen extends StatelessWidget {
             );
           }
 
-          final pokemon = snapshot.data;
+          final results =
+              result.data?['pokemon_v2_pokemon'] as List<dynamic>? ?? const [];
 
-          if (pokemon == null) {
+          if (results.isEmpty) {
             return const Center(
               child: Text('No se encontró información del Pokémon.'),
             );
           }
+
+          final pokemon =
+              _mapToPokemon(results.first as Map<String, dynamic>?) ??
+                  Pokemon(
+                    name: '',
+                    height: 0,
+                    weight: 0,
+                    types: const [],
+                    spriteUrl: '',
+                  );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -73,14 +126,15 @@ class PokemonScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Center(
-                  child: Image.network(
-                    pokemon.spriteUrl,
-                    height: 200,
-                    fit: BoxFit.contain,
+                if (pokemon.spriteUrl.isNotEmpty)
+                  Center(
+                    child: Image.network(
+                      pokemon.spriteUrl,
+                      height: 200,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                if (pokemon.spriteUrl.isNotEmpty) const SizedBox(height: 24),
                 Text(
                   '📏 Altura: ${pokemon.height}',
                   style: Theme.of(context).textTheme.titleMedium,
