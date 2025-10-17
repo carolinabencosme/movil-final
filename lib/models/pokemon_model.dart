@@ -117,15 +117,56 @@ String _extractSpriteUrl(dynamic spriteEntries) {
     return '';
   }
 
+  Map<String, dynamic>? decoded;
   try {
-    final decoded = json.decode(rawSprites) as Map<String, dynamic>;
-    final frontDefault = decoded['front_default'];
-    if (frontDefault is String) {
-      return frontDefault;
+    final parsed = json.decode(rawSprites);
+    if (parsed is Map<String, dynamic>) {
+      decoded = parsed;
     }
   } catch (_) {
     return '';
   }
 
+  if (decoded == null) {
+    return '';
+  }
+
+  final candidates = <String?>[
+    _asNonEmptyString(decoded['front_default']),
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
+    _getNestedString(decoded, ['other', 'home', 'front_default']),
+    _getNestedString(decoded, ['other', 'dream_world', 'front_default']),
+    _asNonEmptyString(decoded['front_shiny']),
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_shiny']),
+    _getNestedString(decoded, ['other', 'home', 'front_shiny']),
+  ];
+
+  for (final candidate in candidates) {
+    if (candidate != null) {
+      return candidate;
+    }
+  }
+
   return '';
+}
+
+String? _getNestedString(
+  Map<String, dynamic> root,
+  List<String> path,
+) {
+  dynamic current = root;
+  for (final key in path) {
+    if (current is! Map<String, dynamic>) {
+      return null;
+    }
+    current = current[key];
+  }
+  return _asNonEmptyString(current);
+}
+
+String? _asNonEmptyString(dynamic value) {
+  if (value is String && value.isNotEmpty) {
+    return value;
+  }
+  return null;
 }
