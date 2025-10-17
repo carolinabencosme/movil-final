@@ -125,21 +125,7 @@ String _extractSpriteUrl(dynamic spriteEntries) {
       continue;
     }
 
-    final rawSprites = entry['sprites'];
-    if (rawSprites is! String || rawSprites.isEmpty) {
-      continue;
-    }
-
-    Map<String, dynamic>? decoded;
-    try {
-      final parsed = json.decode(rawSprites);
-      if (parsed is Map<String, dynamic>) {
-        decoded = parsed;
-      }
-    } catch (_) {
-      continue;
-    }
-
+    final decoded = _decodeSprites(entry['sprites']);
     if (decoded == null) {
       continue;
     }
@@ -151,6 +137,41 @@ String _extractSpriteUrl(dynamic spriteEntries) {
   }
 
   return '';
+}
+
+Map<String, dynamic>? _decodeSprites(dynamic rawSprites) {
+  if (rawSprites == null) {
+    return null;
+  }
+
+  if (rawSprites is String) {
+    if (rawSprites.isEmpty) {
+      return null;
+    }
+
+    try {
+      final parsed = json.decode(rawSprites);
+      if (parsed is Map<String, dynamic>) {
+        return Map<String, dynamic>.from(parsed);
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  if (rawSprites is Map) {
+    final map = <String, dynamic>{};
+    rawSprites.forEach((key, value) {
+      if (key != null) {
+        map[key.toString()] = value;
+      }
+    });
+    return map;
+  }
+
+  return null;
 }
 
 String? _selectSpriteFromMap(Map<String, dynamic> decoded) {
