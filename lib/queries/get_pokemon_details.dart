@@ -6,7 +6,7 @@ const String getPokemonDetailsQuery = r'''
       height
       weight
       base_experience
-      pokemon_v2_pokemonspecies {
+      pokemon_v2_pokemonspecy {
         capture_rate
         pokemon_v2_pokemonspeciesnames(
           where: {language_id: {_eq: $languageId}}

@@ -164,7 +164,7 @@ class PokemonDetail {
         .toList();
 
     final species =
-        json['pokemon_v2_pokemonspecies'] as Map<String, dynamic>?;
+        json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
     final speciesNames =
         species?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
     String category = '';
