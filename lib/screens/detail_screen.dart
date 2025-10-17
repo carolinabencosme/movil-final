@@ -26,6 +26,27 @@ const Map<String, Color> _pokemonTypeColors = {
   'fairy': Color(0xFFD685AD),
 };
 
+const Map<String, String> _typeEmojis = {
+  'normal': '⭐️',
+  'fire': '🔥',
+  'water': '💧',
+  'electric': '⚡️',
+  'grass': '🍃',
+  'ice': '❄️',
+  'fighting': '🥊',
+  'poison': '☠️',
+  'ground': '🌋',
+  'flying': '🕊️',
+  'psychic': '🔮',
+  'bug': '🐛',
+  'rock': '🪨',
+  'ghost': '👻',
+  'dragon': '🐲',
+  'dark': '🌑',
+  'steel': '⚙️',
+  'fairy': '🧚',
+};
+
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
     super.key,
@@ -243,6 +264,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
           ),
           const SizedBox(height: 16),
           _InfoSectionCard(
+            title: 'Debilidades',
+            child: _WeaknessSection(
+              matchups: pokemon.typeMatchups,
+              formatLabel: _formatLabel,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _InfoSectionCard(
             title: 'Datos básicos',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +406,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 ),
                 const SizedBox(height: 16),
                 _InfoSectionCard(
-                  title: 'Debilidades y resistencias',
+                  title: 'Resistencias e inmunidades',
                   child: _TypeMatchupSection(
                     matchups: pokemon.typeMatchups,
                     formatLabel: _formatLabel,
@@ -502,6 +531,159 @@ class _CharacteristicsSection extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _WeaknessSection extends StatefulWidget {
+  const _WeaknessSection({
+    required this.matchups,
+    required this.formatLabel,
+  });
+
+  final List<TypeMatchup> matchups;
+  final String Function(String) formatLabel;
+
+  @override
+  State<_WeaknessSection> createState() => _WeaknessSectionState();
+}
+
+class _WeaknessSectionState extends State<_WeaknessSection> {
+  bool _isExpanded = false;
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weaknesses = widget.matchups
+        .where((matchup) => matchup.multiplier > 1.0)
+        .toList()
+      ..sort((a, b) => b.multiplier.compareTo(a.multiplier));
+
+    if (weaknesses.isEmpty) {
+      return const Text('No hay información de debilidades disponible.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) => SizeTransition(
+            sizeFactor: animation,
+            axisAlignment: -1,
+            child: child,
+          ),
+          child: _isExpanded
+              ? Padding(
+                  key: const ValueKey(true),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _WeaknessChipGrid(
+                    weaknesses: weaknesses,
+                    formatLabel: widget.formatLabel,
+                  ),
+                )
+              : const SizedBox.shrink(key: ValueKey(false)),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _toggleExpanded,
+            icon: Icon(_isExpanded ? Icons.expand_less : Icons.visibility),
+            label: Text(
+              _isExpanded ? 'Ocultar debilidades' : 'Ver debilidades',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeaknessChipGrid extends StatelessWidget {
+  const _WeaknessChipGrid({
+    required this.weaknesses,
+    required this.formatLabel,
+  });
+
+  final List<TypeMatchup> weaknesses;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: weaknesses
+          .map(
+            (matchup) => _WeaknessChip(
+              matchup: matchup,
+              formatLabel: formatLabel,
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _WeaknessChip extends StatelessWidget {
+  const _WeaknessChip({
+    required this.matchup,
+    required this.formatLabel,
+  });
+
+  final TypeMatchup matchup;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final typeKey = matchup.type.toLowerCase();
+    final typeColor = _pokemonTypeColors[typeKey] ?? colorScheme.primary;
+    final emoji = _typeEmojis[typeKey];
+    final background = Color.alphaBlend(
+      typeColor.withOpacity(0.16),
+      colorScheme.surface.withOpacity(0.95),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: typeColor.withOpacity(0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (emoji != null) ...[
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            formatLabel(matchup.type),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _formatMultiplier(matchup.multiplier),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: typeColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -631,14 +813,6 @@ class _TypeMatchupSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (matchups.isEmpty) {
-      return const Text('Sin información de debilidades o resistencias disponible.');
-    }
-
-    final weaknesses = matchups
-        .where((matchup) => matchup.multiplier > 1.01)
-        .toList()
-      ..sort((a, b) => b.multiplier.compareTo(a.multiplier));
     final resistances = matchups
         .where((matchup) => matchup.multiplier > 0 && matchup.multiplier < 0.99)
         .toList()
@@ -647,25 +821,15 @@ class _TypeMatchupSection extends StatelessWidget {
         .where((matchup) => matchup.multiplier <= 0.01)
         .toList();
 
-    final hasContent =
-        weaknesses.isNotEmpty || resistances.isNotEmpty || immunities.isNotEmpty;
+    final hasContent = resistances.isNotEmpty || immunities.isNotEmpty;
 
     if (!hasContent) {
-      return const Text('Sin información de debilidades o resistencias disponible.');
+      return const Text('Sin información de resistencias o inmunidades disponible.');
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (weaknesses.isNotEmpty) ...[
-          _MatchupGroup(
-            title: 'Debilidades',
-            matchups: weaknesses,
-            formatLabel: formatLabel,
-          ),
-          if (resistances.isNotEmpty || immunities.isNotEmpty)
-            const SizedBox(height: 12),
-        ],
         if (resistances.isNotEmpty) ...[
           _MatchupGroup(
             title: 'Resistencias',
@@ -726,6 +890,20 @@ class _MatchupGroup extends StatelessWidget {
   }
 }
 
+String _formatMultiplier(double multiplier) {
+  if (multiplier <= 0) {
+    return '0×';
+  }
+  if ((multiplier - multiplier.round()).abs() < 0.01) {
+    return '${multiplier.round()}×';
+  }
+  final text = multiplier
+      .toStringAsFixed(2)
+      .replaceAll(RegExp(r'0+$'), '')
+      .replaceAll(RegExp(r'\.$'), '');
+  return '$text×';
+}
+
 class _TypeMatchupChip extends StatelessWidget {
   const _TypeMatchupChip({
     required this.matchup,
@@ -782,19 +960,6 @@ class _TypeMatchupChip extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatMultiplier(double multiplier) {
-    if (multiplier <= 0) {
-      return '0×';
-    }
-    if ((multiplier - multiplier.round()).abs() < 0.01) {
-      return '${multiplier.round()}×';
-    }
-    final text = multiplier.toStringAsFixed(2)
-        .replaceAll(RegExp(r'0+$'), '')
-        .replaceAll(RegExp(r'\.$'), '');
-    return '$text×';
   }
 }
 
