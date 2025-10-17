@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:test/test.dart';
-import 'package:movil_final/models/pokemon_model.dart';
+import 'package:pokedex/models/pokemon_model.dart';
 
 void main() {
   group('_extractSpriteUrl via PokemonListItem', () {
