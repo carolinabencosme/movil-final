@@ -51,7 +51,7 @@ const String getPokemonDetailsQuery = r'''
         sprites
       }
     }
-    pokemon_v2_typeefficacies {
+    pokemon_v2_typeefficacy {
       damage_factor
       damage_type_id
       target_type_id

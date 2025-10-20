@@ -123,7 +123,7 @@ class DetailScreen extends StatelessWidget {
           }
 
           final typeEfficacies =
-              result.data?['pokemon_v2_typeefficacies'] as List<dynamic>? ?? [];
+              result.data?['pokemon_v2_typeefficacy'] as List<dynamic>? ?? [];
 
           final pokemon = PokemonDetail.fromGraphQL(
             data,
