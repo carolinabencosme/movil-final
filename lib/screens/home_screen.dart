@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -95,13 +96,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeSectionCard(
                         info: section,
                         onTap: () {
-                          final destination = section.title == 'Pokédex'
-                              ? PokedexScreen(
-                                  heroTag: section.heroTag,
-                                  accentColor: section.color,
-                                  title: section.title,
-                                )
-                              : SectionPlaceholderScreen(info: section);
+                          Widget destination;
+                          switch (section.title) {
+                            case 'Pokédex':
+                              destination = PokedexScreen(
+                                heroTag: section.heroTag,
+                                accentColor: section.color,
+                                title: section.title,
+                              );
+                              break;
+                            case 'Abilities':
+                              destination = AbilitiesScreen(
+                                heroTag: section.heroTag,
+                                accentColor: section.color,
+                                title: section.title,
+                              );
+                              break;
+                            default:
+                              destination = SectionPlaceholderScreen(info: section);
+                          }
 
                           Navigator.of(context).push(
                             PageRouteBuilder(
