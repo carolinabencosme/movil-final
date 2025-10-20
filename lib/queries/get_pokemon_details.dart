@@ -20,12 +20,6 @@ const String getPokemonDetailsQuery = r'''
         pokemon_v2_type {
           id
           name
-          pokemon_v2_typeefficacies {
-            damage_factor
-            pokemon_v2_typeByDamageType {
-              name
-            }
-          }
         }
       }
       pokemon_v2_pokemonstats(order_by: {pokemon_v2_stat: {id: asc}}) {
@@ -56,6 +50,11 @@ const String getPokemonDetailsQuery = r'''
       pokemon_v2_pokemonsprites(limit: 1) {
         sprites
       }
+    }
+    pokemon_v2_typeefficacies {
+      damage_factor
+      damage_type_id
+      target_type_id
     }
   }
 ''';

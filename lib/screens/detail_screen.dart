@@ -122,7 +122,13 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
-          final pokemon = PokemonDetail.fromGraphQL(data);
+          final typeEfficacies =
+              result.data?['pokemon_v2_typeefficacies'] as List<dynamic>? ?? [];
+
+          final pokemon = PokemonDetail.fromGraphQL(
+            data,
+            typeEfficacies: typeEfficacies,
+          );
 
           return RefreshIndicator(
             onRefresh: () async {

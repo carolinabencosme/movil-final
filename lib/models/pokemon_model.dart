@@ -1,5 +1,28 @@
 import 'dart:convert';
 
+const Map<int, String> _pokemonTypeNamesById = {
+  1: 'normal',
+  2: 'fighting',
+  3: 'flying',
+  4: 'poison',
+  5: 'ground',
+  6: 'rock',
+  7: 'bug',
+  8: 'ghost',
+  9: 'steel',
+  10: 'fire',
+  11: 'water',
+  12: 'grass',
+  13: 'electric',
+  14: 'psychic',
+  15: 'ice',
+  16: 'dragon',
+  17: 'dark',
+  18: 'fairy',
+  10001: 'unknown',
+  10002: 'shadow',
+};
+
 class PokemonListItem {
   PokemonListItem({
     required this.id,
@@ -54,10 +77,13 @@ class PokemonDetail {
   final PokemonCharacteristics characteristics;
   final List<TypeMatchup> typeMatchups;
 
-  factory PokemonDetail.fromGraphQL(Map<String, dynamic> json) {
+  factory PokemonDetail.fromGraphQL(
+    Map<String, dynamic> json, {
+    Iterable<dynamic> typeEfficacies = const [],
+  }) {
     final typeEntries = json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [];
     final List<String> types = <String>[];
-    final Map<String, double> matchupAccumulator = <String, double>{};
+    final Set<int> typeIds = <int>{};
 
     for (final dynamic entry in typeEntries) {
       final type = entry as Map<String, dynamic>?;
@@ -69,21 +95,9 @@ class PokemonDetail {
         types.add(typeName);
       }
 
-      final efficacies =
-          typeInfo['pokemon_v2_typeefficacies'] as List<dynamic>? ?? [];
-
-      for (final dynamic efficacyEntry in efficacies) {
-        final efficacy = efficacyEntry as Map<String, dynamic>?;
-        final damageTypeInfo = efficacy?['pokemon_v2_typeByDamageType']
-            as Map<String, dynamic>?;
-        final damageTypeName = damageTypeInfo?['name'];
-        final damageFactor = efficacy?['damage_factor'];
-
-        if (damageTypeName is String && damageFactor is int) {
-          final normalized = damageFactor / 100.0;
-          final previous = matchupAccumulator[damageTypeName] ?? 1.0;
-          matchupAccumulator[damageTypeName] = previous * normalized;
-        }
+      final typeId = typeInfo['id'];
+      if (typeId is int) {
+        typeIds.add(typeId);
       }
     }
 
@@ -188,16 +202,8 @@ class PokemonDetail {
       category: category,
     );
 
-    final List<TypeMatchup> typeMatchups = <TypeMatchup>[];
-    matchupAccumulator.forEach((String typeName, double multiplier) {
-      final normalized = double.parse(multiplier.toStringAsFixed(4));
-      if ((normalized - 1.0).abs() < 0.01) {
-        return;
-      }
-      typeMatchups.add(TypeMatchup(type: typeName, multiplier: normalized));
-    });
-
-    typeMatchups.sort((a, b) => b.multiplier.compareTo(a.multiplier));
+    final typeMatchups =
+        _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
 
     return PokemonDetail(
       id: json['id'] as int? ?? 0,
@@ -258,6 +264,51 @@ class TypeMatchup {
 
   final String type;
   final double multiplier;
+}
+
+List<TypeMatchup> _buildTypeMatchups(
+  Set<int> pokemonTypeIds,
+  Iterable<Map<String, dynamic>> typeEfficacies,
+) {
+  if (pokemonTypeIds.isEmpty) {
+    return <TypeMatchup>[];
+  }
+
+  final Map<int, double> accumulator = <int, double>{};
+
+  for (final Map<String, dynamic> efficacy in typeEfficacies) {
+    final targetTypeId = efficacy['target_type_id'];
+    if (targetTypeId is! int || !pokemonTypeIds.contains(targetTypeId)) {
+      continue;
+    }
+
+    final damageTypeId = efficacy['damage_type_id'];
+    final damageFactor = efficacy['damage_factor'];
+
+    if (damageTypeId is! int || damageFactor is! int) {
+      continue;
+    }
+
+    final normalized = damageFactor / 100.0;
+    final previous = accumulator[damageTypeId] ?? 1.0;
+    accumulator[damageTypeId] = previous * normalized;
+  }
+
+  final List<TypeMatchup> matchups = <TypeMatchup>[];
+
+  accumulator.forEach((int damageTypeId, double multiplier) {
+    final normalized = double.parse(multiplier.toStringAsFixed(4));
+    if ((normalized - 1.0).abs() < 0.01) {
+      return;
+    }
+
+    final typeName =
+        _pokemonTypeNamesById[damageTypeId] ?? 'unknown';
+    matchups.add(TypeMatchup(type: typeName, multiplier: normalized));
+  });
+
+  matchups.sort((a, b) => b.multiplier.compareTo(a.multiplier));
+  return matchups;
 }
 
 String _extractSpriteUrl(dynamic spriteEntries) {
