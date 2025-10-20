@@ -22,7 +22,7 @@ const String getPokemonDetailsQuery = r'''
           name
           pokemon_v2_typeefficacies {
             damage_factor
-            pokemonV2TypeByDamageTypeId {
+            pokemon_v2_typeByDamageTypeId {
               name
             }
           }
