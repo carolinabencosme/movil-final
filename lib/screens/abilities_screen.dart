@@ -298,7 +298,7 @@ class _AbilitiesErrorState extends StatelessWidget {
   });
 
   final String message;
-  final Future<QueryResult<Object?>> Function()? onRetry;
+  final Future<QueryResult<Object?>?> Function()? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -321,7 +321,11 @@ class _AbilitiesErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: onRetry,
+              onPressed: onRetry == null
+                  ? null
+                  : () async {
+                      await onRetry!.call();
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9C27B0),
                 foregroundColor: Colors.white,
