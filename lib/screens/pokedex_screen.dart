@@ -31,6 +31,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
+  final Set<int> _selectedGenerations = <int>{};
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
@@ -43,6 +44,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;
 
   int _totalCount = 0;
+  int _activeFilterCount = 0;
   String _searchTerm = '';
   String _debouncedSearch = '';
   String _errorMessage = '';
@@ -98,8 +100,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
       } else {
         _selectedTypes.add(type);
       }
+      _recalculateActiveFilterCount();
     });
     _resetAndFetch();
+  }
+
+  void _recalculateActiveFilterCount() {
+    _activeFilterCount =
+        _selectedTypes.length + _selectedGenerations.length;
   }
 
   void _resetAndFetch() {
@@ -295,7 +303,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor;
-    final maxFilterHeight = MediaQuery.of(context).size.height * 0.5;
 
     return Scaffold(
       appBar: AppBar(
@@ -322,18 +329,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       ),
       body: Column(
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxFilterHeight),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildSearchBar(theme),
-                Flexible(
-                  child: _buildTypeFilters(theme),
-                ),
-              ],
-            ),
-          ),
+          _buildSearchBar(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
           _buildSummary(theme),
@@ -346,26 +342,75 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        decoration: InputDecoration(
-          hintText: 'Buscar por nombre o número',
-          prefixIcon: const Icon(Icons.search),
-          prefixIconColor: theme.colorScheme.primary,
-          suffixIcon: _searchTerm.isEmpty
-              ? null
-              : IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearchChanged('');
-                  },
-                  icon: const Icon(Icons.clear),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre o número',
+                prefixIcon: const Icon(Icons.search),
+                prefixIconColor: theme.colorScheme.primary,
+                suffixIcon: _searchTerm.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+                suffixIconColor: theme.colorScheme.primary,
+              ),
+              textInputAction: TextInputAction.search,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                tooltip: 'Filtros',
+                onPressed: _openFilters,
+                icon: const Icon(Icons.tune),
+              ),
+              if (_activeFilterCount > 0)
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Badge(
+                    backgroundColor: theme.colorScheme.primary,
+                    label: Text(
+                      '$_activeFilterCount',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-          suffixIconColor: theme.colorScheme.primary,
-        ),
-        textInputAction: TextInputAction.search,
+            ],
+          ),
+        ],
       ),
+    );
+  }
+
+  void _openFilters() {
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildTypeFilters(theme),
+          ),
+        );
+      },
     );
   }
 
