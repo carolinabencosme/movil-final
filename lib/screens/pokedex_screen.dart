@@ -28,11 +28,24 @@ class PokedexScreen extends StatefulWidget {
 
 class _PokedexScreenState extends State<PokedexScreen> {
   static const int _pageSize = 30;
+  static const Map<int, String> _kGenerationLabels = <int, String>{
+    1: 'Kanto',
+    2: 'Johto',
+    3: 'Hoenn',
+    4: 'Sinnoh',
+    5: 'Unova',
+    6: 'Kalos',
+    7: 'Alola',
+    8: 'Galar',
+    9: 'Paldea',
+  };
 
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
   final Set<int> _selectedGenerations = <int>{};
+  final Map<int, String> _availableGenerationLabels =
+      Map<int, String>.from(_kGenerationLabels);
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
@@ -96,15 +109,39 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   void _toggleType(String type) {
+    final updatedTypes = Set<String>.from(_selectedTypes);
+    if (updatedTypes.contains(type)) {
+      updatedTypes.remove(type);
+    } else {
+      updatedTypes.add(type);
+    }
+    _applyFilters(types: updatedTypes);
+  }
+
+  void _applyFilters({
+    Set<String>? types,
+    Set<int>? generations,
+  }) {
+    var hasChanges = false;
+
     setState(() {
-      if (_selectedTypes.contains(type)) {
-        _selectedTypes.remove(type);
-      } else {
-        _selectedTypes.add(type);
+      if (types != null && !setEquals(types, _selectedTypes)) {
+        _selectedTypes
+          ..clear()
+          ..addAll(types);
+        hasChanges = true;
       }
       _recalculateActiveFilterCount();
     });
-    _resetAndFetch();
+
+    if (hasChanges) {
+      _resetAndFetch();
+    }
+  }
+
+  int _calculateActiveFiltersCount() {
+    final searchCount = _debouncedSearch.trim().isEmpty ? 0 : 1;
+    return _selectedTypes.length + _selectedGenerations.length + searchCount;
   }
 
   void _recalculateActiveFilterCount() {
@@ -117,6 +154,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _hasMore = true;
       _totalCount = 0;
       _errorMessage = '';
+      _activeFiltersCount = _calculateActiveFiltersCount();
     });
     _fetchPokemons(reset: true);
   }
@@ -325,7 +363,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   Future<void> _onRefresh() async {
     _debounce?.cancel();
-    _debouncedSearch = _searchTerm.trim();
+    setState(() {
+      _debouncedSearch = _searchTerm.trim();
+      _hasMore = true;
+      _totalCount = 0;
+      _errorMessage = '';
+      _activeFiltersCount = _calculateActiveFiltersCount();
+    });
     await _fetchPokemons(reset: true);
   }
 
@@ -602,6 +646,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final countText = _totalCount == 0
         ? 'Mostrando ${_pokemons.length} Pokémon'
         : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
+    final filtersSuffix = _activeFiltersCount > 0
+        ? ' · $_activeFiltersCount filtro${_activeFiltersCount == 1 ? '' : 's'} activos'
+        : '';
+    final summaryText = '$countText$filtersSuffix';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
@@ -611,7 +659,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              countText,
+              summaryText,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSecondaryContainer,
                 fontWeight: FontWeight.w600,

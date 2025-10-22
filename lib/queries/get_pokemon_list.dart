@@ -77,6 +77,13 @@ ${paginationBlock}      order_by: {id: asc}
           name
         }
       }
+      pokemon_v2_pokemonspecy {
+        generation_id
+        pokemon_v2_generation {
+          id
+          name
+        }
+      }
     }
     pokemon_v2_pokemon_aggregate(
       where: {
