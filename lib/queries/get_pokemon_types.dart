@@ -4,5 +4,9 @@ const String getPokemonTypesQuery = r'''
       id
       name
     }
+    pokemon_v2_generation(order_by: {id: asc}) {
+      id
+      name
+    }
   }
 ''';
