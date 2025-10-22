@@ -295,6 +295,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor;
+    final maxFilterHeight = MediaQuery.of(context).size.height * 0.5;
 
     return Scaffold(
       appBar: AppBar(
@@ -321,8 +322,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
       ),
       body: Column(
         children: [
-          _buildSearchBar(theme),
-          _buildTypeFilters(theme),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxFilterHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSearchBar(theme),
+                Flexible(
+                  child: _buildTypeFilters(theme),
+                ),
+              ],
+            ),
+          ),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
           _buildSummary(theme),
@@ -368,41 +379,47 @@ class _PokedexScreenState extends State<PokedexScreen> {
             )
           : _availableTypes.isEmpty
               ? const SizedBox.shrink()
-              : Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: _availableTypes
-                        .map((type) {
-                          final isSelected = _selectedTypes.contains(type);
-                          return FilterChip(
-                            label: Text(_capitalize(type)),
-                            selected: isSelected,
-                            showCheckmark: false,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            backgroundColor: theme.colorScheme.surfaceVariant
-                                .withOpacity(0.6),
-                            selectedColor: theme.colorScheme.primaryContainer,
-                            labelStyle: theme.textTheme.labelLarge?.copyWith(
-                              color: isSelected
-                                  ? theme.colorScheme.onPrimaryContainer
-                                  : theme.colorScheme.onSurfaceVariant,
-                            ),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                      .withOpacity(0.45)
-                                  : Colors.transparent,
-                            ),
-                            onSelected: (_) => _toggleType(type),
-                          );
-                        })
-                        .toList(),
+              : Scrollbar(
+                  child: SingleChildScrollView(
+                    primary: false,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _availableTypes
+                          .map((type) {
+                            final isSelected = _selectedTypes.contains(type);
+                            return FilterChip(
+                              label: Text(_capitalize(type)),
+                              selected: isSelected,
+                              showCheckmark: false,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              backgroundColor: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.6),
+                              selectedColor:
+                                  theme.colorScheme.primaryContainer,
+                              labelStyle: theme.textTheme.labelLarge?.copyWith(
+                                color: isSelected
+                                    ? theme.colorScheme.onPrimaryContainer
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                        .withOpacity(0.45)
+                                    : Colors.transparent,
+                              ),
+                              onSelected: (_) => _toggleType(type),
+                            );
+                          })
+                          .toList(),
+                    ),
                   ),
                 ),
     );
