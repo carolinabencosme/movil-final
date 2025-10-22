@@ -28,24 +28,10 @@ class PokedexScreen extends StatefulWidget {
 
 class _PokedexScreenState extends State<PokedexScreen> {
   static const int _pageSize = 30;
-  static const Map<int, String> _kGenerationLabels = <int, String>{
-    1: 'Kanto',
-    2: 'Johto',
-    3: 'Hoenn',
-    4: 'Sinnoh',
-    5: 'Unova',
-    6: 'Kalos',
-    7: 'Alola',
-    8: 'Galar',
-    9: 'Paldea',
-  };
-
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
-  final Set<int> _selectedGenerations = <int>{};
-  final Map<int, String> _availableGenerationLabels =
-      Map<int, String>.from(_kGenerationLabels);
+  final Set<String> _selectedGenerations = <String>{};
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
@@ -59,7 +45,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;
 
   int _totalCount = 0;
-  int _activeFilterCount = 0;
+  int _activeFiltersCount = 0;
   String _searchTerm = '';
   String _debouncedSearch = '';
   String _errorMessage = '';
@@ -120,7 +106,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   void _applyFilters({
     Set<String>? types,
-    Set<int>? generations,
+    Set<String>? generations,
   }) {
     var hasChanges = false;
 
@@ -131,7 +117,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
           ..addAll(types);
         hasChanges = true;
       }
-      _recalculateActiveFilterCount();
+      if (generations != null &&
+          !setEquals(generations, _selectedGenerations)) {
+        _selectedGenerations
+          ..clear()
+          ..addAll(generations);
+        hasChanges = true;
+      }
     });
 
     if (hasChanges) {
@@ -142,11 +134,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   int _calculateActiveFiltersCount() {
     final searchCount = _debouncedSearch.trim().isEmpty ? 0 : 1;
     return _selectedTypes.length + _selectedGenerations.length + searchCount;
-  }
-
-  void _recalculateActiveFilterCount() {
-    _activeFilterCount =
-        _selectedTypes.length + _selectedGenerations.length;
   }
 
   void _resetAndFetch() {
@@ -433,7 +420,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
     switch (result.action) {
       case _FiltersAction.apply:
-        _applyFilters(result.types, result.generations);
+        _applyFilters(
+          types: result.types,
+          generations: result.generations,
+        );
         break;
       case _FiltersAction.clear:
         if (_selectedTypes.isEmpty && _selectedGenerations.isEmpty) {
@@ -448,24 +438,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
       case _FiltersAction.cancel:
         break;
     }
-  }
-
-  void _applyFilters(Set<String> types, Set<String> generations) {
-    final typesChanged = !setEquals(_selectedTypes, types);
-    final generationsChanged = !setEquals(_selectedGenerations, generations);
-    if (!typesChanged && !generationsChanged) {
-      return;
-    }
-
-    setState(() {
-      _selectedTypes
-        ..clear()
-        ..addAll(types);
-      _selectedGenerations
-        ..clear()
-        ..addAll(generations);
-    });
-    _resetAndFetch();
   }
 
   @override
@@ -544,14 +516,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
                 onPressed: _openFilters,
                 icon: const Icon(Icons.tune),
               ),
-              if (_activeFilterCount > 0)
+              if (_activeFiltersCount > 0)
                 Positioned(
                   right: 2,
                   top: 2,
                   child: Badge(
                     backgroundColor: theme.colorScheme.primary,
                     label: Text(
-                      '$_activeFilterCount',
+                      '$_activeFiltersCount',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -586,7 +558,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget _buildTypeFilters(ThemeData theme) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
-      child: _typesLoading
+      child: _filtersLoading
           ? const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: LinearProgressIndicator(),
