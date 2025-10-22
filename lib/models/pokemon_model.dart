@@ -29,12 +29,16 @@ class PokemonListItem {
     required this.name,
     required this.imageUrl,
     this.types = const [],
+    this.generationId,
+    this.generationName,
   });
 
   final int id;
   final String name;
   final String imageUrl;
   final List<String> types;
+  final int? generationId;
+  final String? generationName;
 
   factory PokemonListItem.fromGraphQL(Map<String, dynamic> json) {
     final types = (json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
@@ -47,11 +51,28 @@ class PokemonListItem {
         .whereType<String>()
         .toList();
 
+    final species = json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
+    final generationId = species?['generation_id'];
+    int? resolvedGenerationId;
+    if (generationId is int) {
+      resolvedGenerationId = generationId;
+    }
+
+    String? resolvedGenerationName;
+    final generationInfo =
+        species?['pokemon_v2_generation'] as Map<String, dynamic>?;
+    final generationName = generationInfo?['name'] ?? species?['name'];
+    if (generationName is String && generationName.isNotEmpty) {
+      resolvedGenerationName = generationName;
+    }
+
     return PokemonListItem(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
       types: types,
+      generationId: resolvedGenerationId,
+      generationName: resolvedGenerationName,
     );
   }
 }

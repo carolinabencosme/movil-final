@@ -114,6 +114,24 @@ void main() {
 
       expect(item.imageUrl, 'https://example.com/official-map.png');
     });
+
+    test('extracts generation information when provided', () {
+      final item = PokemonListItem.fromGraphQL({
+        'id': 25,
+        'name': 'pikachu',
+        'pokemon_v2_pokemonsprites': _buildSpriteEntries({}),
+        'pokemon_v2_pokemonspecy': {
+          'generation_id': 1,
+          'pokemon_v2_generation': {
+            'id': 1,
+            'name': 'generation-i',
+          },
+        },
+      });
+
+      expect(item.generationId, 1);
+      expect(item.generationName, 'generation-i');
+    });
   });
 }
 
