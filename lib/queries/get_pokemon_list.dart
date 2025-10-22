@@ -1,6 +1,7 @@
 String buildPokemonListQuery({
   required bool includeIdFilter,
   required bool includeTypeFilter,
+  bool includeGenerationFilter = false,
   bool includePagination = true,
 }) {
   final variableDefinitions = <String>[
@@ -13,6 +14,9 @@ String buildPokemonListQuery({
   }
   if (includeTypeFilter) {
     variableDefinitions.add(r'$typeNames: [String!]!');
+  }
+  if (includeGenerationFilter) {
+    variableDefinitions.add(r'$generationNames: [String!]!');
   }
 
   final orConditions = <String>[
@@ -37,6 +41,11 @@ String buildPokemonListQuery({
   if (includeTypeFilter) {
     andConditions.add(
       r'{pokemon_v2_pokemontypes: {pokemon_v2_type: {name: {_in: $typeNames}}}}',
+    );
+  }
+  if (includeGenerationFilter) {
+    andConditions.add(
+      r'{pokemon_v2_pokemonspecy: {pokemon_v2_generation: {name: {_in: $generationNames}}}}',
     );
   }
 

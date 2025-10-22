@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
@@ -31,15 +32,17 @@ class _PokedexScreenState extends State<PokedexScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
+  final Set<String> _selectedGenerations = <String>{};
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
   List<String> _availableTypes = <String>[];
+  List<String> _availableGenerations = <String>[];
 
   bool _isFetching = false;
   bool _isInitialLoading = true;
   bool _hasMore = true;
-  bool _typesLoading = false;
+  bool _filtersLoading = false;
   bool _didInit = false;
 
   int _totalCount = 0;
@@ -58,7 +61,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     super.didChangeDependencies();
     if (_didInit) return;
     _didInit = true;
-    _fetchTypes();
+    _fetchFilters();
     _fetchPokemons(reset: true);
   }
 
@@ -91,17 +94,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
     });
   }
 
-  void _toggleType(String type) {
-    setState(() {
-      if (_selectedTypes.contains(type)) {
-        _selectedTypes.remove(type);
-      } else {
-        _selectedTypes.add(type);
-      }
-    });
-    _resetAndFetch();
-  }
-
   void _resetAndFetch() {
     setState(() {
       _hasMore = true;
@@ -111,8 +103,24 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _fetchPokemons(reset: true);
   }
 
-  Future<void> _fetchTypes() async {
-    setState(() => _typesLoading = true);
+  void _removeTypeFilter(String type) {
+    if (!_selectedTypes.contains(type)) return;
+    setState(() {
+      _selectedTypes.remove(type);
+    });
+    _resetAndFetch();
+  }
+
+  void _removeGenerationFilter(String generation) {
+    if (!_selectedGenerations.contains(generation)) return;
+    setState(() {
+      _selectedGenerations.remove(generation);
+    });
+    _resetAndFetch();
+  }
+
+  Future<void> _fetchFilters() async {
+    setState(() => _filtersLoading = true);
     final client = GraphQLProvider.of(context).value;
     try {
       final result = await client.query(
@@ -123,20 +131,27 @@ class _PokedexScreenState extends State<PokedexScreen> {
       );
       if (!mounted) return;
       if (result.hasException) {
-        setState(() => _typesLoading = false);
+        setState(() => _filtersLoading = false);
         return;
       }
       final types = (result.data?['pokemon_v2_type'] as List<dynamic>? ?? [])
           .map((dynamic entry) => (entry as Map<String, dynamic>)['name'])
           .whereType<String>()
           .toList();
+      final generations =
+          (result.data?['pokemon_v2_generation'] as List<dynamic>? ?? [])
+              .map((dynamic entry) =>
+                  (entry as Map<String, dynamic>)['name'] as String?)
+              .whereType<String>()
+              .toList();
       setState(() {
         _availableTypes = types;
-        _typesLoading = false;
+        _availableGenerations = generations;
+        _filtersLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _typesLoading = false);
+      setState(() => _filtersLoading = false);
     }
   }
 
@@ -158,12 +173,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final numericId = int.tryParse(_debouncedSearch);
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
+    final includeGenerationFilter = _selectedGenerations.isNotEmpty;
     final shouldPaginate = !includeIdFilter;
 
     final document = gql(
       buildPokemonListQuery(
         includeIdFilter: includeIdFilter,
         includeTypeFilter: includeTypeFilter,
+        includeGenerationFilter: includeGenerationFilter,
         includePagination: shouldPaginate,
       ),
     );
@@ -182,6 +199,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
     if (includeTypeFilter) {
       variables['typeNames'] = _selectedTypes.toList();
+    }
+    if (includeGenerationFilter) {
+      variables['generationNames'] = _selectedGenerations.toList();
     }
 
     try {
@@ -291,11 +311,107 @@ class _PokedexScreenState extends State<PokedexScreen> {
     await _fetchPokemons(reset: true);
   }
 
+  Future<void> _openFiltersSheet() async {
+    final result = await showModalBottomSheet<_FiltersResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.75,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return FiltersSheet(
+                scrollController: scrollController,
+                availableTypes: _availableTypes,
+                availableGenerations: _availableGenerations,
+                initialSelectedTypes: Set<String>.from(_selectedTypes),
+                initialSelectedGenerations:
+                    Set<String>.from(_selectedGenerations),
+                onApply: (types, generations) {
+                  Navigator.of(context).pop(
+                    _FiltersResult(
+                      action: _FiltersAction.apply,
+                      types: Set<String>.from(types),
+                      generations: Set<String>.from(generations),
+                    ),
+                  );
+                },
+                onClear: () {
+                  Navigator.of(context).pop(
+                    _FiltersResult(
+                      action: _FiltersAction.clear,
+                      types: <String>{},
+                      generations: <String>{},
+                    ),
+                  );
+                },
+                onCancel: () {
+                  Navigator.of(context).pop(
+                    _FiltersResult(
+                      action: _FiltersAction.cancel,
+                      types: Set<String>.from(_selectedTypes),
+                      generations: Set<String>.from(_selectedGenerations),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (!mounted || result == null) return;
+
+    switch (result.action) {
+      case _FiltersAction.apply:
+        _applyFilters(result.types, result.generations);
+        break;
+      case _FiltersAction.clear:
+        if (_selectedTypes.isEmpty && _selectedGenerations.isEmpty) {
+          return;
+        }
+        setState(() {
+          _selectedTypes.clear();
+          _selectedGenerations.clear();
+        });
+        _resetAndFetch();
+        break;
+      case _FiltersAction.cancel:
+        break;
+    }
+  }
+
+  void _applyFilters(Set<String> types, Set<String> generations) {
+    final typesChanged = !setEquals(_selectedTypes, types);
+    final generationsChanged = !setEquals(_selectedGenerations, generations);
+    if (!typesChanged && !generationsChanged) {
+      return;
+    }
+
+    setState(() {
+      _selectedTypes
+        ..clear()
+        ..addAll(types);
+      _selectedGenerations
+        ..clear()
+        ..addAll(generations);
+    });
+    _resetAndFetch();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor;
-    final maxFilterHeight = MediaQuery.of(context).size.height * 0.5;
+    final hasActiveFilters =
+        _selectedTypes.isNotEmpty || _selectedGenerations.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -319,21 +435,40 @@ class _PokedexScreenState extends State<PokedexScreen> {
                 widget.title,
                 style: theme.textTheme.titleLarge,
               ),
-      ),
-      body: Column(
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxFilterHeight),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+        actions: [
+          IconButton(
+            tooltip: 'Filtros',
+            onPressed: _openFiltersSheet,
+            icon: Stack(
+              clipBehavior: Clip.none,
               children: [
-                _buildSearchBar(theme),
-                Flexible(
-                  child: _buildTypeFilters(theme),
-                ),
+                const Icon(Icons.tune_rounded),
+                if (hasActiveFilters)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: accentColor != null
+                            ? Colors.white
+                            : theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildSearchBar(theme),
+          if (_filtersLoading)
+            const LinearProgressIndicator(minHeight: 2),
+          if (hasActiveFilters) _buildActiveFilters(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
           _buildSummary(theme),
@@ -369,59 +504,43 @@ class _PokedexScreenState extends State<PokedexScreen> {
     );
   }
 
-  Widget _buildTypeFilters(ThemeData theme) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      child: _typesLoading
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: LinearProgressIndicator(),
-            )
-          : _availableTypes.isEmpty
-              ? const SizedBox.shrink()
-              : Scrollbar(
-                  child: SingleChildScrollView(
-                    primary: false,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _availableTypes
-                          .map((type) {
-                            final isSelected = _selectedTypes.contains(type);
-                            return FilterChip(
-                              label: Text(_capitalize(type)),
-                              selected: isSelected,
-                              showCheckmark: false,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              backgroundColor: theme.colorScheme.surfaceVariant
-                                  .withOpacity(0.6),
-                              selectedColor:
-                                  theme.colorScheme.primaryContainer,
-                              labelStyle: theme.textTheme.labelLarge?.copyWith(
-                                color: isSelected
-                                    ? theme.colorScheme.onPrimaryContainer
-                                    : theme.colorScheme.onSurfaceVariant,
-                              ),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                        .withOpacity(0.45)
-                                    : Colors.transparent,
-                              ),
-                              onSelected: (_) => _toggleType(type),
-                            );
-                          })
-                          .toList(),
-                    ),
-                  ),
-                ),
+  Widget _buildActiveFilters(ThemeData theme) {
+    final chips = <Widget>[];
+    for (final type in _selectedTypes) {
+      chips.add(
+        InputChip(
+          label: Text(_capitalize(type)),
+          onDeleted: () => _removeTypeFilter(type),
+          deleteIcon: const Icon(Icons.close_rounded, size: 18),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      );
+    }
+    for (final generation in _selectedGenerations) {
+      chips.add(
+        InputChip(
+          label: Text(_formatGenerationLabel(generation)),
+          onDeleted: () => _removeGenerationFilter(generation),
+          deleteIcon: const Icon(Icons.close_rounded, size: 18),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      );
+    }
+
+    if (chips.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: chips,
+        ),
+      ),
     );
   }
 
@@ -491,6 +610,270 @@ class _PokedexScreenState extends State<PokedexScreen> {
         },
       ),
     );
+  }
+}
+
+enum _FiltersAction { apply, clear, cancel }
+
+class _FiltersResult {
+  const _FiltersResult({
+    required this.action,
+    required this.types,
+    required this.generations,
+  });
+
+  final _FiltersAction action;
+  final Set<String> types;
+  final Set<String> generations;
+}
+
+class FiltersSheet extends StatefulWidget {
+  const FiltersSheet({
+    super.key,
+    required this.availableTypes,
+    required this.availableGenerations,
+    required this.initialSelectedTypes,
+    required this.initialSelectedGenerations,
+    required this.onApply,
+    required this.onClear,
+    required this.onCancel,
+    required this.scrollController,
+  });
+
+  final List<String> availableTypes;
+  final List<String> availableGenerations;
+  final Set<String> initialSelectedTypes;
+  final Set<String> initialSelectedGenerations;
+  final void Function(Set<String> types, Set<String> generations) onApply;
+  final VoidCallback onClear;
+  final VoidCallback onCancel;
+  final ScrollController scrollController;
+
+  @override
+  State<FiltersSheet> createState() => _FiltersSheetState();
+}
+
+class _FiltersSheetState extends State<FiltersSheet> {
+  late Set<String> _selectedTypes;
+  late Set<String> _selectedGenerations;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTypes = Set<String>.from(widget.initialSelectedTypes);
+    _selectedGenerations =
+        Set<String>.from(widget.initialSelectedGenerations);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasSelection =
+        _selectedTypes.isNotEmpty || _selectedGenerations.isNotEmpty;
+
+    return SafeArea(
+      top: false,
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outline.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Filtros',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    tooltip: 'Cerrar',
+                    onPressed: _handleCancel,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: widget.scrollController,
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFilterSection(
+                      title: 'Tipos',
+                      options: widget.availableTypes,
+                      selectedValues: _selectedTypes,
+                      labelBuilder: _capitalize,
+                      emptyMessage: 'No hay tipos disponibles por ahora.',
+                      onToggle: _toggleType,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildFilterSection(
+                      title: 'Generaciones',
+                      options: widget.availableGenerations,
+                      selectedValues: _selectedGenerations,
+                      labelBuilder: _formatGenerationLabel,
+                      emptyMessage:
+                          'No hay generaciones disponibles por ahora.',
+                      onToggle: _toggleGeneration,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                12,
+                24,
+                24 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: hasSelection ? _handleClear : null,
+                      child: const Text('Limpiar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _handleCancel,
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _handleApply,
+                      child: const Text('Aplicar'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterSection({
+    required String title,
+    required List<String> options,
+    required Set<String> selectedValues,
+    required String Function(String value) labelBuilder,
+    required String emptyMessage,
+    required ValueChanged<String> onToggle,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (options.isEmpty)
+          Text(
+            emptyMessage,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: options.map((option) {
+              final isSelected = selectedValues.contains(option);
+              return FilterChip(
+                label: Text(labelBuilder(option)),
+                selected: isSelected,
+                showCheckmark: false,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                backgroundColor:
+                    theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                selectedColor: theme.colorScheme.primaryContainer,
+                labelStyle: theme.textTheme.labelLarge?.copyWith(
+                  color: isSelected
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+                side: BorderSide(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withOpacity(0.45)
+                      : Colors.transparent,
+                ),
+                onSelected: (_) => onToggle(option),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  void _toggleType(String type) {
+    setState(() {
+      if (_selectedTypes.contains(type)) {
+        _selectedTypes.remove(type);
+      } else {
+        _selectedTypes.add(type);
+      }
+    });
+  }
+
+  void _toggleGeneration(String generation) {
+    setState(() {
+      if (_selectedGenerations.contains(generation)) {
+        _selectedGenerations.remove(generation);
+      } else {
+        _selectedGenerations.add(generation);
+      }
+    });
+  }
+
+  void _handleApply() {
+    widget.onApply(
+      Set<String>.from(_selectedTypes),
+      Set<String>.from(_selectedGenerations),
+    );
+  }
+
+  void _handleClear() {
+    setState(() {
+      _selectedTypes.clear();
+      _selectedGenerations.clear();
+    });
+    widget.onClear();
+  }
+
+  void _handleCancel() {
+    widget.onCancel();
   }
 }
 
@@ -679,6 +1062,22 @@ class _ErrorView extends StatelessWidget {
 String _capitalize(String value) {
   if (value.isEmpty) return value;
   return value[0].toUpperCase() + value.substring(1);
+}
+
+String _formatGenerationLabel(String value) {
+  final sanitized = value.replaceAll('-', ' ').trim();
+  if (sanitized.isEmpty) return sanitized;
+  final parts = sanitized.split(RegExp(r'\s+'));
+  if (parts.isEmpty) return sanitized;
+  if (parts.first.toLowerCase() == 'generation') {
+    final suffix = parts
+        .skip(1)
+        .map((part) => part.toUpperCase())
+        .join(' ')
+        .trim();
+    return suffix.isEmpty ? 'Generación' : 'Generación $suffix';
+  }
+  return parts.map(_capitalize).join(' ');
 }
 
 String _formatPokemonNumber(int id) {
