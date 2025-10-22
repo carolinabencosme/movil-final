@@ -32,7 +32,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
-  final Set<String> _selectedGenerations = <String>{};
+  final Set<int> _selectedGenerations = <int>{};
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
@@ -46,6 +46,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;
 
   int _totalCount = 0;
+  int _activeFilterCount = 0;
   String _searchTerm = '';
   String _debouncedSearch = '';
   String _errorMessage = '';
@@ -92,6 +93,23 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _debouncedSearch = value.trim();
       _resetAndFetch();
     });
+  }
+
+  void _toggleType(String type) {
+    setState(() {
+      if (_selectedTypes.contains(type)) {
+        _selectedTypes.remove(type);
+      } else {
+        _selectedTypes.add(type);
+      }
+      _recalculateActiveFilterCount();
+    });
+    _resetAndFetch();
+  }
+
+  void _recalculateActiveFilterCount() {
+    _activeFilterCount =
+        _selectedTypes.length + _selectedGenerations.length;
   }
 
   void _resetAndFetch() {
@@ -410,8 +428,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor;
-    final hasActiveFilters =
-        _selectedTypes.isNotEmpty || _selectedGenerations.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -435,40 +451,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
                 widget.title,
                 style: theme.textTheme.titleLarge,
               ),
-        actions: [
-          IconButton(
-            tooltip: 'Filtros',
-            onPressed: _openFiltersSheet,
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.tune_rounded),
-                if (hasActiveFilters)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: accentColor != null
-                            ? Colors.white
-                            : theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
           _buildSearchBar(theme),
-          if (_filtersLoading)
-            const LinearProgressIndicator(minHeight: 2),
-          if (hasActiveFilters) _buildActiveFilters(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
           _buildSummary(theme),
@@ -481,66 +467,131 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        decoration: InputDecoration(
-          hintText: 'Buscar por nombre o número',
-          prefixIcon: const Icon(Icons.search),
-          prefixIconColor: theme.colorScheme.primary,
-          suffixIcon: _searchTerm.isEmpty
-              ? null
-              : IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearchChanged('');
-                  },
-                  icon: const Icon(Icons.clear),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre o número',
+                prefixIcon: const Icon(Icons.search),
+                prefixIconColor: theme.colorScheme.primary,
+                suffixIcon: _searchTerm.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+                suffixIconColor: theme.colorScheme.primary,
+              ),
+              textInputAction: TextInputAction.search,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                tooltip: 'Filtros',
+                onPressed: _openFilters,
+                icon: const Icon(Icons.tune),
+              ),
+              if (_activeFilterCount > 0)
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Badge(
+                    backgroundColor: theme.colorScheme.primary,
+                    label: Text(
+                      '$_activeFilterCount',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-          suffixIconColor: theme.colorScheme.primary,
-        ),
-        textInputAction: TextInputAction.search,
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildActiveFilters(ThemeData theme) {
-    final chips = <Widget>[];
-    for (final type in _selectedTypes) {
-      chips.add(
-        InputChip(
-          label: Text(_capitalize(type)),
-          onDeleted: () => _removeTypeFilter(type),
-          deleteIcon: const Icon(Icons.close_rounded, size: 18),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      );
-    }
-    for (final generation in _selectedGenerations) {
-      chips.add(
-        InputChip(
-          label: Text(_formatGenerationLabel(generation)),
-          onDeleted: () => _removeGenerationFilter(generation),
-          deleteIcon: const Icon(Icons.close_rounded, size: 18),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      );
-    }
+  void _openFilters() {
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildTypeFilters(theme),
+          ),
+        );
+      },
+    );
+  }
 
-    if (chips.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: chips,
-        ),
-      ),
+  Widget _buildTypeFilters(ThemeData theme) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: _typesLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: LinearProgressIndicator(),
+            )
+          : _availableTypes.isEmpty
+              ? const SizedBox.shrink()
+              : Scrollbar(
+                  child: SingleChildScrollView(
+                    primary: false,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _availableTypes
+                          .map((type) {
+                            final isSelected = _selectedTypes.contains(type);
+                            return FilterChip(
+                              label: Text(_capitalize(type)),
+                              selected: isSelected,
+                              showCheckmark: false,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              backgroundColor: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.6),
+                              selectedColor:
+                                  theme.colorScheme.primaryContainer,
+                              labelStyle: theme.textTheme.labelLarge?.copyWith(
+                                color: isSelected
+                                    ? theme.colorScheme.onPrimaryContainer
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                        .withOpacity(0.45)
+                                    : Colors.transparent,
+                              ),
+                              onSelected: (_) => _toggleType(type),
+                            );
+                          })
+                          .toList(),
+                    ),
+                  ),
+                ),
     );
   }
 
