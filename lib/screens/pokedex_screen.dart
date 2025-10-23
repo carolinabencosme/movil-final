@@ -94,16 +94,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
     });
   }
 
-  void _toggleType(String type) {
-    final updatedTypes = Set<String>.from(_selectedTypes);
-    if (updatedTypes.contains(type)) {
-      updatedTypes.remove(type);
-    } else {
-      updatedTypes.add(type);
-    }
-    _applyFilters(types: updatedTypes);
-  }
-
   void _applyFilters({
     Set<String>? types,
     Set<String>? generations,
@@ -513,7 +503,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
             children: [
               IconButton(
                 tooltip: 'Filtros',
-                onPressed: _openFilters,
+                onPressed: _filtersLoading ? null : _openFiltersSheet,
                 icon: const Icon(Icons.tune),
               ),
               if (_activeFiltersCount > 0)
@@ -535,79 +525,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _openFilters() {
-    if (!mounted) return;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildTypeFilters(theme),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTypeFilters(ThemeData theme) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      child: _filtersLoading
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: LinearProgressIndicator(),
-            )
-          : _availableTypes.isEmpty
-              ? const SizedBox.shrink()
-              : Scrollbar(
-                  child: SingleChildScrollView(
-                    primary: false,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _availableTypes
-                          .map((type) {
-                            final isSelected = _selectedTypes.contains(type);
-                            return FilterChip(
-                              label: Text(_capitalize(type)),
-                              selected: isSelected,
-                              showCheckmark: false,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              backgroundColor: theme.colorScheme.surfaceVariant
-                                  .withOpacity(0.6),
-                              selectedColor:
-                                  theme.colorScheme.primaryContainer,
-                              labelStyle: theme.textTheme.labelLarge?.copyWith(
-                                color: isSelected
-                                    ? theme.colorScheme.onPrimaryContainer
-                                    : theme.colorScheme.onSurfaceVariant,
-                              ),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                        .withOpacity(0.45)
-                                    : Colors.transparent,
-                              ),
-                              onSelected: (_) => _toggleType(type),
-                            );
-                          })
-                          .toList(),
-                    ),
-                  ),
-                ),
     );
   }
 
