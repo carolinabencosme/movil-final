@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -412,11 +413,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                   ),
                                 ),
-                                const _HeaderIcon(icon: Icons.notifications_none),
+                                const _HeaderIcon(
+                                  icon: Icons.notifications_none,
+                                ),
                                 const SizedBox(width: 12),
-                                const _HeaderIcon(icon: Icons.shopping_bag_outlined),
+                                const _HeaderIcon(
+                                  icon: Icons.shopping_bag_outlined,
+                                ),
                                 const SizedBox(width: 12),
-                                const _HeaderIcon(icon: Icons.person_outline),
+                                _HeaderIcon(
+                                  icon: Icons.settings_outlined,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const SettingsScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                             const SizedBox(height: 24),
@@ -769,9 +783,11 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 class _HeaderIcon extends StatelessWidget {
   const _HeaderIcon({
     required this.icon,
+    this.onTap,
   });
 
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -781,7 +797,7 @@ class _HeaderIcon extends StatelessWidget {
       color: colorScheme.surfaceVariant.withOpacity(0.35),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(
           height: 44,
