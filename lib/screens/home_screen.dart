@@ -22,6 +22,47 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.catching_pokemon,
       color: Color(0xFFE94256),
       heroTag: 'section-pokedex',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.catching_pokemon,
+          scale: 0.92,
+          color: Colors.white,
+          opacity: 0.96,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.auto_awesome_motion,
+          scale: 0.42,
+          color: Colors.white,
+          opacity: 0.5,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-18, 24),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -52,
+          right: -28,
+          diameterFactor: 1.05,
+          color: Colors.white,
+          opacity: 0.2,
+        ),
+        _AccentShape.circle(
+          bottom: -48,
+          left: -18,
+          diameterFactor: 0.68,
+          color: Colors.white,
+          opacity: 0.12,
+        ),
+        _AccentShape.roundedRect(
+          bottom: 36,
+          right: -48,
+          widthFactor: 0.58,
+          heightFactor: 0.22,
+          color: Colors.black,
+          opacity: 0.18,
+          borderRadius: BorderRadius.all(Radius.circular(40)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'Moves',
@@ -29,6 +70,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.flash_on,
       color: Color(0xFF4DA3FF),
       heroTag: 'section-moves',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.flash_on,
+          scale: 0.88,
+          color: Colors.white,
+          opacity: 0.94,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.stacked_line_chart,
+          scale: 0.4,
+          color: Colors.white,
+          opacity: 0.48,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-12, 18),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -40,
+          right: -26,
+          diameterFactor: 0.9,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -24,
+          right: 12,
+          widthFactor: 0.54,
+          heightFactor: 0.18,
+          color: Colors.white,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(28)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'TM',
@@ -36,6 +111,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.memory,
       color: Color(0xFFF2A649),
       heroTag: 'section-tm',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.memory,
+          scale: 0.88,
+          color: Colors.white,
+          opacity: 0.94,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.settings_input_component,
+          scale: 0.38,
+          color: Colors.white,
+          opacity: 0.48,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-10, 20),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -34,
+          right: -22,
+          diameterFactor: 0.84,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -20,
+          right: 18,
+          widthFactor: 0.52,
+          heightFactor: 0.18,
+          color: Colors.black,
+          opacity: 0.1,
+          borderRadius: BorderRadius.all(Radius.circular(26)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'Abilities',
@@ -43,6 +152,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.auto_fix_high,
       color: Color(0xFF9D4EDD),
       heroTag: 'section-abilities',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.auto_fix_high,
+          scale: 0.9,
+          color: Colors.white,
+          opacity: 0.95,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.bubble_chart,
+          scale: 0.4,
+          color: Colors.white,
+          opacity: 0.48,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-14, 16),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -36,
+          right: -24,
+          diameterFactor: 0.92,
+          color: Colors.white,
+          opacity: 0.2,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -18,
+          right: 16,
+          widthFactor: 0.5,
+          heightFactor: 0.2,
+          color: Colors.white,
+          opacity: 0.13,
+          borderRadius: BorderRadius.all(Radius.circular(32)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'Checklists',
@@ -50,6 +193,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.checklist_rtl,
       color: Color(0xFF59CD90),
       heroTag: 'section-checklists',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.check_circle_outline,
+          scale: 0.86,
+          color: Colors.white,
+          opacity: 0.92,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.fact_check,
+          scale: 0.38,
+          color: Colors.white,
+          opacity: 0.5,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-12, 18),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -32,
+          right: -20,
+          diameterFactor: 0.82,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -22,
+          right: 12,
+          widthFactor: 0.5,
+          heightFactor: 0.18,
+          color: Colors.black,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'Parties',
@@ -57,6 +234,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.groups_2,
       color: Color(0xFFFF6F91),
       heroTag: 'section-parties',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.groups_2,
+          scale: 0.88,
+          color: Colors.white,
+          opacity: 0.95,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.auto_graph,
+          scale: 0.38,
+          color: Colors.white,
+          opacity: 0.48,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-14, 18),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -36,
+          right: -18,
+          diameterFactor: 0.84,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -20,
+          right: 16,
+          widthFactor: 0.52,
+          heightFactor: 0.18,
+          color: Colors.white,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(26)),
+        ),
+      ],
     ),
     _SectionInfo(
       title: 'Locations',
@@ -64,6 +275,40 @@ class _HomeScreenState extends State<HomeScreen> {
       icon: Icons.travel_explore,
       color: Color(0xFF3BC9DB),
       heroTag: 'section-locations',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.travel_explore,
+          scale: 0.88,
+          color: Colors.white,
+          opacity: 0.95,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.explore,
+          scale: 0.38,
+          color: Colors.white,
+          opacity: 0.48,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-10, 20),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -32,
+          right: -20,
+          diameterFactor: 0.9,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -22,
+          right: 12,
+          widthFactor: 0.5,
+          heightFactor: 0.2,
+          color: Colors.black,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(28)),
+        ),
+      ],
     ),
   ];
 
@@ -274,83 +519,250 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final baseTitleStyle = widget.isHero
+    final bool isHero = widget.isHero;
+    final baseTitleStyle = isHero
         ? textTheme.headlineMedium ?? textTheme.headlineSmall
         : textTheme.titleLarge ?? textTheme.titleMedium;
     final titleStyle = baseTitleStyle?.copyWith(
       color: Colors.white,
       fontWeight: FontWeight.w700,
+      height: 1.05,
+      letterSpacing: -0.2,
     );
 
-    final baseSubtitleStyle = widget.isHero
+    final baseSubtitleStyle = isHero
         ? textTheme.bodyLarge ?? textTheme.bodyMedium
         : textTheme.bodyMedium ?? textTheme.bodySmall;
     final subtitleStyle = baseSubtitleStyle?.copyWith(
-      color: Colors.white.withOpacity(widget.isHero ? 0.9 : 0.85),
-      height: 1.4,
+      color: Colors.white.withOpacity(isHero ? 0.88 : 0.84),
+      height: 1.35,
     );
+
+    final double cornerRadius = isHero ? 36 : 28;
+    final double pressedScale = isHero ? 0.975 : 0.965;
 
     return Hero(
       tag: widget.info.heroTag,
       child: Material(
         color: Colors.transparent,
         child: AnimatedScale(
-          scale: _pressed ? 0.97 : 1,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
+          scale: _pressed ? pressedScale : 1,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
           child: InkWell(
             onTap: widget.onTap,
             onTapDown: (_) => _setPressed(true),
             onTapCancel: () => _setPressed(false),
             onTapUp: (_) => _setPressed(false),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(cornerRadius),
             child: Card(
-              color: widget.info.color.withOpacity(0.92),
-              elevation: 6,
-              shadowColor: widget.info.color.withOpacity(0.4),
+              clipBehavior: Clip.antiAlias,
+              elevation: isHero ? 16 : 10,
+              shadowColor: widget.info.color.withOpacity(0.45),
+              margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(cornerRadius),
               ),
-              child: Padding(
-                padding: EdgeInsets.all(widget.isHero ? 26 : 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.16),
-                        borderRadius: BorderRadius.circular(18),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final double basePadding = isHero ? 28 : 22;
+                  final double verticalPadding = isHero ? 30 : 24;
+                  final double maxTextWidth =
+                      constraints.maxWidth * (isHero ? 0.68 : 0.74);
+
+                  final List<_SectionGraphic> graphics =
+                      widget.info.graphics.isNotEmpty
+                          ? widget.info.graphics
+                          : [
+                              _SectionGraphic.icon(
+                                icon: widget.info.icon,
+                                color: Colors.white,
+                                opacity: 0.94,
+                              ),
+                            ];
+
+                  return Stack(
+                    fit: StackFit.expand,
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                widget.info.color
+                                    .withOpacity(isHero ? 0.96 : 0.92),
+                                widget.info.color
+                                    .withOpacity(isHero ? 0.8 : 0.78),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
                       ),
-                      padding: EdgeInsets.all(widget.isHero ? 18 : 14),
-                      child: Icon(
-                        widget.info.icon,
-                        size: widget.isHero ? 56 : 36,
-                        color: Colors.white,
+                      ..._buildBackgroundAccents(
+                        constraints: constraints,
+                        fallbackRadius: cornerRadius,
                       ),
-                    ),
-                    SizedBox(height: widget.isHero ? 12 : 16),
-                    if (widget.isHero) const Spacer(),
-                    Text(
-                      widget.info.title,
-                      style: titleStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.info.subtitle,
-                      style: subtitleStyle,
-                      maxLines: widget.isHero ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                      Positioned(
+                        right: basePadding - (isHero ? 8 : 6),
+                        top: verticalPadding - (isHero ? 8 : 6),
+                        child: _buildGraphicGroup(
+                          constraints: constraints,
+                          graphics: graphics,
+                        ),
+                      ),
+                      Positioned(
+                        left: basePadding,
+                        bottom: verticalPadding,
+                        right: basePadding,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: maxTextWidth,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.info.title,
+                                style: titleStyle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: isHero ? 12 : 10),
+                              Text(
+                                widget.info.subtitle,
+                                style: subtitleStyle,
+                                maxLines: isHero ? 3 : 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildGraphicGroup({
+    required BoxConstraints constraints,
+    required List<_SectionGraphic> graphics,
+  }) {
+    final double minDimension =
+        math.min(constraints.maxWidth, constraints.maxHeight);
+    final double baseExtent =
+        (widget.isHero ? 0.64 : 0.58) * minDimension;
+    final double extent = baseExtent.clamp(
+      108.0,
+      widget.isHero ? 220.0 : 172.0,
+    );
+
+    return SizedBox(
+      width: extent,
+      height: extent,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (final graphic in graphics)
+            Align(
+              alignment: graphic.alignment,
+              child: Transform.translate(
+                offset: graphic.offset,
+                child: _buildGraphic(
+                  graphic,
+                  baseExtent: extent,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGraphic(
+    _SectionGraphic graphic, {
+    required double baseExtent,
+  }) {
+    final double rawSize =
+        graphic.fixedSize ?? (baseExtent * graphic.scale);
+    final double size = rawSize.clamp(32.0, baseExtent * 1.05).toDouble();
+    final Color? baseColor = graphic.color ??
+        (graphic.icon != null ? Colors.white : null);
+    final Color? effectiveColor =
+        baseColor?.withOpacity(graphic.opacity);
+
+    if (graphic.asset != null) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Image.asset(
+          graphic.asset!,
+          color: effectiveColor,
+          colorBlendMode:
+              effectiveColor != null ? BlendMode.srcIn : null,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+
+    return Icon(
+      graphic.icon,
+      size: size,
+      color: effectiveColor ?? Colors.white.withOpacity(graphic.opacity),
+    );
+  }
+
+  List<Widget> _buildBackgroundAccents({
+    required BoxConstraints constraints,
+    required double fallbackRadius,
+  }) {
+    if (widget.info.accents.isEmpty) {
+      return const <Widget>[];
+    }
+
+    final double baseDimension =
+        math.min(constraints.maxWidth, constraints.maxHeight);
+
+    return widget.info.accents.map((accent) {
+      final double width = accent.width ??
+          (accent.widthFactor != null
+              ? baseDimension * accent.widthFactor!
+              : baseDimension * 0.58);
+      final double height = accent.height ??
+          (accent.heightFactor != null
+              ? baseDimension * accent.heightFactor!
+              : (accent.shape == BoxShape.circle
+                  ? width
+                  : baseDimension * 0.2));
+
+      return Positioned(
+        top: accent.top,
+        right: accent.right,
+        bottom: accent.bottom,
+        left: accent.left,
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: accent.color.withOpacity(accent.opacity),
+            shape: accent.shape,
+            borderRadius: accent.shape == BoxShape.rectangle
+                ? accent.borderRadius ??
+                    BorderRadius.circular(fallbackRadius * 0.7)
+                : null,
+          ),
+        ),
+      );
+    }).toList();
   }
 }
 
@@ -469,6 +881,8 @@ class _SectionInfo {
     required this.icon,
     required this.color,
     required this.heroTag,
+    this.graphics = const [],
+    this.accents = const [],
   });
 
   final String title;
@@ -476,4 +890,117 @@ class _SectionInfo {
   final IconData icon;
   final Color color;
   final String heroTag;
+  final List<_SectionGraphic> graphics;
+  final List<_AccentShape> accents;
+}
+
+class _SectionGraphic {
+  const _SectionGraphic.icon({
+    required this.icon,
+    this.fixedSize,
+    this.scale = 1,
+    this.opacity = 1,
+    this.color,
+    this.alignment = Alignment.topRight,
+    this.offset = Offset.zero,
+  }) : asset = null;
+
+  const _SectionGraphic.asset({
+    required this.asset,
+    this.fixedSize,
+    this.scale = 1,
+    this.opacity = 1,
+    this.color,
+    this.alignment = Alignment.topRight,
+    this.offset = Offset.zero,
+  }) : icon = null;
+
+  final IconData? icon;
+  final String? asset;
+  final double? fixedSize;
+  final double scale;
+  final double opacity;
+  final Color? color;
+  final Alignment alignment;
+  final Offset offset;
+}
+
+class _AccentShape {
+  const _AccentShape._({
+    this.top,
+    this.right,
+    this.bottom,
+    this.left,
+    this.width,
+    this.height,
+    this.widthFactor,
+    this.heightFactor,
+    required this.color,
+    required this.shape,
+    this.borderRadius,
+    this.opacity = 1,
+  });
+
+  const _AccentShape.circle({
+    double? top,
+    double? right,
+    double? bottom,
+    double? left,
+    double? diameter,
+    double? diameterFactor,
+    required Color color,
+    double opacity = 1,
+  }) : this._(
+          top: top,
+          right: right,
+          bottom: bottom,
+          left: left,
+          width: diameter,
+          height: diameter,
+          widthFactor: diameterFactor,
+          heightFactor: diameterFactor,
+          color: color,
+          shape: BoxShape.circle,
+          opacity: opacity,
+        );
+
+  const _AccentShape.roundedRect({
+    double? top,
+    double? right,
+    double? bottom,
+    double? left,
+    double? width,
+    double? height,
+    double? widthFactor,
+    double? heightFactor,
+    required Color color,
+    double opacity = 1,
+    BorderRadius? borderRadius,
+  }) : this._(
+          top: top,
+          right: right,
+          bottom: bottom,
+          left: left,
+          width: width,
+          height: height,
+          widthFactor: widthFactor,
+          heightFactor: heightFactor,
+          color: color,
+          shape: BoxShape.rectangle,
+          borderRadius: borderRadius,
+          opacity: opacity,
+        );
+
+  final double? top;
+  final double? right;
+  final double? bottom;
+  final double? left;
+  final double? width;
+  final double? height;
+  final double? widthFactor;
+  final double? heightFactor;
+  final Color color;
+  final BoxShape shape;
+  final BorderRadius? borderRadius;
+  final double opacity;
 }
