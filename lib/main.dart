@@ -6,13 +6,15 @@ import 'controllers/auth_controller.dart';
 import 'screens/auth/auth_gate.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'services/auth_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initHiveForFlutter();
   final clientNotifier = initGraphQLClient();
   final themeController = ThemeController();
-  final authController = AuthController();
+  final authRepository = await AuthRepository.init();
+  final authController = AuthController(repository: authRepository);
 
   runApp(
     MyApp(

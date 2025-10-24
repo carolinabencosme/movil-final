@@ -1,60 +1,26 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-class AuthException implements Exception {
-  const AuthException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'AuthException: $message';
-}
-
-class AuthRepository {
-  AuthRepository();
-
-  final Map<String, String> _users = {
-    'trainer@poke.app': 'pikachu123',
-  };
-
-  Future<void> login(String email, String password) async {
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    final normalizedEmail = email.trim().toLowerCase();
-    final storedPassword = _users[normalizedEmail];
-    if (storedPassword == null || storedPassword != password.trim()) {
-      throw const AuthException('Credenciales inválidas.');
-    }
-  }
-
-  Future<void> register(String email, String password) async {
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    final normalizedEmail = email.trim().toLowerCase();
-    if (_users.containsKey(normalizedEmail)) {
-      throw const AuthException('Ya existe una cuenta con este correo.');
-    }
-
-    _users[normalizedEmail] = password.trim();
-  }
-}
+import '../services/auth_repository.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController({AuthRepository? repository})
-      : _repository = repository ?? AuthRepository();
+  AuthController({required AuthRepository repository}) : _repository = repository {
+    _repository.addListener(_onRepositoryChanged);
+  }
 
   final AuthRepository _repository;
 
-  bool _isAuthenticated = false;
   bool _isLoading = false;
   String? _errorMessage;
-  String? _currentEmail;
 
-  bool get isAuthenticated => _isAuthenticated;
+  bool get isAuthenticated => _repository.currentUser != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String? get currentEmail => _currentEmail;
+  String? get currentEmail => _repository.currentUser?.email;
 
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+  }) async {
     if (_isLoading) {
       return false;
     }
@@ -63,13 +29,10 @@ class AuthController extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      await _repository.login(email, password);
-      _currentEmail = email.trim();
-      _isAuthenticated = true;
+      await _repository.login(email: email, password: password);
       return true;
     } on AuthException catch (error) {
       _errorMessage = error.message;
-      _isAuthenticated = false;
       return false;
     } finally {
       _setLoading(false);
@@ -88,26 +51,26 @@ class AuthController extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      await _repository.register(email, password);
-      _currentEmail = email.trim();
-      _isAuthenticated = true;
+      await _repository.registerUser(email: email, password: password);
       return true;
     } on AuthException catch (error) {
       _errorMessage = error.message;
-      _isAuthenticated = false;
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  void logout() {
-    if (!_isAuthenticated) {
+  Future<void> logout() async {
+    if (_isLoading) {
       return;
     }
 
-    _isAuthenticated = false;
-    _currentEmail = null;
+    _errorMessage = null;
+    await _repository.logout();
+  }
+
+  void _onRepositoryChanged() {
     notifyListeners();
   }
 
@@ -118,6 +81,12 @@ class AuthController extends ChangeNotifier {
 
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _repository.removeListener(_onRepositoryChanged);
+    super.dispose();
   }
 }
 
