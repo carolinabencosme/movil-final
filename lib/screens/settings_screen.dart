@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../controllers/auth_controller.dart';
 import '../theme/theme_controller.dart';
+import 'profile_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = AuthScope.of(context);
     final themeController = ThemeScope.of(context);
     final themeMode = themeController.themeMode;
     final textTheme = Theme.of(context).textTheme;
@@ -18,6 +21,72 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cuenta',
+                    style: textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    controller.currentEmail ?? 'Sin correo registrado',
+                    style: textTheme.bodyLarge,
+                  ),
+                  if (controller.isLoading) ...[
+                    const SizedBox(height: 16),
+                    const LinearProgressIndicator(),
+                  ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.tonal(
+                          onPressed: controller.currentEmail == null
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProfileSettingsScreen(
+                                        controller: controller,
+                                      ),
+                                    ),
+                                  );
+                                },
+                          child: const Text('Editar perfil'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: controller.isLoading
+                              ? null
+                              : () async {
+                                  final navigator = Navigator.of(context);
+                                  await controller.logout();
+                                  if (!navigator.mounted) {
+                                    return;
+                                  }
+                                  navigator.pop();
+                                },
+                          child: const Text('Cerrar sesión'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text(
             'Apariencia',
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
