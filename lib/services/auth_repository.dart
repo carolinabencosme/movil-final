@@ -88,6 +88,51 @@ class AuthRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateProfile({
+    required String email,
+    String? newEmail,
+    String? newPassword,
+  }) async {
+    final normalizedEmail = _normalizeEmail(email);
+    final storedUser = _usersBox.get(normalizedEmail);
+
+    if (storedUser == null) {
+      throw const AuthException('No existe un usuario con este correo.');
+    }
+
+    final hasNewEmail = newEmail != null && newEmail.trim().isNotEmpty;
+    final targetEmail =
+        hasNewEmail ? _normalizeEmail(newEmail!) : normalizedEmail;
+
+    if (targetEmail != normalizedEmail &&
+        _usersBox.containsKey(targetEmail)) {
+      throw const AuthException('Ya existe una cuenta con este correo.');
+    }
+
+    final shouldUpdatePassword =
+        newPassword != null && newPassword.trim().isNotEmpty;
+    final updatedPasswordHash = shouldUpdatePassword
+        ? _hashPassword(newPassword!)
+        : storedUser.passwordHash;
+
+    final updatedUser = storedUser.copyWith(
+      email: targetEmail,
+      passwordHash: updatedPasswordHash,
+    );
+
+    if (targetEmail != normalizedEmail) {
+      await _usersBox.delete(normalizedEmail);
+    }
+    await _usersBox.put(targetEmail, updatedUser);
+
+    if (_currentUser?.email == normalizedEmail) {
+      _currentUser = updatedUser;
+      await _sessionBox.put(_currentUserKey, targetEmail);
+    }
+
+    notifyListeners();
+  }
+
   Future<void> restoreSession() async {
     final savedEmail = _sessionBox.get(_currentUserKey);
     if (savedEmail == null) {

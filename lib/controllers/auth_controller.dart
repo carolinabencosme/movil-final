@@ -70,6 +70,32 @@ class AuthController extends ChangeNotifier {
     await _repository.logout();
   }
 
+  Future<void> updateProfile({
+    required String email,
+    String? newEmail,
+    String? newPassword,
+  }) async {
+    if (_isLoading) {
+      return;
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      await _repository.updateProfile(
+        email: email,
+        newEmail: newEmail,
+        newPassword: newPassword,
+      );
+    } on AuthException catch (error) {
+      _errorMessage = error.message;
+      throw error;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void _onRepositoryChanged() {
     notifyListeners();
   }
