@@ -1266,9 +1266,9 @@ class _TypeLayout extends StatelessWidget {
               crossAxisCount: crossAxisCount,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              children: List.generate(
-                types.length,
-                (index) => _buildTypeChip(theme, types[index]),
+              childDelegate: SliverChildBuilderDelegate(
+                (context, index) => _buildTypeChip(theme, types[index]),
+                childCount: types.length,
               ),
             ),
           ],
@@ -1403,9 +1403,8 @@ class _CharacteristicsSection extends StatelessWidget {
               crossAxisCount: crossAxisCount,
               mainAxisSpacing: 14,
               crossAxisSpacing: 14,
-              children: List.generate(
-                items.length,
-                (index) {
+              childDelegate: SliverChildBuilderDelegate(
+                (context, index) {
                   final item = items[index];
                   return _CharacteristicTile(
                     icon: item.icon,
@@ -1413,6 +1412,7 @@ class _CharacteristicsSection extends StatelessWidget {
                     value: item.value,
                   );
                 },
+                childCount: items.length,
               ),
             ),
           ],
