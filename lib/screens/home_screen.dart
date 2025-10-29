@@ -15,6 +15,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _showGrid = false;
+  late final PageController _pageController;
+  int _activePage = 0;
 
   final List<_SectionInfo> _sections = const [
     _SectionInfo(
@@ -316,31 +318,51 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(viewportFraction: 0.88);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _showGrid = true);
     });
   }
 
-  void _openSection(_SectionInfo section) {
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _openSection([_SectionInfo? section]) {
+    final _SectionInfo? target;
+    if (section != null) {
+      target = section;
+    } else if (_sections.isNotEmpty &&
+        _activePage >= 0 &&
+        _activePage < _sections.length) {
+      target = _sections[_activePage];
+    } else {
+      target = null;
+    }
+
+    if (target == null) return;
+
     Widget destination;
-    switch (section.title) {
+    switch (target.title) {
       case 'Pokédex':
         destination = PokedexScreen(
-          heroTag: section.heroTag,
-          accentColor: section.color,
-          title: section.title,
+          heroTag: target.heroTag,
+          accentColor: target.color,
+          title: target.title,
         );
         break;
       case 'Abilities':
         destination = AbilitiesScreen(
-          heroTag: section.heroTag,
-          accentColor: section.color,
-          title: section.title,
+          heroTag: target.heroTag,
+          accentColor: target.color,
+          title: target.title,
         );
         break;
       default:
-        destination = SectionPlaceholderScreen(info: section);
+        destination = SectionPlaceholderScreen(info: target);
     }
 
     Navigator.of(context).push(
@@ -356,7 +378,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final heroSection = _sections.first;
     final gridSections = _sections.skip(1).toList();
     const double pageHorizontalPadding = 20;
     const double gridSpacing = 16;
@@ -367,6 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final double tileHeight = math.max(220, tileWidth + 56);
     final double childAspectRatio =
         tileWidth > 0 ? tileWidth / tileHeight : 0.95;
+    final double heroHeight = math.max(260, tileHeight + 40);
 
     const quickAccess = [
       'Gym Leaders & Elite 4',
@@ -437,13 +459,53 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: math.max(220, tileHeight),
-                          child: _HomeSectionCard(
-                            info: heroSection,
-                            onTap: () => _openSection(heroSection),
-                            isHero: true,
+                      SliverAppBar(
+                        pinned: true,
+                        automaticallyImplyLeading: false,
+                        expandedHeight: heroHeight,
+                        collapsedHeight: heroHeight * 0.6,
+                        elevation: 0,
+                        backgroundColor:
+                            Theme.of(context).scaffoldBackgroundColor,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                PageView.builder(
+                                  controller: _pageController,
+                                  onPageChanged: (index) {
+                                    setState(() => _activePage = index);
+                                  },
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _sections.length,
+                                  itemBuilder: (context, index) {
+                                    final info = _sections[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 12,
+                                      ),
+                                      child: _HomeSectionCard(
+                                        info: info,
+                                        onTap: _openSection,
+                                        isHero: true,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 12,
+                                  child: _SectionPageIndicator(
+                                    itemCount: _sections.length,
+                                    activeIndex: _activePage,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -777,6 +839,41 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
         ),
       );
     }).toList();
+  }
+}
+
+class _SectionPageIndicator extends StatelessWidget {
+  const _SectionPageIndicator({
+    required this.itemCount,
+    required this.activeIndex,
+  });
+
+  final int itemCount;
+  final int activeIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    if (itemCount <= 1) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(itemCount, (index) {
+        final bool isActive = index == activeIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          height: 6,
+          width: isActive ? 20 : 8,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(isActive ? 0.9 : 0.45),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
   }
 }
 
