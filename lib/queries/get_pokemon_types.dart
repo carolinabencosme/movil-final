@@ -8,5 +8,13 @@ const String getPokemonTypesQuery = r'''
       id
       name
     }
+    pokemon_v2_region(order_by: {id: asc}) {
+      id
+      name
+    }
+    pokemon_v2_pokemonshape(order_by: {id: asc}) {
+      id
+      name
+    }
   }
 ''';

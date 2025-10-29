@@ -10,6 +10,39 @@ import '../queries/get_pokemon_types.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 
+enum PokemonSortOption { id, name, height, weight }
+
+extension PokemonSortOptionX on PokemonSortOption {
+  String get label {
+    switch (this) {
+      case PokemonSortOption.id:
+        return 'Número';
+      case PokemonSortOption.name:
+        return 'Nombre';
+      case PokemonSortOption.height:
+        return 'Altura';
+      case PokemonSortOption.weight:
+        return 'Peso';
+    }
+  }
+
+  String get graphqlField {
+    switch (this) {
+      case PokemonSortOption.id:
+        return 'id';
+      case PokemonSortOption.name:
+        return 'name';
+      case PokemonSortOption.height:
+        return 'height';
+      case PokemonSortOption.weight:
+        return 'weight';
+    }
+  }
+}
+
+const PokemonSortOption kDefaultSortOption = PokemonSortOption.id;
+const bool kDefaultSortAscending = true;
+
 class PokedexScreen extends StatefulWidget {
   const PokedexScreen({
     super.key,
@@ -32,11 +65,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedTypes = <String>{};
   final Set<String> _selectedGenerations = <String>{};
+  final Set<String> _selectedRegions = <String>{};
+  final Set<String> _selectedShapes = <String>{};
+
+  PokemonSortOption _sortOption = kDefaultSortOption;
+  bool _isSortAscending = kDefaultSortAscending;
 
   Timer? _debounce;
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
   List<String> _availableTypes = <String>[];
   List<String> _availableGenerations = <String>[];
+  List<String> _availableRegions = <String>[];
+  List<String> _availableShapes = <String>[];
 
   bool _isFetching = false;
   bool _isInitialLoading = true;
@@ -49,6 +89,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
   String _searchTerm = '';
   String _debouncedSearch = '';
   String _errorMessage = '';
+
+  bool get _isDefaultSort =>
+      _sortOption == kDefaultSortOption && _isSortAscending == kDefaultSortAscending;
 
   @override
   void initState() {
@@ -97,6 +140,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
   void _applyFilters({
     Set<String>? types,
     Set<String>? generations,
+    Set<String>? regions,
+    Set<String>? shapes,
+    PokemonSortOption? sortOption,
+    bool? isSortAscending,
   }) {
     var hasChanges = false;
 
@@ -114,6 +161,27 @@ class _PokedexScreenState extends State<PokedexScreen> {
           ..addAll(generations);
         hasChanges = true;
       }
+      if (regions != null && !setEquals(regions, _selectedRegions)) {
+        _selectedRegions
+          ..clear()
+          ..addAll(regions);
+        hasChanges = true;
+      }
+      if (shapes != null && !setEquals(shapes, _selectedShapes)) {
+        _selectedShapes
+          ..clear()
+          ..addAll(shapes);
+        hasChanges = true;
+      }
+      if (sortOption != null && isSortAscending != null) {
+        final shouldUpdateSort =
+            sortOption != _sortOption || isSortAscending != _isSortAscending;
+        if (shouldUpdateSort) {
+          _sortOption = sortOption;
+          _isSortAscending = isSortAscending;
+          hasChanges = true;
+        }
+      }
     });
 
     if (hasChanges) {
@@ -123,7 +191,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   int _calculateActiveFiltersCount() {
     final searchCount = _debouncedSearch.trim().isEmpty ? 0 : 1;
-    return _selectedTypes.length + _selectedGenerations.length + searchCount;
+    final sortCount = _isDefaultSort ? 0 : 1;
+    return _selectedTypes.length +
+        _selectedGenerations.length +
+        _selectedRegions.length +
+        _selectedShapes.length +
+        searchCount +
+        sortCount;
   }
 
   void _resetAndFetch() {
@@ -148,6 +222,44 @@ class _PokedexScreenState extends State<PokedexScreen> {
     if (!_selectedGenerations.contains(generation)) return;
     setState(() {
       _selectedGenerations.remove(generation);
+    });
+    _resetAndFetch();
+  }
+
+  void _removeRegionFilter(String region) {
+    if (!_selectedRegions.contains(region)) return;
+    setState(() {
+      _selectedRegions.remove(region);
+    });
+    _resetAndFetch();
+  }
+
+  void _removeShapeFilter(String shape) {
+    if (!_selectedShapes.contains(shape)) return;
+    setState(() {
+      _selectedShapes.remove(shape);
+    });
+    _resetAndFetch();
+  }
+
+  void _resetSortSelection() {
+    if (_isDefaultSort) return;
+    setState(() {
+      _sortOption = kDefaultSortOption;
+      _isSortAscending = kDefaultSortAscending;
+    });
+    _resetAndFetch();
+  }
+
+  void _clearSearchFilter() {
+    if (_debouncedSearch.trim().isEmpty && _searchTerm.trim().isEmpty) {
+      return;
+    }
+    _debounce?.cancel();
+    setState(() {
+      _searchController.clear();
+      _searchTerm = '';
+      _debouncedSearch = '';
     });
     _resetAndFetch();
   }
@@ -177,9 +289,23 @@ class _PokedexScreenState extends State<PokedexScreen> {
                   (entry as Map<String, dynamic>)['name'] as String?)
               .whereType<String>()
               .toList();
+      final regions =
+          (result.data?['pokemon_v2_region'] as List<dynamic>? ?? [])
+              .map((dynamic entry) =>
+                  (entry as Map<String, dynamic>)['name'] as String?)
+              .whereType<String>()
+              .toList();
+      final shapes =
+          (result.data?['pokemon_v2_pokemonshape'] as List<dynamic>? ?? [])
+              .map((dynamic entry) =>
+                  (entry as Map<String, dynamic>)['name'] as String?)
+              .whereType<String>()
+              .toList();
       setState(() {
         _availableTypes = types;
         _availableGenerations = generations;
+        _availableRegions = regions;
+        _availableShapes = shapes;
         _filtersLoading = false;
       });
     } catch (_) {
@@ -207,6 +333,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
     final includeGenerationFilter = _selectedGenerations.isNotEmpty;
+    final includeRegionFilter = _selectedRegions.isNotEmpty;
+    final includeShapeFilter = _selectedShapes.isNotEmpty;
     final shouldPaginate = !includeIdFilter;
 
     final document = gql(
@@ -214,7 +342,11 @@ class _PokedexScreenState extends State<PokedexScreen> {
         includeIdFilter: includeIdFilter,
         includeTypeFilter: includeTypeFilter,
         includeGenerationFilter: includeGenerationFilter,
+        includeRegionFilter: includeRegionFilter,
+        includeShapeFilter: includeShapeFilter,
         includePagination: shouldPaginate,
+        orderField: _sortOption.graphqlField,
+        isOrderAscending: _isSortAscending,
       ),
     );
 
@@ -235,6 +367,12 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
     if (includeGenerationFilter) {
       variables['generationNames'] = _selectedGenerations.toList();
+    }
+    if (includeRegionFilter) {
+      variables['regionNames'] = _selectedRegions.toList();
+    }
+    if (includeShapeFilter) {
+      variables['shapeNames'] = _selectedShapes.toList();
     }
 
     try {
@@ -369,15 +507,26 @@ class _PokedexScreenState extends State<PokedexScreen> {
                 scrollController: scrollController,
                 availableTypes: _availableTypes,
                 availableGenerations: _availableGenerations,
+                availableRegions: _availableRegions,
+                availableShapes: _availableShapes,
                 initialSelectedTypes: Set<String>.from(_selectedTypes),
                 initialSelectedGenerations:
                     Set<String>.from(_selectedGenerations),
-                onApply: (types, generations) {
+                initialSelectedRegions: Set<String>.from(_selectedRegions),
+                initialSelectedShapes: Set<String>.from(_selectedShapes),
+                initialSortOption: _sortOption,
+                initialSortAscending: _isSortAscending,
+                onApply:
+                    (types, generations, regions, shapes, sortOption, isAscending) {
                   Navigator.of(context).pop(
                     _FiltersResult(
                       action: _FiltersAction.apply,
                       types: Set<String>.from(types),
                       generations: Set<String>.from(generations),
+                      regions: Set<String>.from(regions),
+                      shapes: Set<String>.from(shapes),
+                      sortOption: sortOption,
+                      isAscending: isAscending,
                     ),
                   );
                 },
@@ -387,6 +536,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
                       action: _FiltersAction.clear,
                       types: <String>{},
                       generations: <String>{},
+                      regions: <String>{},
+                      shapes: <String>{},
+                      sortOption: kDefaultSortOption,
+                      isAscending: kDefaultSortAscending,
                     ),
                   );
                 },
@@ -396,6 +549,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
                       action: _FiltersAction.cancel,
                       types: Set<String>.from(_selectedTypes),
                       generations: Set<String>.from(_selectedGenerations),
+                      regions: Set<String>.from(_selectedRegions),
+                      shapes: Set<String>.from(_selectedShapes),
+                      sortOption: _sortOption,
+                      isAscending: _isSortAscending,
                     ),
                   );
                 },
@@ -413,15 +570,28 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _applyFilters(
           types: result.types,
           generations: result.generations,
+          regions: result.regions,
+          shapes: result.shapes,
+          sortOption: result.sortOption,
+          isSortAscending: result.isAscending,
         );
         break;
       case _FiltersAction.clear:
-        if (_selectedTypes.isEmpty && _selectedGenerations.isEmpty) {
+        final hasFilters = _selectedTypes.isNotEmpty ||
+            _selectedGenerations.isNotEmpty ||
+            _selectedRegions.isNotEmpty ||
+            _selectedShapes.isNotEmpty ||
+            !_isDefaultSort;
+        if (!hasFilters) {
           return;
         }
         setState(() {
           _selectedTypes.clear();
           _selectedGenerations.clear();
+          _selectedRegions.clear();
+          _selectedShapes.clear();
+          _sortOption = kDefaultSortOption;
+          _isSortAscending = kDefaultSortAscending;
         });
         _resetAndFetch();
         break;
@@ -535,28 +705,137 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final countText = _totalCount == 0
         ? 'Mostrando ${_pokemons.length} Pokémon'
         : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
-    final filtersSuffix = _activeFiltersCount > 0
-        ? ' · $_activeFiltersCount filtro${_activeFiltersCount == 1 ? '' : 's'} activos'
-        : '';
-    final summaryText = '$countText$filtersSuffix';
+    final details = <String>[];
+    if (_activeFiltersCount > 0) {
+      details.add(
+        '$_activeFiltersCount filtro${_activeFiltersCount == 1 ? '' : 's'} activos',
+      );
+    }
+    if (!_isDefaultSort) {
+      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
+      details.add('Orden: ${_sortOption.label} $directionText');
+    }
+    final suffix = details.isNotEmpty ? ' · ${details.join(' · ')}' : '';
+    final summaryText = '$countText$suffix';
+    final chips = _buildActiveFilterChipWidgets(theme);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Card(
-        color: theme.colorScheme.secondaryContainer.withOpacity(0.45),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              summaryText,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSecondaryContainer,
-                fontWeight: FontWeight.w600,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            color: theme.colorScheme.secondaryContainer.withOpacity(0.45),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  summaryText,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+          if (chips.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: chips,
+            ),
+          ],
+        ],
       ),
+    );
+  }
+
+  List<Widget> _buildActiveFilterChipWidgets(ThemeData theme) {
+    final chips = <Widget>[];
+    final searchValue = _debouncedSearch.trim();
+    if (searchValue.isNotEmpty) {
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Búsqueda: $searchValue',
+          onDeleted: _clearSearchFilter,
+        ),
+      );
+    }
+    for (final type in _sortedStrings(_selectedTypes)) {
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Tipo: ${_capitalize(type)}',
+          onDeleted: () => _removeTypeFilter(type),
+        ),
+      );
+    }
+    for (final generation in _sortedStrings(_selectedGenerations)) {
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Generación: ${_formatGenerationLabel(generation)}',
+          onDeleted: () => _removeGenerationFilter(generation),
+        ),
+      );
+    }
+    for (final region in _sortedStrings(_selectedRegions)) {
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Región: ${_formatRegionLabel(region)}',
+          onDeleted: () => _removeRegionFilter(region),
+        ),
+      );
+    }
+    for (final shape in _sortedStrings(_selectedShapes)) {
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Forma: ${_formatShapeLabel(shape)}',
+          onDeleted: () => _removeShapeFilter(shape),
+        ),
+      );
+    }
+    if (!_isDefaultSort) {
+      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
+      chips.add(
+        _buildActiveChip(
+          theme: theme,
+          label: 'Orden: ${_sortOption.label} $directionText',
+          onDeleted: _resetSortSelection,
+        ),
+      );
+    }
+    return chips;
+  }
+
+  List<String> _sortedStrings(Iterable<String> values) {
+    final list = List<String>.from(values);
+    list.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return list;
+  }
+
+  Widget _buildActiveChip({
+    required ThemeData theme,
+    required String label,
+    required VoidCallback onDeleted,
+  }) {
+    return InputChip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      deleteIcon: const Icon(Icons.close_rounded, size: 18),
+      deleteIconColor: theme.colorScheme.onSurfaceVariant,
+      backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.7),
+      labelStyle: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     );
   }
 
@@ -608,11 +887,19 @@ class _FiltersResult {
     required this.action,
     required this.types,
     required this.generations,
+    required this.regions,
+    required this.shapes,
+    required this.sortOption,
+    required this.isAscending,
   });
 
   final _FiltersAction action;
   final Set<String> types;
   final Set<String> generations;
+  final Set<String> regions;
+  final Set<String> shapes;
+  final PokemonSortOption sortOption;
+  final bool isAscending;
 }
 
 class FiltersSheet extends StatefulWidget {
@@ -620,8 +907,14 @@ class FiltersSheet extends StatefulWidget {
     super.key,
     required this.availableTypes,
     required this.availableGenerations,
+    required this.availableRegions,
+    required this.availableShapes,
     required this.initialSelectedTypes,
     required this.initialSelectedGenerations,
+    required this.initialSelectedRegions,
+    required this.initialSelectedShapes,
+    required this.initialSortOption,
+    required this.initialSortAscending,
     required this.onApply,
     required this.onClear,
     required this.onCancel,
@@ -630,9 +923,22 @@ class FiltersSheet extends StatefulWidget {
 
   final List<String> availableTypes;
   final List<String> availableGenerations;
+  final List<String> availableRegions;
+  final List<String> availableShapes;
   final Set<String> initialSelectedTypes;
   final Set<String> initialSelectedGenerations;
-  final void Function(Set<String> types, Set<String> generations) onApply;
+  final Set<String> initialSelectedRegions;
+  final Set<String> initialSelectedShapes;
+  final PokemonSortOption initialSortOption;
+  final bool initialSortAscending;
+  final void Function(
+    Set<String> types,
+    Set<String> generations,
+    Set<String> regions,
+    Set<String> shapes,
+    PokemonSortOption sortOption,
+    bool isAscending,
+  ) onApply;
   final VoidCallback onClear;
   final VoidCallback onCancel;
   final ScrollController scrollController;
@@ -644,6 +950,10 @@ class FiltersSheet extends StatefulWidget {
 class _FiltersSheetState extends State<FiltersSheet> {
   late Set<String> _selectedTypes;
   late Set<String> _selectedGenerations;
+  late Set<String> _selectedRegions;
+  late Set<String> _selectedShapes;
+  late PokemonSortOption _sortOption;
+  late bool _isSortAscending;
 
   @override
   void initState() {
@@ -651,13 +961,21 @@ class _FiltersSheetState extends State<FiltersSheet> {
     _selectedTypes = Set<String>.from(widget.initialSelectedTypes);
     _selectedGenerations =
         Set<String>.from(widget.initialSelectedGenerations);
+    _selectedRegions = Set<String>.from(widget.initialSelectedRegions);
+    _selectedShapes = Set<String>.from(widget.initialSelectedShapes);
+    _sortOption = widget.initialSortOption;
+    _isSortAscending = widget.initialSortAscending;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasSelection =
-        _selectedTypes.isNotEmpty || _selectedGenerations.isNotEmpty;
+    final hasSelection = _selectedTypes.isNotEmpty ||
+        _selectedGenerations.isNotEmpty ||
+        _selectedRegions.isNotEmpty ||
+        _selectedShapes.isNotEmpty ||
+        _sortOption != kDefaultSortOption ||
+        _isSortAscending != kDefaultSortAscending;
 
     return SafeArea(
       top: false,
@@ -704,6 +1022,8 @@ class _FiltersSheetState extends State<FiltersSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildSortSection(theme),
+                    const SizedBox(height: 24),
                     _buildFilterSection(
                       title: 'Tipos',
                       options: widget.availableTypes,
@@ -721,6 +1041,24 @@ class _FiltersSheetState extends State<FiltersSheet> {
                       emptyMessage:
                           'No hay generaciones disponibles por ahora.',
                       onToggle: _toggleGeneration,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildFilterSection(
+                      title: 'Regiones',
+                      options: widget.availableRegions,
+                      selectedValues: _selectedRegions,
+                      labelBuilder: _formatRegionLabel,
+                      emptyMessage: 'No hay regiones disponibles por ahora.',
+                      onToggle: _toggleRegion,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildFilterSection(
+                      title: 'Formas',
+                      options: widget.availableShapes,
+                      selectedValues: _selectedShapes,
+                      labelBuilder: _formatShapeLabel,
+                      emptyMessage: 'No hay formas disponibles por ahora.',
+                      onToggle: _toggleShape,
                     ),
                   ],
                 ),
@@ -761,6 +1099,63 @@ class _FiltersSheetState extends State<FiltersSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSortSection(ThemeData theme) {
+    final directionLabel = _isSortAscending ? 'Ascendente' : 'Descendente';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ordenar por',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<PokemonSortOption>(
+                value: _sortOption,
+                decoration: const InputDecoration(
+                  labelText: 'Criterio',
+                  border: OutlineInputBorder(),
+                ),
+                items: PokemonSortOption.values
+                    .map(
+                      (option) => DropdownMenuItem<PokemonSortOption>(
+                        value: option,
+                        child: Text(option.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _sortOption = value;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: directionLabel,
+              child: FilledButton.tonalIcon(
+                onPressed: _toggleSortDirection,
+                icon: Icon(
+                  _isSortAscending
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                ),
+                label: Text(_isSortAscending ? 'Asc' : 'Desc'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -845,10 +1240,40 @@ class _FiltersSheetState extends State<FiltersSheet> {
     });
   }
 
+  void _toggleRegion(String region) {
+    setState(() {
+      if (_selectedRegions.contains(region)) {
+        _selectedRegions.remove(region);
+      } else {
+        _selectedRegions.add(region);
+      }
+    });
+  }
+
+  void _toggleShape(String shape) {
+    setState(() {
+      if (_selectedShapes.contains(shape)) {
+        _selectedShapes.remove(shape);
+      } else {
+        _selectedShapes.add(shape);
+      }
+    });
+  }
+
+  void _toggleSortDirection() {
+    setState(() {
+      _isSortAscending = !_isSortAscending;
+    });
+  }
+
   void _handleApply() {
     widget.onApply(
       Set<String>.from(_selectedTypes),
       Set<String>.from(_selectedGenerations),
+      Set<String>.from(_selectedRegions),
+      Set<String>.from(_selectedShapes),
+      _sortOption,
+      _isSortAscending,
     );
   }
 
@@ -856,6 +1281,10 @@ class _FiltersSheetState extends State<FiltersSheet> {
     setState(() {
       _selectedTypes.clear();
       _selectedGenerations.clear();
+      _selectedRegions.clear();
+      _selectedShapes.clear();
+      _sortOption = kDefaultSortOption;
+      _isSortAscending = kDefaultSortAscending;
     });
     widget.onClear();
   }
@@ -1052,6 +1481,19 @@ String _capitalize(String value) {
   return value[0].toUpperCase() + value.substring(1);
 }
 
+String _capitalizeWords(String value) {
+  final sanitized = value.replaceAll(RegExp(r'[_-]+'), ' ').trim();
+  if (sanitized.isEmpty) return sanitized;
+  final parts = sanitized.split(RegExp(r'\s+'));
+  return parts
+      .map((part) {
+        final lower = part.toLowerCase();
+        if (lower.isEmpty) return lower;
+        return lower[0].toUpperCase() + lower.substring(1);
+      })
+      .join(' ');
+}
+
 String _formatGenerationLabel(String value) {
   final sanitized = value.replaceAll('-', ' ').trim();
   if (sanitized.isEmpty) return sanitized;
@@ -1066,6 +1508,14 @@ String _formatGenerationLabel(String value) {
     return suffix.isEmpty ? 'Generación' : 'Generación $suffix';
   }
   return parts.map(_capitalize).join(' ');
+}
+
+String _formatRegionLabel(String value) {
+  return _capitalizeWords(value);
+}
+
+String _formatShapeLabel(String value) {
+  return _capitalizeWords(value);
 }
 
 String _formatPokemonNumber(int id) {
