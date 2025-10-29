@@ -494,6 +494,22 @@ PokemonEvolutionChain? _parseEvolutionChain(
     return null;
   }
 
+  final Map<int, Map<String, dynamic>> speciesMapsById =
+      <int, Map<String, dynamic>>{};
+  for (final dynamic entry in speciesEntries) {
+    final speciesMap = entry as Map<String, dynamic>?;
+    if (speciesMap == null) {
+      continue;
+    }
+
+    final speciesId = speciesMap['id'] as int?;
+    if (speciesId == null) {
+      continue;
+    }
+
+    speciesMapsById[speciesId] = speciesMap;
+  }
+
   final Map<int, _EvolutionSpeciesData> speciesData =
       <int, _EvolutionSpeciesData>{};
   final Map<int, List<String>> conditionsByTarget =
@@ -548,16 +564,21 @@ PokemonEvolutionChain? _parseEvolutionChain(
       if (evoMap == null) {
         continue;
       }
-      final targetRef =
-          _readEvolutionSpeciesRef(evoMap['pokemon_v2_pokemon_speciesByEvolved_species_id']);
-      final sourceRef =
-          _readEvolutionSpeciesRef(evoMap['pokemon_v2_pokemon_species']);
-
+      final targetRef = _readEvolutionSpeciesRef(
+        evoMap['evolved_species_id'] as int?,
+        speciesMapsById,
+      );
       final evolvedId = targetRef?.id;
       if (evolvedId == null) {
         continue;
       }
 
+      final sourceRef = _readEvolutionSpeciesRef(
+        (evoMap['pokemon_species_id'] is int)
+            ? evoMap['pokemon_species_id'] as int
+            : speciesId,
+        speciesMapsById,
+      );
       final sourceId = sourceRef?.id ?? speciesId;
       if (sourceId != null) {
         parentByTarget[evolvedId] = sourceId;
@@ -652,33 +673,21 @@ String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
   return fallback;
 }
 
-_EvolutionSpeciesRef? _readEvolutionSpeciesRef(dynamic rawSpecies) {
-  if (rawSpecies == null) {
+_EvolutionSpeciesRef? _readEvolutionSpeciesRef(
+  int? speciesId,
+  Map<int, Map<String, dynamic>> speciesMapsById,
+) {
+  if (speciesId == null) {
     return null;
   }
 
-  if (rawSpecies is List) {
-    if (rawSpecies.isEmpty) {
-      return null;
-    }
-    return _readEvolutionSpeciesRef(rawSpecies.first);
-  }
-
-  if (rawSpecies is! Map<String, dynamic>) {
-    return null;
-  }
-
-  final idValue = rawSpecies['id'];
-  if (idValue is! int) {
-    return null;
-  }
-
-  final fallbackName = rawSpecies['name'] as String? ?? '';
+  final speciesMap = speciesMapsById[speciesId];
+  final fallbackName = speciesMap?['name'] as String? ?? '';
   final localizedNames =
-      rawSpecies['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+      speciesMap?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
   final name = _resolveLocalizedName(localizedNames, fallbackName);
 
-  return _EvolutionSpeciesRef(id: idValue, name: name);
+  return _EvolutionSpeciesRef(id: speciesId, name: name);
 }
 
 String _describeEvolutionCondition(Map<String, dynamic> evolution) {
