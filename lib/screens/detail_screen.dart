@@ -1475,9 +1475,41 @@ class _WeaknessSectionState extends State<_WeaknessSection> {
               ? Padding(
                   key: const ValueKey(true),
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: _WeaknessChipGrid(
-                    weaknesses: weaknesses,
-                    formatLabel: widget.formatLabel,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MatchupHexGrid(
+                        matchups: weaknesses,
+                        formatLabel: widget.formatLabel,
+                        category: _MatchupCategory.weakness,
+                      ),
+                      const SizedBox(height: 12),
+                      const _MatchupLegend(
+                        entries: [
+                          _LegendEntry(
+                            label: '4×',
+                            description:
+                                'Doble debilidad: el daño recibido se multiplica por cuatro.',
+                            icon: Icons.local_fire_department,
+                            colorRole: _LegendColorRole.critical,
+                          ),
+                          _LegendEntry(
+                            label: '2×',
+                            description:
+                                'Debilidad clásica: ataques súper efectivos.',
+                            icon: Icons.trending_up,
+                            colorRole: _LegendColorRole.warning,
+                          ),
+                          _LegendEntry(
+                            label: '1.5×',
+                            description:
+                                'Ventaja moderada: daño ligeramente incrementado.',
+                            icon: Icons.bolt,
+                            colorRole: _LegendColorRole.emphasis,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 )
               : const SizedBox.shrink(key: ValueKey(false)),
@@ -1497,86 +1529,44 @@ class _WeaknessSectionState extends State<_WeaknessSection> {
   }
 }
 
-class _WeaknessChipGrid extends StatelessWidget {
-  const _WeaknessChipGrid({
-    required this.weaknesses,
+class _MatchupHexGrid extends StatelessWidget {
+  const _MatchupHexGrid({
+    required this.matchups,
     required this.formatLabel,
+    required this.category,
   });
 
-  final List<TypeMatchup> weaknesses;
+  final List<TypeMatchup> matchups;
   final String Function(String) formatLabel;
+  final _MatchupCategory category;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: weaknesses
-          .map(
-            (matchup) => _WeaknessChip(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = math.max(2, math.min(4, (width / 150).floor()));
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.05,
+          ),
+          itemCount: matchups.length,
+          itemBuilder: (context, index) {
+            final matchup = matchups[index];
+            return _MatchupHexCell(
               matchup: matchup,
               formatLabel: formatLabel,
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _WeaknessChip extends StatelessWidget {
-  const _WeaknessChip({
-    required this.matchup,
-    required this.formatLabel,
-  });
-
-  final TypeMatchup matchup;
-  final String Function(String) formatLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final typeKey = matchup.type.toLowerCase();
-    final typeColor = pokemonTypeColors[typeKey] ?? colorScheme.primary;
-    final emoji = _typeEmojis[typeKey];
-    final background = Color.alphaBlend(
-      typeColor.withOpacity(0.16),
-      colorScheme.surface.withOpacity(0.95),
-    );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: typeColor.withOpacity(0.45)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (emoji != null) ...[
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            formatLabel(matchup.type),
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _formatMultiplier(matchup.multiplier),
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: typeColor,
-            ),
-          ),
-        ],
-      ),
+              category: category,
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -2217,6 +2207,7 @@ class _TypeMatchupSection extends StatelessWidget {
             title: 'Resistencias',
             matchups: resistances,
             formatLabel: formatLabel,
+            category: _MatchupCategory.resistance,
           ),
           if (immunities.isNotEmpty) const SizedBox(height: 12),
         ],
@@ -2225,7 +2216,33 @@ class _TypeMatchupSection extends StatelessWidget {
             title: 'Inmunidades',
             matchups: immunities,
             formatLabel: formatLabel,
+            category: _MatchupCategory.immunity,
           ),
+        const SizedBox(height: 16),
+        const _MatchupLegend(
+          entries: [
+            _LegendEntry(
+              label: '0×',
+              description: 'Sin efecto: el Pokémon es inmune a este tipo.',
+              icon: Icons.block,
+              colorRole: _LegendColorRole.emphasis,
+            ),
+            _LegendEntry(
+              label: '0.25×',
+              description:
+                  'Resistencia doble: el daño recibido se reduce a la cuarta parte.',
+              icon: Icons.shield,
+              colorRole: _LegendColorRole.success,
+            ),
+            _LegendEntry(
+              label: '0.5×',
+              description:
+                  'Resistencia clásica: el daño recibido se reduce a la mitad.',
+              icon: Icons.shield_outlined,
+              colorRole: _LegendColorRole.warning,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -2236,11 +2253,13 @@ class _MatchupGroup extends StatelessWidget {
     required this.title,
     required this.matchups,
     required this.formatLabel,
+    required this.category,
   });
 
   final String title;
   final List<TypeMatchup> matchups;
   final String Function(String) formatLabel;
+  final _MatchupCategory category;
 
   @override
   Widget build(BuildContext context) {
@@ -2255,17 +2274,10 @@ class _MatchupGroup extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: matchups
-              .map(
-                (matchup) => _TypeMatchupChip(
-                  matchup: matchup,
-                  formatLabel: formatLabel,
-                ),
-              )
-              .toList(),
+        _MatchupHexGrid(
+          matchups: matchups,
+          formatLabel: formatLabel,
+          category: category,
         ),
       ],
     );
@@ -2286,57 +2298,295 @@ String _formatMultiplier(double multiplier) {
   return '$text×';
 }
 
-class _TypeMatchupChip extends StatelessWidget {
-  const _TypeMatchupChip({
-    required this.matchup,
-    required this.formatLabel,
+class _LegendEntry {
+  const _LegendEntry({
+    required this.label,
+    required this.description,
+    required this.icon,
+    required this.colorRole,
   });
 
-  final TypeMatchup matchup;
-  final String Function(String) formatLabel;
+  final String label;
+  final String description;
+  final IconData icon;
+  final _LegendColorRole colorRole;
+}
+
+enum _LegendColorRole { critical, warning, emphasis, success }
+
+class _MatchupLegend extends StatelessWidget {
+  const _MatchupLegend({required this.entries});
+
+  final List<_LegendEntry> entries;
+
+  Color _resolveColor(ColorScheme scheme, _LegendColorRole role) {
+    switch (role) {
+      case _LegendColorRole.critical:
+        return scheme.error;
+      case _LegendColorRole.warning:
+        return scheme.tertiary;
+      case _LegendColorRole.emphasis:
+        return scheme.primary;
+      case _LegendColorRole.success:
+        return scheme.secondary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final typeColor =
-        pokemonTypeColors[matchup.type.toLowerCase()] ?? colorScheme.primary;
+    final scheme = theme.colorScheme;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      children: entries
+          .map(
+            (entry) {
+              final color = _resolveColor(scheme, entry.colorRole);
+              final background = Color.alphaBlend(
+                color.withOpacity(0.14),
+                scheme.surface.withOpacity(0.92),
+              );
+              return Tooltip(
+                message: entry.description,
+                waitDuration: const Duration(milliseconds: 200),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: background,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: color.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(entry.icon, size: 16, color: color),
+                      const SizedBox(width: 6),
+                      Text(
+                        entry.label,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          )
+          .toList(),
+    );
+  }
+}
+
+enum _MatchupCategory { weakness, resistance, immunity }
+
+class _MatchupHexCell extends StatelessWidget {
+  const _MatchupHexCell({
+    required this.matchup,
+    required this.formatLabel,
+    required this.category,
+  });
+
+  final TypeMatchup matchup;
+  final String Function(String) formatLabel;
+  final _MatchupCategory category;
+
+  double _scaleForMultiplier(double multiplier) {
+    switch (category) {
+      case _MatchupCategory.weakness:
+        final normalized = (multiplier - 1).clamp(0.0, 3.5);
+        return 1 + normalized * 0.12;
+      case _MatchupCategory.resistance:
+        final normalized = (1 - multiplier).clamp(0.0, 1.0);
+        return 1 + normalized * 0.12;
+      case _MatchupCategory.immunity:
+        return 1.18;
+    }
+  }
+
+  IconData _iconForMultiplier(double multiplier) {
+    switch (category) {
+      case _MatchupCategory.weakness:
+        return multiplier >= 4 ? Icons.local_fire_department : Icons.trending_up;
+      case _MatchupCategory.resistance:
+        return Icons.shield_outlined;
+      case _MatchupCategory.immunity:
+        return Icons.block;
+    }
+  }
+
+  String _tooltipForMatchup(String label, double multiplier) {
+    final formatted = _formatMultiplier(multiplier);
+    switch (category) {
+      case _MatchupCategory.weakness:
+        return '$label recibe $formatted de daño: procura evitar este tipo.';
+      case _MatchupCategory.resistance:
+        return '$label causa $formatted de daño: es una buena cobertura defensiva.';
+      case _MatchupCategory.immunity:
+        return '$label no afecta a este Pokémon.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final typeKey = matchup.type.toLowerCase();
+    final typeColor = pokemonTypeColors[typeKey] ?? scheme.primary;
+    final emoji = _typeEmojis[typeKey];
+    final label = formatLabel(matchup.type);
+    final scale = _scaleForMultiplier(matchup.multiplier);
+    final tooltip = _tooltipForMatchup(label, matchup.multiplier);
+
     final background = Color.alphaBlend(
-      typeColor.withOpacity(0.16),
-      colorScheme.surface.withOpacity(0.95),
+      typeColor.withOpacity(0.14),
+      scheme.surface.withOpacity(0.94),
     );
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 200),
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutBack,
+        child: _HexagonContainer(
+          color: typeColor,
+          background: background,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (emoji != null) ...[
+                Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 22),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              _MultiplierBadge(
+                multiplier: matchup.multiplier,
+                icon: _iconForMultiplier(matchup.multiplier),
+                color: typeColor,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HexagonContainer extends StatelessWidget {
+  const _HexagonContainer({
+    required this.child,
+    required this.color,
+    required this.background,
+  });
+
+  final Widget child;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipPath(
+      clipper: const _HexagonClipper(),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: background,
+          border: Border.all(color: color.withOpacity(0.55), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.18),
+              blurRadius: 14,
+              spreadRadius: 2,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _HexagonClipper extends CustomClipper<Path> {
+  const _HexagonClipper();
+
+  @override
+  Path getClip(Size size) {
+    final width = size.width;
+    final height = size.height;
+    final verticalInset = height * 0.25;
+
+    return Path()
+      ..moveTo(width / 2, 0)
+      ..lineTo(width, verticalInset)
+      ..lineTo(width, height - verticalInset)
+      ..lineTo(width / 2, height)
+      ..lineTo(0, height - verticalInset)
+      ..lineTo(0, verticalInset)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _MultiplierBadge extends StatelessWidget {
+  const _MultiplierBadge({
+    required this.multiplier,
+    required this.icon,
+    required this.color,
+  });
+
+  final double multiplier;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final background = Color.alphaBlend(
+      color.withOpacity(0.18),
+      scheme.surface.withOpacity(0.92),
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: typeColor.withOpacity(0.45)),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: typeColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: color.withOpacity(0.9)),
+          const SizedBox(width: 6),
           Text(
-            formatLabel(matchup.type),
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _formatMultiplier(matchup.multiplier),
-            style: theme.textTheme.labelLarge?.copyWith(
+            _formatMultiplier(multiplier),
+            style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: typeColor,
+              color: color,
             ),
           ),
         ],
@@ -2390,14 +2640,84 @@ class _StatBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: normalized,
-              minHeight: 8,
-              color: theme.colorScheme.primary,
-              backgroundColor:
-                  theme.colorScheme.primary.withOpacity(0.18),
+          SizedBox(
+            height: 28,
+            child: Row(
+              children: [
+                for (var i = 0; i < 10; i++) ...[
+                  Expanded(
+                    child: _StatSegment(
+                      fill: (normalized * 10) - i,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  if (i != 9) const SizedBox(width: 4),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatSegment extends StatelessWidget {
+  const _StatSegment({required this.fill, required this.color});
+
+  final double fill;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final clampedFill = fill.clamp(0.0, 1.0);
+    final brightness = theme.colorScheme.brightness == Brightness.dark
+        ? Colors.white
+        : theme.colorScheme.onPrimary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: color.withOpacity(0.12),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          FractionallySizedBox(
+            widthFactor: clampedFill,
+            alignment: Alignment.centerLeft,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.85),
+                    color,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              opacity: clampedFill >= 0.95
+                  ? 1
+                  : clampedFill > 0.4
+                      ? 0.7
+                      : 0.25,
+              child: Icon(
+                Icons.catching_pokemon,
+                size: 16,
+                color: clampedFill > 0
+                    ? brightness.withOpacity(0.9)
+                    : color.withOpacity(0.4),
+              ),
             ),
           ),
         ],
