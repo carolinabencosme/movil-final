@@ -52,7 +52,7 @@ const String getPokemonDetailsQuery = r'''
               pokemon_v2_type {
                 name
               }
-              pokemon_v2_pokemon_species {
+              pokemon_v2_pokemon_species: pokemon_v2_pokemonspecy {
                 id
                 name
                 pokemon_v2_pokemonspeciesnames(
@@ -62,7 +62,7 @@ const String getPokemonDetailsQuery = r'''
                   name
                 }
               }
-              pokemon_v2_pokemon_speciesByEvolved_species_id {
+              pokemon_v2_pokemon_speciesByEvolved_species_id: pokemon_v2_pokemonspecyByEvolved_species_id {
                 id
                 name
                 pokemon_v2_pokemonspeciesnames(
