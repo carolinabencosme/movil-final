@@ -206,6 +206,107 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
     return _resolveStaticTypeColor(type, colorScheme);
   }
 
+  Widget _buildFloatingSummaryCard(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    PokemonDetail pokemon,
+  ) {
+    final textTheme = theme.textTheme;
+    final idText = '#${pokemon.id.toString().padLeft(4, '0')}';
+    final heightText = _formatHeight(pokemon.characteristics.height);
+    final weightText = _formatWeight(pokemon.characteristics.weight);
+    final labelStyle = textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.2,
+    );
+
+    Widget buildMetric(String label, String value) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: labelStyle),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
+      );
+    }
+
+    final typeChips = pokemon.types
+        .map((type) {
+          final typeColor = _resolveTypeColor(type, colorScheme);
+          final textColor = ThemeData.estimateBrightnessForColor(typeColor) ==
+                  Brightness.dark
+              ? Colors.white
+              : colorScheme.onSurface;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: typeColor.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: typeColor.withOpacity(0.35)),
+            ),
+            child: Text(
+              _formatLabel(type),
+              style: textTheme.labelSmall?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          );
+        })
+        .toList();
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      color: colorScheme.surface.withOpacity(0.82),
+      elevation: 6,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 220),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                idText,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              if (typeChips.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: typeChips,
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  buildMetric('Altura', heightText),
+                  const SizedBox(width: 14),
+                  buildMetric('Peso', weightText),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -349,6 +450,15 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                   ),
                                 ),
                               ),
+                              Positioned(
+                                right: 24,
+                                bottom: 24,
+                                child: _buildFloatingSummaryCard(
+                                  theme,
+                                  colorScheme,
+                                  pokemon,
+                                ),
+                              ),
                               Align(
                                 alignment: Alignment.bottomCenter,
                                 child: Padding(
@@ -359,9 +469,11 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                       imageUrl: pokemon.imageUrl,
                                       size: 210,
                                       borderRadius: 36,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 16,
+                                      padding: const EdgeInsets.fromLTRB(
+                                        24,
+                                        16,
+                                        48,
+                                        16,
                                       ),
                                     ),
                                   ),
