@@ -30,8 +30,6 @@ const String getPokemonDetailsQuery = r'''
               name
             }
             pokemon_v2_pokemonevolutions {
-              pokemon_species_id
-              evolved_species_id
               min_level
               min_happiness
               min_affection
@@ -53,6 +51,26 @@ const String getPokemonDetailsQuery = r'''
               }
               pokemon_v2_type {
                 name
+              }
+              pokemon_v2_pokemon_species {
+                id
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              pokemon_v2_pokemon_speciesByEvolved_species_id {
+                id
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
               }
             }
             pokemon_v2_pokemons(limit: 1) {
