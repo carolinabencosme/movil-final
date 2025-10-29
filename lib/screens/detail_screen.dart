@@ -359,11 +359,18 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
       child: Builder(
         builder: (context) {
           final tabController = DefaultTabController.of(context)!;
+          const double collapsedHeight = kToolbarHeight + 72.0;
           final mediaQuery = MediaQuery.of(context);
           final size = mediaQuery.size;
           final isLandscape = mediaQuery.orientation == Orientation.landscape;
-          final portraitHeight = math.min(360.0, size.height * 0.45);
-          final landscapeHeight = math.min(320.0, size.height * 0.6);
+          final portraitHeight = math.max(
+            collapsedHeight,
+            math.min(360.0, size.height * 0.45),
+          );
+          final landscapeHeight = math.max(
+            collapsedHeight,
+            math.min(320.0, size.height * 0.6),
+          );
           final expandedHeight = isLandscape ? landscapeHeight : portraitHeight;
 
           return DecoratedBox(
