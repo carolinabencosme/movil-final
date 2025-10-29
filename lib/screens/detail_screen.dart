@@ -64,7 +64,6 @@ class DetailScreen extends StatelessWidget {
           document: gql(getPokemonDetailsQuery),
           fetchPolicy: FetchPolicy.networkOnly,
           cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
-          carryForwardDataOnException: false,
           errorPolicy: ErrorPolicy.ignore,
           variables: {
             'id': pokemonId,
