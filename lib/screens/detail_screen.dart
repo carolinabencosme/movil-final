@@ -544,62 +544,99 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                       preferredSize: const Size.fromHeight(72),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 12, top: 8),
-                        child: Theme(
-                          data: theme.copyWith(
-                            tabBarTheme: theme.tabBarTheme.copyWith(
-                              indicatorSize: TabBarIndicatorSize.tab,
-                              labelPadding:
-                                  const EdgeInsets.symmetric(horizontal: 6),
-                              overlayColor: MaterialStateProperty.all(
-                                Colors.transparent,
-                              ),
-                              splashFactory: NoSplash.splashFactory,
-                            ),
-                          ),
-                          child: ChipTheme(
-                            data: ChipTheme.of(context).copyWith(
-                              backgroundColor: Colors.transparent,
-                              selectedColor: onTypeColor.withOpacity(0.18),
-                              disabledColor: Colors.transparent,
-                              padding: EdgeInsets.zero,
-                              shape: const StadiumBorder(),
-                              labelStyle:
-                                  theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: onTypeColor,
-                              ),
-                            ),
-                            child: TabBar(
-                              controller: tabController,
-                              isScrollable: true,
-                              indicator: _PillUnderlineTabIndicator(
-                                borderSide: BorderSide(
-                                  color: onTypeColor.withOpacity(0.18),
-                                  width: 40,
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isCompact = constraints.maxWidth < 360;
+                            final double widePadding =
+                                constraints.maxWidth /
+                                    (_detailTabConfigs.length * 2.6);
+                            final double horizontalPadding = isCompact
+                                ? 8
+                                : math.max(
+                                    12.0,
+                                    math.min(widePadding, 24.0),
+                                  );
+                            final TextStyle baseTitle =
+                                theme.textTheme.titleMedium ??
+                                    const TextStyle();
+                            final double baseFontSize =
+                                baseTitle.fontSize ?? 16;
+                            final TextStyle tabTextStyle = baseTitle.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: onTypeColor,
+                              height: 1.2,
+                              fontSize: isCompact
+                                  ? math.max(baseFontSize - 2, 12)
+                                  : baseFontSize,
+                            );
+
+                            if (isCompact) {
+                              return _CompactTabSelector(
+                                controller: tabController,
+                                configs: _detailTabConfigs,
+                                foregroundColor: onTypeColor,
+                                textStyle: tabTextStyle.copyWith(
+                                  color: onTypeColor.withOpacity(0.9),
                                 ),
-                                insets: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                              );
+                            }
+
+                            return Theme(
+                              data: theme.copyWith(
+                                tabBarTheme: theme.tabBarTheme.copyWith(
+                                  indicatorSize: TabBarIndicatorSize.tab,
+                                  labelPadding: EdgeInsets.symmetric(
+                                    horizontal: horizontalPadding,
+                                  ),
+                                  overlayColor: MaterialStateProperty.all(
+                                    Colors.transparent,
+                                  ),
+                                  splashFactory: NoSplash.splashFactory,
                                 ),
                               ),
-                              labelColor: onTypeColor,
-                              unselectedLabelColor:
-                                  onTypeColor.withOpacity(0.72),
-                              tabs: [
-                                for (var i = 0;
-                                    i < _detailTabConfigs.length;
-                                    i++)
-                                  Tab(
-                                    child: _ElasticTabChip(
-                                      controller: tabController,
-                                      index: i,
-                                      config: _detailTabConfigs[i],
-                                      foregroundColor: onTypeColor,
+                              child: ChipTheme(
+                                data: ChipTheme.of(context).copyWith(
+                                  backgroundColor: Colors.transparent,
+                                  selectedColor: onTypeColor.withOpacity(0.18),
+                                  disabledColor: Colors.transparent,
+                                  padding: EdgeInsets.zero,
+                                  shape: const StadiumBorder(),
+                                  labelStyle: tabTextStyle,
+                                ),
+                                child: TabBar(
+                                  controller: tabController,
+                                  isScrollable: true,
+                                  indicator: _PillUnderlineTabIndicator(
+                                    borderSide: BorderSide(
+                                      color: onTypeColor.withOpacity(0.18),
+                                      width: 28,
+                                    ),
+                                    insets: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
+                                  labelColor: onTypeColor,
+                                  unselectedLabelColor:
+                                      onTypeColor.withOpacity(0.72),
+                                  tabs: [
+                                    for (var i = 0;
+                                        i < _detailTabConfigs.length;
+                                        i++)
+                                      Tab(
+                                        child: _ElasticTabChip(
+                                          controller: tabController,
+                                          index: i,
+                                          config: _detailTabConfigs[i],
+                                          foregroundColor: onTypeColor,
+                                          textStyle: tabTextStyle,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -673,23 +710,94 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
   }
 }
 
+class _CompactTabSelector extends StatelessWidget {
+  const _CompactTabSelector({
+    required this.controller,
+    required this.configs,
+    required this.foregroundColor,
+    this.textStyle,
+  });
+
+  final TabController controller;
+  final List<_DetailTabConfig> configs;
+  final Color foregroundColor;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller.animation!,
+      builder: (context, _) {
+        final double animationValue =
+            controller.animation?.value ?? controller.index.toDouble();
+        final int selectedIndex = animationValue.round();
+        final int clampedIndex = selectedIndex < 0
+            ? 0
+            : (selectedIndex >= configs.length
+                ? configs.length - 1
+                : selectedIndex);
+        final List<bool> selections = List<bool>.generate(
+          configs.length,
+          (index) => index == clampedIndex,
+        );
+
+        return ToggleButtons(
+          isSelected: selections,
+          onPressed: (index) {
+            if (index < 0 || index >= configs.length) {
+              return;
+            }
+            controller.animateTo(index);
+          },
+          borderRadius: const BorderRadius.all(Radius.circular(999)),
+          constraints: const BoxConstraints(minHeight: 40, minWidth: 0),
+          renderBorder: false,
+          color: foregroundColor.withOpacity(0.72),
+          selectedColor: foregroundColor,
+          fillColor: foregroundColor.withOpacity(0.16),
+          highlightColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          children: [
+            for (var i = 0; i < configs.length; i++)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Text(
+                  configs[i].label,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: (textStyle ?? const TextStyle()).copyWith(
+                    color: selections[i]
+                        ? foregroundColor
+                        : foregroundColor.withOpacity(0.75),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _ElasticTabChip extends StatelessWidget {
   const _ElasticTabChip({
     required this.controller,
     required this.index,
     required this.config,
     required this.foregroundColor,
+    required this.textStyle,
   });
 
   final TabController controller;
   final int index;
   final _DetailTabConfig config;
   final Color foregroundColor;
+  final TextStyle textStyle;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AnimatedBuilder(
       animation: controller.animation!,
       builder: (context, _) {
@@ -721,10 +829,7 @@ class _ElasticTabChip extends StatelessWidget {
             ),
             label: Text(
               config.label,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+              style: textStyle.copyWith(color: textColor),
             ),
             shape: const StadiumBorder(),
           ),
