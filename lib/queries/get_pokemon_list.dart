@@ -2,7 +2,11 @@ String buildPokemonListQuery({
   required bool includeIdFilter,
   required bool includeTypeFilter,
   bool includeGenerationFilter = false,
+  bool includeRegionFilter = false,
+  bool includeShapeFilter = false,
   bool includePagination = true,
+  required String orderField,
+  required bool isOrderAscending,
 }) {
   final variableDefinitions = <String>[
     if (includePagination) r'$limit: Int!',
@@ -17,6 +21,12 @@ String buildPokemonListQuery({
   }
   if (includeGenerationFilter) {
     variableDefinitions.add(r'$generationNames: [String!]!');
+  }
+  if (includeRegionFilter) {
+    variableDefinitions.add(r'$regionNames: [String!]!');
+  }
+  if (includeShapeFilter) {
+    variableDefinitions.add(r'$shapeNames: [String!]!');
   }
 
   final orConditions = <String>[
@@ -48,6 +58,16 @@ String buildPokemonListQuery({
       r'{pokemon_v2_pokemonspecy: {pokemon_v2_generation: {name: {_in: $generationNames}}}}',
     );
   }
+  if (includeRegionFilter) {
+    andConditions.add(
+      r'{pokemon_v2_pokemonspecy: {pokemon_v2_generation: {pokemon_v2_region: {name: {_in: $regionNames}}}}}',
+    );
+  }
+  if (includeShapeFilter) {
+    andConditions.add(
+      r'{pokemon_v2_pokemonspecy: {pokemon_v2_pokemonshape: {name: {_in: $shapeNames}}}}',
+    );
+  }
 
   final bufferAndConditions = andConditions.join(',\n        ');
 
@@ -57,10 +77,16 @@ String buildPokemonListQuery({
 '''
       : '';
 
+  final orderDirection = isOrderAscending ? 'asc' : 'desc';
+  final fieldPattern = RegExp(r'^[a-zA-Z0-9_]+$');
+  final resolvedOrderField =
+      fieldPattern.hasMatch(orderField) ? orderField : 'id';
+  final orderByBlock = '{${resolvedOrderField}: $orderDirection}';
+
   return '''
   query GetPokemonList(${variableDefinitions.join(', ')}) {
     pokemon_v2_pokemon(
-${paginationBlock}      order_by: {id: asc}
+${paginationBlock}      order_by: $orderByBlock
       where: {
         _and: [
         $bufferAndConditions
