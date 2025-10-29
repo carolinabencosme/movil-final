@@ -356,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gridSections = _sections.skip(1).toList();
+    final List<_SectionInfo> sections = _sections;
     const double pageHorizontalPadding = 20;
     const double gridSpacing = 16;
     final Size size = MediaQuery.of(context).size;
@@ -366,8 +366,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final double tileHeight = math.max(220, tileWidth + 56);
     final double childAspectRatio =
         tileWidth > 0 ? tileWidth / tileHeight : 0.95;
-    final double heroHeight = math.max(260, tileHeight + 40);
-
     const quickAccess = [
       'Gym Leaders & Elite 4',
       'Natures',
@@ -376,9 +374,6 @@ class _HomeScreenState extends State<HomeScreen> {
       'Breeding Guides',
       'Berry Farming',
     ];
-
-    final _SectionInfo? pokedexSection =
-        _sections.isNotEmpty ? _sections.first : null;
 
     return Scaffold(
       body: SafeArea(
@@ -438,45 +433,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 24),
                           ],
-                        ),
                       ),
-                      if (pokedexSection != null)
-                        SliverAppBar(
-                          pinned: true,
-                          automaticallyImplyLeading: false,
-                          expandedHeight: heroHeight,
-                          collapsedHeight: heroHeight * 0.6,
-                          elevation: 0,
-                          backgroundColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                          flexibleSpace: FlexibleSpaceBar(
-                            background: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: FractionallySizedBox(
-                                  widthFactor: 0.92,
-                                  child: _HomeSectionCard(
-                                    info: pokedexSection,
-                                    onTap: () => _openSection(pokedexSection),
-                                    isHero: false,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
                       SliverGrid(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                            final section = gridSections[index];
+                            final section = sections[index];
                             return _HomeSectionCard(
                               info: section,
                               onTap: () => _openSection(section),
                             );
                           },
-                          childCount: gridSections.length,
+                          childCount: sections.length,
                         ),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
