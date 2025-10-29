@@ -465,13 +465,30 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                right: 24,
-                                bottom: 24,
-                                child: _buildFloatingSummaryCard(
-                                  theme,
-                                  colorScheme,
-                                  pokemon,
+                              Positioned.fill(
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final isCompact =
+                                        constraints.maxWidth < 460;
+                                    final alignment = isCompact
+                                        ? Alignment.topCenter
+                                        : Alignment.bottomRight;
+                                    final padding = isCompact
+                                        ? const EdgeInsets.fromLTRB(24, 24, 24, 0)
+                                        : const EdgeInsets.fromLTRB(0, 0, 24, 24);
+
+                                    return Align(
+                                      alignment: alignment,
+                                      child: Padding(
+                                        padding: padding,
+                                        child: _buildFloatingSummaryCard(
+                                          theme,
+                                          colorScheme,
+                                          pokemon,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                               Align(
