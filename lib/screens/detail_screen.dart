@@ -93,8 +93,7 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
-          final data =
-              result.data?['pokemon_v2_pokemon_by_pk'] as Map<String, dynamic>?;
+          final data = result.data?['pokemon'] as Map<String, dynamic>?;
 
           if (data == null) {
             return const Center(
@@ -103,7 +102,7 @@ class DetailScreen extends StatelessWidget {
           }
 
           final typeEfficacies =
-              result.data?['pokemon_v2_typeefficacy'] as List<dynamic>? ?? [];
+              result.data?['type_efficacy'] as List<dynamic>? ?? [];
 
           final pokemon = PokemonDetail.fromGraphQL(
             data,
