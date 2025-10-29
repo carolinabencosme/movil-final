@@ -224,8 +224,7 @@ class PokemonDetail {
       json['pokemon_v2_pokemonmoves'] as List<dynamic>? ?? const [],
     );
 
-    final species =
-        json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
+    final species = json['species'] as Map<String, dynamic>?;
     final speciesNames =
         species?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
     String category = '';
@@ -340,16 +339,6 @@ class _EvolutionSpeciesData {
   final int order;
   final int? fromSpeciesId;
   final String imageUrl;
-}
-
-class _EvolutionSpeciesRef {
-  const _EvolutionSpeciesRef({
-    required this.id,
-    required this.name,
-  });
-
-  final int id;
-  final String name;
 }
 
 class PokemonStat {
@@ -483,19 +472,18 @@ PokemonEvolutionChain? _parseEvolutionChain(
     return null;
   }
 
-  final chain = species['pokemon_v2_evolutionchain'] as Map<String, dynamic>?;
+  final chain = species['evolution_chain'] as Map<String, dynamic>?;
   if (chain == null) {
     return null;
   }
 
-  final speciesEntries =
-      chain['pokemon_v2_pokemonspecies'] as List<dynamic>? ?? [];
+  final speciesEntries = chain['species_list'] as List<dynamic>? ?? [];
   if (speciesEntries.isEmpty) {
     return null;
   }
 
-  final Map<int, Map<String, dynamic>> speciesMapsById =
-      <int, Map<String, dynamic>>{};
+  final Map<int, String> nameById = <int, String>{};
+
   for (final dynamic entry in speciesEntries) {
     final speciesMap = entry as Map<String, dynamic>?;
     if (speciesMap == null) {
@@ -507,7 +495,15 @@ PokemonEvolutionChain? _parseEvolutionChain(
       continue;
     }
 
-    speciesMapsById[speciesId] = speciesMap;
+    final fallbackName = speciesMap['name'] as String? ?? '';
+    final localizedNames =
+        speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+    final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
+    nameById[speciesId] = resolvedName;
+  }
+
+  if (nameById.isEmpty) {
+    return null;
   }
 
   final Map<int, _EvolutionSpeciesData> speciesData =
@@ -527,11 +523,6 @@ PokemonEvolutionChain? _parseEvolutionChain(
       continue;
     }
 
-    final fallbackName = speciesMap['name'] as String? ?? '';
-    final localizedNames =
-        speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
-    final name = _resolveLocalizedName(localizedNames, fallbackName);
-
     final order = speciesMap['order'] as int? ?? 0;
     final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
 
@@ -542,7 +533,8 @@ PokemonEvolutionChain? _parseEvolutionChain(
       if (pokemonMap == null) {
         continue;
       }
-      final candidate = _extractSpriteUrl(pokemonMap['pokemon_v2_pokemonsprites']);
+      final candidate =
+          _extractSpriteUrl(pokemonMap['pokemon_v2_pokemonsprites']);
       if (candidate.isNotEmpty) {
         imageUrl = candidate;
         break;
@@ -551,7 +543,7 @@ PokemonEvolutionChain? _parseEvolutionChain(
 
     speciesData[speciesId] = _EvolutionSpeciesData(
       id: speciesId,
-      name: name,
+      name: nameById[speciesId] ?? '',
       order: order,
       fromSpeciesId: fromSpeciesId,
       imageUrl: imageUrl,
@@ -564,25 +556,13 @@ PokemonEvolutionChain? _parseEvolutionChain(
       if (evoMap == null) {
         continue;
       }
-      final targetRef = _readEvolutionSpeciesRef(
-        evoMap['evolved_species_id'] as int?,
-        speciesMapsById,
-      );
-      final evolvedId = targetRef?.id;
+
+      final evolvedId = evoMap['evolved_species_id'] as int?;
       if (evolvedId == null) {
         continue;
       }
 
-      final sourceRef = _readEvolutionSpeciesRef(
-        (evoMap['pokemon_species_id'] is int)
-            ? evoMap['pokemon_species_id'] as int
-            : speciesId,
-        speciesMapsById,
-      );
-      final sourceId = sourceRef?.id ?? speciesId;
-      if (sourceId != null) {
-        parentByTarget[evolvedId] = sourceId;
-      }
+      parentByTarget[evolvedId] = speciesId;
 
       final description = _describeEvolutionCondition(evoMap);
       if (description.isEmpty) {
@@ -673,29 +653,22 @@ String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
   return fallback;
 }
 
-_EvolutionSpeciesRef? _readEvolutionSpeciesRef(
-  int? speciesId,
-  Map<int, Map<String, dynamic>> speciesMapsById,
-) {
-  if (speciesId == null) {
-    return null;
-  }
-
-  final speciesMap = speciesMapsById[speciesId];
-  final fallbackName = speciesMap?['name'] as String? ?? '';
-  final localizedNames =
-      speciesMap?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
-  final name = _resolveLocalizedName(localizedNames, fallbackName);
-
-  return _EvolutionSpeciesRef(id: speciesId, name: name);
-}
-
 String _describeEvolutionCondition(Map<String, dynamic> evolution) {
   final List<String> details = <String>[];
 
   final minLevel = evolution['min_level'];
   if (minLevel is int && minLevel > 0) {
     details.add('Nivel $minLevel');
+  }
+
+  final minHappiness = evolution['min_happiness'];
+  if (minHappiness is int && minHappiness > 0) {
+    details.add('Felicidad mínima: $minHappiness');
+  }
+
+  final minBeauty = evolution['min_beauty'];
+  if (minBeauty is int && minBeauty > 0) {
+    details.add('Belleza mínima: $minBeauty');
   }
 
   final triggerMap =
@@ -705,69 +678,9 @@ String _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Método: ${_formatGraphqlLabel(trigger)}');
   }
 
-  final itemMap = evolution['pokemon_v2_item'] as Map<String, dynamic>?;
-  final item = itemMap?['name'] as String?;
-  if (item != null && item.isNotEmpty) {
-    details.add('Objeto: ${_formatGraphqlLabel(item)}');
-  }
-
-  final moveMap = evolution['pokemon_v2_move'] as Map<String, dynamic>?;
-  final move = moveMap?['name'] as String?;
-  if (move != null && move.isNotEmpty) {
-    details.add('Movimiento: ${_formatGraphqlLabel(move)}');
-  }
-
-  final locationMap =
-      evolution['pokemon_v2_location'] as Map<String, dynamic>?;
-  final location = locationMap?['name'] as String?;
-  if (location != null && location.isNotEmpty) {
-    details.add('Lugar: ${_formatGraphqlLabel(location)}');
-  }
-
-  final typeMap = evolution['pokemon_v2_type'] as Map<String, dynamic>?;
-  final type = typeMap?['name'] as String?;
-  if (type != null && type.isNotEmpty) {
-    details.add('Tipo requerido: ${_formatGraphqlLabel(type)}');
-  }
-
   final timeOfDay = evolution['time_of_day'];
   if (timeOfDay is String && timeOfDay.isNotEmpty) {
     details.add('Momento: ${_formatGraphqlLabel(timeOfDay)}');
-  }
-
-  final minHappiness = evolution['min_happiness'];
-  if (minHappiness is int && minHappiness > 0) {
-    details.add('Felicidad mínima: $minHappiness');
-  }
-
-  final minAffection = evolution['min_affection'];
-  if (minAffection is int && minAffection > 0) {
-    details.add('Afecto mínimo: $minAffection');
-  }
-
-  final minBeauty = evolution['min_beauty'];
-  if (minBeauty is int && minBeauty > 0) {
-    details.add('Belleza mínima: $minBeauty');
-  }
-
-  final relativePhysicalStats = evolution['relative_physical_stats'];
-  if (relativePhysicalStats is int) {
-    if (relativePhysicalStats > 0) {
-      details.add('Ataque > Defensa');
-    } else if (relativePhysicalStats < 0) {
-      details.add('Ataque < Defensa');
-    } else {
-      details.add('Ataque = Defensa');
-    }
-  }
-
-  final gender = evolution['gender_id'];
-  if (gender is int) {
-    if (gender == 1) {
-      details.add('Solo hembra');
-    } else if (gender == 2) {
-      details.add('Solo macho');
-    }
   }
 
   if (details.isEmpty) {

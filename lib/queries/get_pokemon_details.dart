@@ -1,24 +1,29 @@
 const String getPokemonDetailsQuery = r'''
-  query GetPokemonDetails($id: Int!, $languageId: Int!) {
-    pokemon_v2_pokemon_by_pk(id: $id) {
+  query GetPokemonDetail($id: Int!, $languageId: Int!) {
+    pokemon: pokemon_v2_pokemon_by_pk(id: $id) {
       id
       name
       height
       weight
       base_experience
-      pokemon_v2_pokemonspecy {
+      species: pokemon_v2_pokemonspecy {
         id
         name
         capture_rate
+        generation_id
         pokemon_v2_pokemonspeciesnames(
           where: {language_id: {_eq: $languageId}}
           limit: 1
         ) {
           genus
         }
-        pokemon_v2_evolutionchain {
+        pokemon_v2_generation {
           id
-          pokemon_v2_pokemonspecies(order_by: {order: asc}) {
+          name
+        }
+        evolution_chain: pokemon_v2_evolutionchain {
+          id
+          species_list: pokemon_v2_pokemonspecies(order_by: {order: asc}) {
             id
             name
             order
@@ -33,45 +38,10 @@ const String getPokemonDetailsQuery = r'''
               evolved_species_id
               min_level
               min_happiness
-              min_affection
               min_beauty
               time_of_day
-              gender_id
-              relative_physical_stats
               pokemon_v2_evolutiontrigger {
                 name
-              }
-              pokemon_v2_item {
-                name
-              }
-              pokemon_v2_move {
-                name
-              }
-              pokemon_v2_location {
-                name
-              }
-              pokemon_v2_type {
-                name
-              }
-              pokemon_v2_pokemon_species: pokemon_v2_pokemonspecy {
-                id
-                name
-                pokemon_v2_pokemonspeciesnames(
-                  where: {language_id: {_eq: $languageId}}
-                  limit: 1
-                ) {
-                  name
-                }
-              }
-              pokemon_v2_pokemon_speciesByEvolved_species_id: pokemon_v2_pokemonspecyByEvolved_species_id {
-                id
-                name
-                pokemon_v2_pokemonspeciesnames(
-                  where: {language_id: {_eq: $languageId}}
-                  limit: 1
-                ) {
-                  name
-                }
               }
             }
             pokemon_v2_pokemons(limit: 1) {
@@ -148,7 +118,7 @@ const String getPokemonDetailsQuery = r'''
         sprites
       }
     }
-    pokemon_v2_typeefficacy {
+    type_efficacy: pokemon_v2_typeefficacy {
       damage_factor
       damage_type_id
       target_type_id
