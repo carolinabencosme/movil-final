@@ -766,10 +766,15 @@ class _CompactTabSelector extends StatelessWidget {
           },
           borderRadius: const BorderRadius.all(Radius.circular(999)),
           constraints: const BoxConstraints(minHeight: 40, minWidth: 0),
-          renderBorder: false,
+          renderBorder: true,
+          borderWidth: 1,
+          borderColor: foregroundColor.withOpacity(0.4),
+          selectedBorderColor: foregroundColor,
           color: foregroundColor.withOpacity(0.72),
           selectedColor: foregroundColor,
-          fillColor: foregroundColor.withOpacity(0.16),
+          fillColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          focusColor: Colors.transparent,
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
           children: [
@@ -777,21 +782,67 @@ class _CompactTabSelector extends StatelessWidget {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Text(
-                  configs[i].label,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: (textStyle ?? const TextStyle()).copyWith(
-                    color: selections[i]
-                        ? foregroundColor
-                        : foregroundColor.withOpacity(0.75),
-                  ),
+                child: _CompactTabSelectorItem(
+                  config: configs[i],
+                  textStyle: textStyle,
+                  isSelected: selections[i],
+                  foregroundColor: foregroundColor,
                 ),
               ),
           ],
         );
       },
+    );
+  }
+}
+
+class _CompactTabSelectorItem extends StatelessWidget {
+  const _CompactTabSelectorItem({
+    required this.config,
+    required this.textStyle,
+    required this.isSelected,
+    required this.foregroundColor,
+  });
+
+  final _DetailTabConfig config;
+  final TextStyle? textStyle;
+  final bool isSelected;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color effectiveColor =
+        isSelected ? foregroundColor : foregroundColor.withOpacity(0.75);
+    final TextStyle baseStyle = (textStyle ?? const TextStyle()).copyWith(
+      color: effectiveColor,
+      shadows: [
+        Shadow(
+          color: Colors.black.withOpacity(0.18),
+          offset: const Offset(0, 1),
+          blurRadius: 2,
+        ),
+      ],
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          config.icon,
+          size: 18,
+          color: effectiveColor,
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            config.label,
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+            style: baseStyle,
+          ),
+        ),
+      ],
     );
   }
 }
