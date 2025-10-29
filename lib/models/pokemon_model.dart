@@ -324,6 +324,16 @@ class _EvolutionSpeciesData {
   final String imageUrl;
 }
 
+class _EvolutionSpeciesRef {
+  const _EvolutionSpeciesRef({
+    required this.id,
+    required this.name,
+  });
+
+  final int id;
+  final String name;
+}
+
 class PokemonStat {
   const PokemonStat({
     required this.name,
@@ -470,6 +480,7 @@ PokemonEvolutionChain? _parseEvolutionChain(
       <int, _EvolutionSpeciesData>{};
   final Map<int, List<String>> conditionsByTarget =
       <int, List<String>>{};
+  final Map<int, int> parentByTarget = <int, int>{};
 
   for (final dynamic entry in speciesEntries) {
     final speciesMap = entry as Map<String, dynamic>?;
@@ -519,10 +530,21 @@ PokemonEvolutionChain? _parseEvolutionChain(
       if (evoMap == null) {
         continue;
       }
-      final evolvedId = evoMap['evolved_species_id'];
-      if (evolvedId is! int) {
+      final targetRef =
+          _readEvolutionSpeciesRef(evoMap['pokemon_v2_pokemon_speciesByEvolved_species_id']);
+      final sourceRef =
+          _readEvolutionSpeciesRef(evoMap['pokemon_v2_pokemon_species']);
+
+      final evolvedId = targetRef?.id;
+      if (evolvedId == null) {
         continue;
       }
+
+      final sourceId = sourceRef?.id ?? speciesId;
+      if (sourceId != null) {
+        parentByTarget[evolvedId] = sourceId;
+      }
+
       final description = _describeEvolutionCondition(evoMap);
       if (description.isEmpty) {
         continue;
@@ -539,9 +561,10 @@ PokemonEvolutionChain? _parseEvolutionChain(
 
   final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
   speciesData.forEach((int id, _EvolutionSpeciesData data) {
+    final parentId = parentByTarget[id] ?? data.fromSpeciesId;
     final conditions =
         List<String>.from(conditionsByTarget[id] ?? const <String>[]);
-    if (conditions.isEmpty && data.fromSpeciesId != null) {
+    if (conditions.isEmpty && parentId != null) {
       conditions.add('Requisitos no especificados');
     }
     nodes.add(
@@ -550,7 +573,7 @@ PokemonEvolutionChain? _parseEvolutionChain(
         name: data.name,
         imageUrl: data.imageUrl,
         order: data.order,
-        fromSpeciesId: data.fromSpeciesId,
+        fromSpeciesId: parentId,
         conditions: conditions,
       ),
     );
@@ -609,6 +632,35 @@ String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
     }
   }
   return fallback;
+}
+
+_EvolutionSpeciesRef? _readEvolutionSpeciesRef(dynamic rawSpecies) {
+  if (rawSpecies == null) {
+    return null;
+  }
+
+  if (rawSpecies is List) {
+    if (rawSpecies.isEmpty) {
+      return null;
+    }
+    return _readEvolutionSpeciesRef(rawSpecies.first);
+  }
+
+  if (rawSpecies is! Map<String, dynamic>) {
+    return null;
+  }
+
+  final idValue = rawSpecies['id'];
+  if (idValue is! int) {
+    return null;
+  }
+
+  final fallbackName = rawSpecies['name'] as String? ?? '';
+  final localizedNames =
+      rawSpecies['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+  final name = _resolveLocalizedName(localizedNames, fallbackName);
+
+  return _EvolutionSpeciesRef(id: idValue, name: name);
 }
 
 String _describeEvolutionCondition(Map<String, dynamic> evolution) {
