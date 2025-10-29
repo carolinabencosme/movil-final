@@ -416,7 +416,8 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
       level = null;
     }
 
-    final key = '${moveId ?? resolvedName}_$method_${versionGroup ?? ''}_${level ?? ''}';
+    final key =
+        '${moveId ?? resolvedName}_${method}_${versionGroup ?? ''}_${level ?? ''}';
     if (!seen.add(key)) {
       continue;
     }
