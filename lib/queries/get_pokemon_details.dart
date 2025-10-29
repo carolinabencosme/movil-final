@@ -35,7 +35,7 @@ const String getPokemonDetailsQuery = r'''
               min_affection
               min_beauty
               time_of_day
-              gender
+              gender_id
               relative_physical_stats
               pokemon_v2_evolutiontrigger {
                 name
