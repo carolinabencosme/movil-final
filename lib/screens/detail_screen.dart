@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
@@ -832,27 +833,11 @@ class _PokemonInfoTab extends StatelessWidget {
             title: 'Tipos',
             backgroundColor: sectionBackground,
             borderColor: sectionBorder,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             child: pokemon.types.isNotEmpty
-                ? Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: pokemon.types
-                        .map((type) {
-                          final typeColor = _resolveStaticTypeColor(
-                            type,
-                            theme.colorScheme,
-                          );
-                          return Chip(
-                            label: Text(formatLabel(type)),
-                            backgroundColor: typeColor.withOpacity(0.18),
-                            labelStyle: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            side: BorderSide(color: typeColor.withOpacity(0.45)),
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          );
-                        })
-                        .toList(),
+                ? _TypeLayout(
+                    types: pokemon.types,
+                    formatLabel: formatLabel,
                   )
                 : const Text('Sin información de tipos disponible.'),
           ),
@@ -936,6 +921,8 @@ class _PokemonInfoTab extends StatelessWidget {
             title: 'Características',
             backgroundColor: sectionBackground,
             borderColor: sectionBorder,
+            variant: InfoSectionCardVariant.angled,
+            padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
             child: _CharacteristicsSection(
               characteristics: characteristics,
               formatHeight: formatHeight,
@@ -947,19 +934,33 @@ class _PokemonInfoTab extends StatelessWidget {
             title: 'Habilidades',
             backgroundColor: sectionBackground,
             borderColor: sectionBorder,
+            variant: InfoSectionCardVariant.angled,
+            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
             child: pokemon.abilities.isNotEmpty
-                ? Column(
-                    children: pokemon.abilities
-                        .map(
-                          (ability) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: _AbilityTile(
-                              ability: ability,
-                              formatLabel: formatLabel,
+                ? SizedBox(
+                    height: 198,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < pokemon.abilities.length; i++)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                right: i == pokemon.abilities.length - 1 ? 0 : 14,
+                              ),
+                              child: SizedBox(
+                                width: 260,
+                                child: _AbilityTile(
+                                  ability: pokemon.abilities[i],
+                                  formatLabel: formatLabel,
+                                ),
+                              ),
                             ),
-                          ),
-                        )
-                        .toList(),
+                        ],
+                      ),
+                    ),
                   )
                 : const Text('Sin información de habilidades disponible.'),
           ),
@@ -1120,18 +1121,24 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+enum InfoSectionCardVariant { rounded, angled }
+
 class _InfoSectionCard extends StatelessWidget {
   const _InfoSectionCard({
     required this.title,
     required this.child,
     this.backgroundColor,
     this.borderColor,
+    this.variant = InfoSectionCardVariant.rounded,
+    this.padding,
   });
 
   final String title;
   final Widget child;
   final Color? backgroundColor;
   final Color? borderColor;
+  final InfoSectionCardVariant variant;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -1139,25 +1146,153 @@ class _InfoSectionCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final cardColor = backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.4);
     final outlineColor = borderColor ?? colorScheme.outline.withOpacity(0.12);
-    return Card(
-      margin: EdgeInsets.zero,
-      color: cardColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(26),
-        side: BorderSide(color: outlineColor),
+    final effectivePadding = padding ?? const EdgeInsets.all(20);
+    final content = Padding(
+      padding: effectivePadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(title: title),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionTitle(title: title),
-            const SizedBox(height: 12),
-            child,
+    );
+
+    switch (variant) {
+      case InfoSectionCardVariant.rounded:
+        return Card(
+          margin: EdgeInsets.zero,
+          color: cardColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: BorderSide(color: outlineColor),
+          ),
+          child: content,
+        );
+      case InfoSectionCardVariant.angled:
+        return ClipPath(
+          clipper: const _AngledCardClipper(),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: cardColor,
+              border: Border.all(color: outlineColor),
+            ),
+            child: content,
+          ),
+        );
+    }
+  }
+}
+
+class _AngledCardClipper extends CustomClipper<Path> {
+  const _AngledCardClipper();
+
+  @override
+  Path getClip(Size size) {
+    const double cut = 26;
+    return Path()
+      ..moveTo(0, cut)
+      ..quadraticBezierTo(0, 0, cut, 0)
+      ..lineTo(size.width - cut, 0)
+      ..quadraticBezierTo(size.width, 0, size.width, cut)
+      ..lineTo(size.width, size.height - cut)
+      ..quadraticBezierTo(
+        size.width,
+        size.height,
+        size.width - cut,
+        size.height,
+      )
+      ..lineTo(cut, size.height)
+      ..quadraticBezierTo(0, size.height, 0, size.height - cut)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _TypeLayout extends StatelessWidget {
+  const _TypeLayout({
+    required this.types,
+    required this.formatLabel,
+  });
+
+  final List<String> types;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (types.length <= 3) {
+      return Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: types.map((type) => _buildTypeChip(theme, type)).toList(),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
+
+        if (types.length <= 6) {
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 3.4,
+            ),
+            itemCount: types.length,
+            itemBuilder: (context, index) => Align(
+              alignment: Alignment.center,
+              child: _buildTypeChip(theme, types[index]),
+            ),
+          );
+        }
+
+        return CustomScrollView(
+          shrinkWrap: true,
+          primary: false,
+          physics: const NeverScrollableScrollPhysics(),
+          slivers: [
+            SliverMasonryGrid.count(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildTypeChip(theme, types[index]),
+                childCount: types.length,
+              ),
+            ),
           ],
-        ),
+        );
+      },
+    );
+  }
+
+  int _calculateCrossAxisCount(double maxWidth) {
+    final raw = (maxWidth / 180).floor();
+    var count = raw < 2 ? 2 : raw;
+    count = math.min(count, math.min(types.length, 4));
+    return count;
+  }
+
+  Widget _buildTypeChip(ThemeData theme, String type) {
+    final typeColor = _resolveStaticTypeColor(type, theme.colorScheme);
+    return Chip(
+      label: Text(formatLabel(type)),
+      backgroundColor: typeColor.withOpacity(0.18),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w600,
       ),
+      side: BorderSide(color: typeColor.withOpacity(0.45)),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }
@@ -1210,19 +1345,86 @@ class _CharacteristicsSection extends StatelessWidget {
       ),
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: items
-          .map(
-            (item) => _CharacteristicTile(
-              icon: item.icon,
-              label: item.label,
-              value: item.value,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (items.length <= 3) {
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: items
+                .map(
+                  (item) => SizedBox(
+                    width: 170,
+                    child: _CharacteristicTile(
+                      icon: item.icon,
+                      label: item.label,
+                      value: item.value,
+                    ),
+                  ),
+                )
+                .toList(),
+          );
+        }
+
+        final crossAxisCount = _characteristicCrossAxisCount(
+          constraints.maxWidth,
+          items.length,
+        );
+
+        if (items.length <= 6) {
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 1.45,
             ),
-          )
-          .toList(),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return _CharacteristicTile(
+                icon: item.icon,
+                label: item.label,
+                value: item.value,
+              );
+            },
+          );
+        }
+
+        return CustomScrollView(
+          shrinkWrap: true,
+          primary: false,
+          physics: const NeverScrollableScrollPhysics(),
+          slivers: [
+            SliverMasonryGrid.count(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = items[index];
+                  return _CharacteristicTile(
+                    icon: item.icon,
+                    label: item.label,
+                    value: item.value,
+                  );
+                },
+                childCount: items.length,
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  int _characteristicCrossAxisCount(double maxWidth, int itemCount) {
+    final raw = (maxWidth / 210).floor();
+    var count = raw < 2 ? 2 : raw;
+    count = math.min(count, math.min(itemCount, 4));
+    return count;
   }
 }
 
@@ -1850,8 +2052,7 @@ class _CharacteristicTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
-      width: 165,
-      constraints: const BoxConstraints(minHeight: 88),
+      constraints: const BoxConstraints(minWidth: 150, minHeight: 100),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colorScheme.surface.withOpacity(0.95),
@@ -1898,51 +2099,86 @@ class _AbilityTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final subtitle = ability.isHidden ? 'Habilidad oculta' : 'Habilidad principal';
 
-    return DecoratedBox(
+    return Container(
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: colorScheme.surface.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.08)),
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer.withOpacity(0.9),
+            colorScheme.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
                   Icons.auto_fix_high_outlined,
                   color: colorScheme.primary,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    formatLabel(ability.name),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  formatLabel(ability.name),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: ability.isHidden
+                  ? colorScheme.secondaryContainer.withOpacity(0.9)
+                  : colorScheme.tertiaryContainer.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 6),
-            Text(
+            child: Text(
               subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.75),
-                fontWeight: FontWeight.w600,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: ability.isHidden
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onTertiaryContainer,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Text(
               ability.description,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface.withOpacity(0.85),
               ),
+              maxLines: 6,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
