@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'dart:ui' show clampDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -65,6 +66,13 @@ const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
   _DetailTabConfig(icon: Icons.upcoming_rounded, label: 'Futuras'),
 ];
+
+EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
+  return EdgeInsets.symmetric(horizontal: horizontalPadding)
+      .copyWith(top: 24, bottom: 32);
+}
 
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
@@ -958,9 +966,10 @@ class _PokemonInfoTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final characteristics = pokemon.characteristics;
+    final padding = _responsiveDetailTabPadding(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -984,24 +993,38 @@ class _PokemonInfoTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _InfoCard(
-                        icon: Icons.height,
-                        label: 'Altura',
-                        value: formatHeight(characteristics.height),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _InfoCard(
-                        icon: Icons.monitor_weight_outlined,
-                        label: 'Peso',
-                        value: formatWeight(characteristics.weight),
-                      ),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxWidth = constraints.maxWidth;
+                    final isWide = maxWidth >= 520;
+                    const spacing = 12.0;
+                    final cardWidth = isWide
+                        ? (maxWidth - spacing) / 2
+                        : maxWidth;
+
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          child: _InfoCard(
+                            icon: Icons.height,
+                            label: 'Altura',
+                            value: formatHeight(characteristics.height),
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: _InfoCard(
+                            icon: Icons.monitor_weight_outlined,
+                            label: 'Peso',
+                            value: formatWeight(characteristics.weight),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 Card(
@@ -1072,30 +1095,47 @@ class _PokemonInfoTab extends StatelessWidget {
             variant: InfoSectionCardVariant.angled,
             padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
             child: pokemon.abilities.isNotEmpty
-                ? SizedBox(
-                    height: 198,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (var i = 0; i < pokemon.abilities.length; i++)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                right: i == pokemon.abilities.length - 1 ? 0 : 14,
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final size = MediaQuery.sizeOf(context);
+                      final isCompactWidth = constraints.maxWidth < 560;
+                      final viewportFraction = isCompactWidth ? 0.88 : 0.52;
+                      final cardWidth = clampDouble(
+                        constraints.maxWidth * viewportFraction,
+                        220,
+                        constraints.maxWidth,
+                      );
+                      final baseHeight = size.height * (isCompactWidth ? 0.28 : 0.32);
+                      final cardHeight = clampDouble(
+                        baseHeight,
+                        isCompactWidth ? 160 : 200,
+                        isCompactWidth ? 220 : 260,
+                      );
+                      final controller = PageController(viewportFraction: viewportFraction);
+
+                      return SizedBox(
+                        height: cardHeight,
+                        child: PageView.builder(
+                          controller: controller,
+                          padEnds: pokemon.abilities.length == 1,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: pokemon.abilities.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isCompactWidth ? 8 : 10,
                               ),
-                              child: SizedBox(
-                                width: 260,
-                                child: _AbilityTile(
-                                  ability: pokemon.abilities[i],
-                                  formatLabel: formatLabel,
-                                ),
+                              child: _AbilityTile(
+                                ability: pokemon.abilities[index],
+                                formatLabel: formatLabel,
+                                width: cardWidth,
+                                height: cardHeight,
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   )
                 : const Text('Sin información de habilidades disponible.'),
           ),
@@ -1120,8 +1160,10 @@ class _PokemonStatsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: padding,
       child: _InfoSectionCard(
         title: 'Estadísticas',
         backgroundColor: sectionBackground,
@@ -1158,8 +1200,10 @@ class _PokemonMatchupsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1203,8 +1247,10 @@ class _PokemonFutureTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2220,10 +2266,14 @@ class _AbilityTile extends StatelessWidget {
   const _AbilityTile({
     required this.ability,
     required this.formatLabel,
+    required this.width,
+    required this.height,
   });
 
   final PokemonAbilityDetail ability;
   final String Function(String) formatLabel;
+  final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -2231,86 +2281,90 @@ class _AbilityTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final subtitle = ability.isHidden ? 'Habilidad oculta' : 'Habilidad principal';
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primaryContainer.withOpacity(0.9),
-            colorScheme.surface,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.9),
+              colorScheme.surface,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.auto_fix_high_outlined,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  formatLabel(ability.name),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+          border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.auto_fix_high_outlined,
+                    color: colorScheme.primary,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: ability.isHidden
-                  ? colorScheme.secondaryContainer.withOpacity(0.9)
-                  : colorScheme.tertiaryContainer.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    formatLabel(ability.name),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: Text(
-              subtitle,
-              style: theme.textTheme.labelSmall?.copyWith(
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
                 color: ability.isHidden
-                    ? colorScheme.onSecondaryContainer
-                    : colorScheme.onTertiaryContainer,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
+                    ? colorScheme.secondaryContainer.withOpacity(0.9)
+                    : colorScheme.tertiaryContainer.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                subtitle,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: ability.isHidden
+                      ? colorScheme.onSecondaryContainer
+                      : colorScheme.onTertiaryContainer,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Text(
-              ability.description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.85),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Text(
+                ability.description,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.85),
+                ),
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
