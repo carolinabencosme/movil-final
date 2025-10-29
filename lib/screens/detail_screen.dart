@@ -1262,15 +1262,19 @@ class _TypeLayout extends StatelessWidget {
           primary: false,
           physics: const NeverScrollableScrollPhysics(),
           slivers: [
-            SliverMasonryGrid.count(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childDelegate: SliverChildBuilderDelegate(
-                (context, index) => _buildTypeChip(theme, types[index]),
+            SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.0, // Puedes ajustar esto si es necesario
+              ),
+              delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildTypeChip(theme, types[index]),
                 childCount: types.length,
               ),
             ),
+
           ],
         );
       },
@@ -1399,12 +1403,15 @@ class _CharacteristicsSection extends StatelessWidget {
           primary: false,
           physics: const NeverScrollableScrollPhysics(),
           slivers: [
-            SliverMasonryGrid.count(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childDelegate: SliverChildBuilderDelegate(
-                (context, index) {
+            SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                childAspectRatio: 1, // Ajusta esto si necesitas un aspecto diferente
+              ),
+              delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
                   final item = items[index];
                   return _CharacteristicTile(
                     icon: item.icon,
