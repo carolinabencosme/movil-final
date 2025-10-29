@@ -734,7 +734,7 @@ String _describeEvolutionCondition(Map<String, dynamic> evolution) {
     }
   }
 
-  final gender = evolution['gender'];
+  final gender = evolution['gender_id'];
   if (gender is int) {
     if (gender == 1) {
       details.add('Solo hembra');
