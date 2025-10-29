@@ -103,6 +103,12 @@ ${paginationBlock}      order_by: $orderByBlock
           name
         }
       }
+      pokemon_v2_pokemonstats(limit: 3, order_by: {pokemon_v2_stat: {id: asc}}) {
+        base_stat
+        pokemon_v2_stat {
+          name
+        }
+      }
       pokemon_v2_pokemonspecy {
         generation_id
         pokemon_v2_generation {

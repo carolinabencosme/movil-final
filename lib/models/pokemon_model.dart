@@ -29,6 +29,7 @@ class PokemonListItem {
     required this.name,
     required this.imageUrl,
     this.types = const [],
+    this.stats = const [],
     this.generationId,
     this.generationName,
   });
@@ -37,6 +38,7 @@ class PokemonListItem {
   final String name;
   final String imageUrl;
   final List<String> types;
+  final List<PokemonStat> stats;
   final int? generationId;
   final String? generationName;
 
@@ -49,6 +51,21 @@ class PokemonListItem {
           return name is String ? name : null;
         })
         .whereType<String>()
+        .toList();
+
+    final statsEntries = json['pokemon_v2_pokemonstats'] as List<dynamic>? ?? [];
+    final stats = statsEntries
+        .map((dynamic statEntry) {
+          final stat = statEntry as Map<String, dynamic>?;
+          final baseStat = stat?['base_stat'];
+          final statInfo = stat?['pokemon_v2_stat'] as Map<String, dynamic>?;
+          final statName = statInfo?['name'];
+          if (baseStat is int && statName is String) {
+            return PokemonStat(name: statName, baseStat: baseStat);
+          }
+          return null;
+        })
+        .whereType<PokemonStat>()
         .toList();
 
     final species = json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
@@ -71,6 +88,7 @@ class PokemonListItem {
       name: json['name'] as String? ?? '',
       imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
       types: types,
+      stats: stats,
       generationId: resolvedGenerationId,
       generationName: resolvedGenerationName,
     );

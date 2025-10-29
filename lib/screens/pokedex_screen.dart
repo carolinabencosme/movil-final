@@ -7,6 +7,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
+import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 
@@ -1294,108 +1295,192 @@ class _FiltersSheetState extends State<FiltersSheet> {
   }
 }
 
-class _PokemonListTile extends StatelessWidget {
+class _PokemonListTile extends StatefulWidget {
   const _PokemonListTile({required this.pokemon});
 
   final PokemonListItem pokemon;
 
   @override
+  State<_PokemonListTile> createState() => _PokemonListTileState();
+}
+
+class _PokemonListTileState extends State<_PokemonListTile> {
+  bool _isPressed = false;
+
+  void _handleTap(BuildContext context, String heroTag) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailScreen(
+          pokemonId: widget.pokemon.id,
+          initialPokemon: widget.pokemon,
+          heroTag: heroTag,
+        ),
+      ),
+    );
+  }
+
+  Color _shiftLightness(Color color, double amount) {
+    final hsl = HSLColor.fromColor(color);
+    final double lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
+    return hsl.withLightness(lightness).toColor();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final pokemon = widget.pokemon;
     final heroTag = 'pokemon-image-${pokemon.id}';
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DetailScreen(
-                pokemonId: pokemon.id,
-                initialPokemon: pokemon,
-                heroTag: heroTag,
-              ),
+    final primaryTypeKey =
+        pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
+    final baseColor =
+        pokemonTypeColors[primaryTypeKey] ?? theme.colorScheme.primary;
+    final gradient = LinearGradient(
+      colors: [
+        _shiftLightness(baseColor, 0.18),
+        _shiftLightness(baseColor, -0.06),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+    final textColor = Colors.white;
+    final displayTypes =
+        pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
+    final statBadges = pokemon.stats.take(3).toList();
+
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      scale: _isPressed ? 0.97 : 1.0,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: baseColor.withOpacity(0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
             ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Hero(
-                tag: heroTag,
-                child: PokemonArtwork(
-                  imageUrl: pokemon.imageUrl,
-                  size: 86,
-                  borderRadius: 24,
-                  padding: const EdgeInsets.all(10),
-                  showShadow: false,
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+          clipBehavior: Clip.antiAlias,
+          child: InkResponse(
+            containedInkWell: true,
+            highlightShape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(28),
+            onHighlightChanged: (value) {
+              if (_isPressed != value) {
+                setState(() => _isPressed = value);
+              }
+            },
+            onTap: () => _handleTap(context, heroTag),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -14,
+                  right: -14,
+                  child: Icon(
+                    Icons.catching_pokemon,
+                    size: 96,
+                    color: textColor.withOpacity(0.12),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          child: Text(
-                            _formatPokemonNumber(pokemon.id),
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _capitalize(pokemon.name),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (pokemon.types.isNotEmpty)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: pokemon.types
-                            .map((type) => _PokemonTypeChip(type: type))
-                            .toList(),
-                      )
-                    else
-                      Text(
-                        'Tipo desconocido',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Hero(
+                        tag: heroTag,
+                        child: PokemonArtwork(
+                          imageUrl: pokemon.imageUrl,
+                          size: 90,
+                          borderRadius: 24,
+                          padding: const EdgeInsets.all(10),
+                          showShadow: false,
                         ),
                       ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatPokemonNumber(pokemon.id),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: textColor.withOpacity(0.88),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              pokemon.name.toUpperCase(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: textColor,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: displayTypes
+                                  .map(
+                                    (type) => _PokemonTypeChip(
+                                      type: type,
+                                      backgroundColor:
+                                          textColor.withOpacity(0.16),
+                                      foregroundColor: textColor,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                            if (statBadges.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: statBadges
+                                    .map(
+                                      (stat) => _PokemonStatBadge(
+                                        stat: stat,
+                                        backgroundColor:
+                                            textColor.withOpacity(0.14),
+                                        foregroundColor: textColor,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: textColor.withOpacity(0.9),
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: theme.colorScheme.primary,
-                size: 18,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1404,25 +1489,87 @@ class _PokemonListTile extends StatelessWidget {
 }
 
 class _PokemonTypeChip extends StatelessWidget {
-  const _PokemonTypeChip({required this.type});
+  const _PokemonTypeChip({
+    required this.type,
+    this.backgroundColor,
+    this.foregroundColor,
+  });
 
   final String type;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Chip(
-      label: Text(_capitalize(type)),
-      backgroundColor:
-          theme.colorScheme.secondaryContainer.withOpacity(0.85),
-      labelStyle: theme.textTheme.labelMedium?.copyWith(
-        color: theme.colorScheme.onSecondaryContainer,
-        fontWeight: FontWeight.w600,
-      ),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    final bgColor =
+        backgroundColor ?? theme.colorScheme.secondaryContainer.withOpacity(0.85);
+    final fgColor = foregroundColor ?? theme.colorScheme.onSecondaryContainer;
+
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        type.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: fgColor,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _PokemonStatBadge extends StatelessWidget {
+  const _PokemonStatBadge({
+    required this.stat,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final PokemonStat stat;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  String _statLabel(String name) {
+    switch (name.toLowerCase()) {
+      case 'hp':
+        return 'HP';
+      case 'attack':
+        return 'ATK';
+      case 'defense':
+        return 'DEF';
+      case 'special-attack':
+        return 'SPA';
+      case 'special-defense':
+        return 'SPD';
+      case 'speed':
+        return 'SPE';
+      default:
+        return name.toUpperCase();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '${_statLabel(stat.name)} ${stat.baseStat}',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: foregroundColor,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
