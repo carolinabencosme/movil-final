@@ -377,6 +377,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 ),
                 const SizedBox(height: 16),
                 _InfoSectionCard(
+                  title: 'Movimientos',
+                  child: _MovesSection(
+                    moves: pokemon.moves,
+                    formatLabel: _formatLabel,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _InfoSectionCard(
                   title: 'Habilidades',
                   child: pokemon.abilities.isNotEmpty
                       ? Column(
@@ -415,6 +423,15 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                   title: 'Resistencias e inmunidades',
                   child: _TypeMatchupSection(
                     matchups: pokemon.typeMatchups,
+                    formatLabel: _formatLabel,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _InfoSectionCard(
+                  title: 'Cadena evolutiva',
+                  child: _EvolutionSection(
+                    evolutionChain: pokemon.evolutionChain,
+                    currentSpeciesId: pokemon.speciesId,
                     formatLabel: _formatLabel,
                   ),
                 ),
@@ -686,6 +703,461 @@ class _WeaknessChip extends StatelessWidget {
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: typeColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MovesSection extends StatefulWidget {
+  const _MovesSection({
+    required this.moves,
+    required this.formatLabel,
+  });
+
+  final List<PokemonMove> moves;
+  final String Function(String) formatLabel;
+
+  @override
+  State<_MovesSection> createState() => _MovesSectionState();
+}
+
+class _MovesSectionState extends State<_MovesSection> {
+  String? _selectedMethod;
+  bool _onlyWithLevel = false;
+
+  String _resolveDisplayName(String value) {
+    if (value.isEmpty) {
+      return 'Movimiento desconocido';
+    }
+    final lowercase = value.toLowerCase();
+    if (value == lowercase) {
+      return widget.formatLabel(value);
+    }
+    return value;
+  }
+
+  String _formatMethod(String method) {
+    if (method.toLowerCase() == 'unknown') {
+      return 'Desconocido';
+    }
+    return widget.formatLabel(method);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.moves.isEmpty) {
+      return const Text('Sin información de movimientos disponible.');
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final methods = widget.moves
+        .map((move) => move.method)
+        .where((method) => method.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort(
+        (a, b) => widget.formatLabel(a).compareTo(widget.formatLabel(b)),
+      );
+
+    final filteredMoves = widget.moves.where((move) {
+      if (_selectedMethod != null && move.method != _selectedMethod) {
+        return false;
+      }
+      if (_onlyWithLevel && !move.hasLevel) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) {
+        final levelA = a.level ?? 999;
+        final levelB = b.level ?? 999;
+        final levelComparison = levelA.compareTo(levelB);
+        if (levelComparison != 0) {
+          return levelComparison;
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Todos'),
+              selected: _selectedMethod == null,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() => _selectedMethod = null);
+                }
+              },
+            ),
+            ...methods.map(
+              (method) => ChoiceChip(
+                label: Text(_formatMethod(method)),
+                selected: _selectedMethod == method,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedMethod = selected ? method : null;
+                  });
+                },
+              ),
+            ),
+            FilterChip(
+              label: const Text('Solo movimientos con nivel'),
+              selected: _onlyWithLevel,
+              onSelected: (selected) {
+                setState(() => _onlyWithLevel = selected);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (filteredMoves.isEmpty)
+          const Text('No hay movimientos que coincidan con los filtros.')
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filteredMoves.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final move = filteredMoves[index];
+              final typeKey = move.type?.toLowerCase() ?? '';
+              final typeColor =
+                  _pokemonTypeColors[typeKey] ?? colorScheme.primary;
+              final emoji = _typeEmojis[typeKey];
+              final typeLabel = move.type == null || move.type!.isEmpty
+                  ? '—'
+                  : widget.formatLabel(move.type!);
+              final methodLabel = _formatMethod(move.method);
+              final versionLabel = move.versionGroup == null ||
+                      move.versionGroup!.isEmpty
+                  ? null
+                  : widget.formatLabel(move.versionGroup!);
+
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withOpacity(0.94),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: typeColor.withOpacity(0.28)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (emoji != null) ...[
+                          Text(emoji, style: const TextStyle(fontSize: 18)),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            _resolveDisplayName(move.name),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: typeColor.withOpacity(0.16),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            typeLabel,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _MoveInfoChip(
+                          icon: Icons.school_outlined,
+                          label: methodLabel,
+                        ),
+                        _MoveInfoChip(
+                          icon: Icons.trending_up,
+                          label: move.hasLevel
+                              ? 'Nivel ${move.level}'
+                              : 'Sin nivel definido',
+                        ),
+                        if (versionLabel != null)
+                          _MoveInfoChip(
+                            icon: Icons.videogame_asset_outlined,
+                            label: versionLabel,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _EvolutionSection extends StatelessWidget {
+  const _EvolutionSection({
+    required this.evolutionChain,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final PokemonEvolutionChain? evolutionChain;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final chain = evolutionChain;
+    if (chain == null || chain.isEmpty) {
+      return const Text('Sin información de evoluciones disponible.');
+    }
+
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < chain.groups.length; index++) ...[
+          _EvolutionStageRow(
+            nodes: chain.groups[index],
+            currentSpeciesId: currentSpeciesId,
+            formatLabel: formatLabel,
+          ),
+          if (index < chain.groups.length - 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Icon(
+                  Icons.arrow_downward_rounded,
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.65),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _EvolutionStageRow extends StatelessWidget {
+  const _EvolutionStageRow({
+    required this.nodes,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final List<PokemonEvolutionNode> nodes;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (nodes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final mediaWidth = MediaQuery.of(context).size.width;
+    final double rawMaxWidth = mediaWidth < 480 ? mediaWidth - 64 : 260;
+    final double maxWidth = rawMaxWidth.clamp(180.0, 320.0).toDouble();
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      alignment: WrapAlignment.center,
+      children: nodes
+          .map(
+            (node) => ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: 180,
+                maxWidth: maxWidth,
+              ),
+              child: _EvolutionStageCard(
+                node: node,
+                isCurrent: currentSpeciesId != null &&
+                    currentSpeciesId == node.speciesId,
+                formatLabel: formatLabel,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _EvolutionStageCard extends StatelessWidget {
+  const _EvolutionStageCard({
+    required this.node,
+    required this.isCurrent,
+    required this.formatLabel,
+  });
+
+  final PokemonEvolutionNode node;
+  final bool isCurrent;
+  final String Function(String) formatLabel;
+
+  String _resolveName(String value) {
+    if (value.isEmpty) {
+      return 'Desconocido';
+    }
+    final lowercase = value.toLowerCase();
+    if (value == lowercase) {
+      return formatLabel(value);
+    }
+    return value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final borderColor = isCurrent
+        ? colorScheme.primary
+        : colorScheme.outline.withOpacity(0.35);
+    final backgroundColor = isCurrent
+        ? colorScheme.primaryContainer.withOpacity(0.7)
+        : colorScheme.surface.withOpacity(0.96);
+    final textColor = isCurrent
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
+    final subtitleColor = isCurrent
+        ? colorScheme.onPrimaryContainer.withOpacity(0.88)
+        : colorScheme.onSurfaceVariant;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: borderColor,
+          width: isCurrent ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PokemonArtwork(
+            imageUrl: node.imageUrl,
+            size: 110,
+            borderRadius: 24,
+            padding: const EdgeInsets.all(12),
+            showShadow: false,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _resolveName(node.name),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (node.conditions.isEmpty)
+            Text(
+              'Sin requisitos adicionales.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: subtitleColor,
+              ),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: node.conditions
+                  .map(
+                    (condition) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '• ',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: subtitleColor,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              condition,
+                              style:
+                                  theme.textTheme.bodyMedium?.copyWith(
+                                color: subtitleColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoveInfoChip extends StatelessWidget {
+  const _MoveInfoChip({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

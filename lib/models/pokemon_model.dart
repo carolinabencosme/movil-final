@@ -87,6 +87,9 @@ class PokemonDetail {
     required this.stats,
     required this.characteristics,
     required this.typeMatchups,
+    required this.moves,
+    this.evolutionChain,
+    this.speciesId,
   });
 
   final int id;
@@ -97,6 +100,9 @@ class PokemonDetail {
   final List<PokemonStat> stats;
   final PokemonCharacteristics characteristics;
   final List<TypeMatchup> typeMatchups;
+  final List<PokemonMove> moves;
+  final PokemonEvolutionChain? evolutionChain;
+  final int? speciesId;
 
   factory PokemonDetail.fromGraphQL(
     Map<String, dynamic> json, {
@@ -196,6 +202,10 @@ class PokemonDetail {
         .whereType<PokemonAbilityDetail>()
         .toList();
 
+    final moves = _parsePokemonMoves(
+      json['pokemon_v2_pokemonmoves'] as List<dynamic>? ?? const [],
+    );
+
     final species =
         json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
     final speciesNames =
@@ -214,6 +224,12 @@ class PokemonDetail {
     final captureRate = species?['capture_rate'] as int? ?? 0;
     final height = json['height'] as int? ?? 0;
     final weight = json['weight'] as int? ?? 0;
+
+    final speciesId = species?['id'] as int?;
+    final evolutionChain = _parseEvolutionChain(
+      species,
+      currentSpeciesId: speciesId,
+    );
 
     final characteristics = PokemonCharacteristics(
       height: height,
@@ -235,8 +251,77 @@ class PokemonDetail {
       stats: stats,
       characteristics: characteristics,
       typeMatchups: typeMatchups,
+      moves: moves,
+      evolutionChain: evolutionChain,
+      speciesId: speciesId,
     );
   }
+}
+
+class PokemonMove {
+  const PokemonMove({
+    this.id,
+    required this.name,
+    required this.method,
+    this.type,
+    this.level,
+    this.versionGroup,
+  });
+
+  final int? id;
+  final String name;
+  final String method;
+  final String? type;
+  final int? level;
+  final String? versionGroup;
+
+  bool get hasLevel => level != null && level! > 0;
+}
+
+class PokemonEvolutionChain {
+  const PokemonEvolutionChain({
+    required this.groups,
+    this.currentSpeciesId,
+  });
+
+  final List<List<PokemonEvolutionNode>> groups;
+  final int? currentSpeciesId;
+
+  bool get isEmpty => groups.isEmpty || groups.every((group) => group.isEmpty);
+}
+
+class PokemonEvolutionNode {
+  const PokemonEvolutionNode({
+    required this.speciesId,
+    required this.name,
+    required this.imageUrl,
+    required this.order,
+    this.fromSpeciesId,
+    this.conditions = const <String>[],
+  });
+
+  final int speciesId;
+  final String name;
+  final String imageUrl;
+  final int order;
+  final int? fromSpeciesId;
+  final List<String> conditions;
+}
+
+class _EvolutionSpeciesData {
+  const _EvolutionSpeciesData({
+    required this.id,
+    required this.name,
+    required this.order,
+    this.fromSpeciesId,
+    this.imageUrl = '',
+  });
+
+  final int id;
+  final String name;
+  final int order;
+  final int? fromSpeciesId;
+  final String imageUrl;
 }
 
 class PokemonStat {
@@ -285,6 +370,343 @@ class TypeMatchup {
 
   final String type;
   final double multiplier;
+}
+
+List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
+  if (entries.isEmpty) {
+    return const <PokemonMove>[];
+  }
+
+  final List<PokemonMove> moves = <PokemonMove>[];
+  final Set<String> seen = <String>{};
+
+  for (final dynamic entry in entries) {
+    final moveEntry = entry as Map<String, dynamic>?;
+    if (moveEntry == null) {
+      continue;
+    }
+
+    final moveInfo = moveEntry['pokemon_v2_move'] as Map<String, dynamic>?;
+    if (moveInfo == null) {
+      continue;
+    }
+
+    final int? moveId = moveInfo['id'] as int?;
+    final String fallbackName = moveInfo['name'] as String? ?? '';
+    final localizedNames =
+        moveInfo['pokemon_v2_movenames'] as List<dynamic>? ?? [];
+    final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
+
+    final methodInfo =
+        moveEntry['pokemon_v2_movelearnmethod'] as Map<String, dynamic>?;
+    final method = methodInfo?['name'] as String? ?? 'unknown';
+
+    final versionGroupInfo =
+        moveEntry['pokemon_v2_versiongroup'] as Map<String, dynamic>?;
+    final versionGroup = versionGroupInfo?['name'] as String?;
+
+    final typeInfo = moveInfo['pokemon_v2_type'] as Map<String, dynamic>?;
+    final type = typeInfo?['name'] as String?;
+
+    final levelValue = moveEntry['level'];
+    final int? level;
+    if (levelValue is int) {
+      level = levelValue >= 0 ? levelValue : null;
+    } else {
+      level = null;
+    }
+
+    final key = '${moveId ?? resolvedName}_$method_${versionGroup ?? ''}_${level ?? ''}';
+    if (!seen.add(key)) {
+      continue;
+    }
+
+    moves.add(
+      PokemonMove(
+        id: moveId,
+        name: resolvedName,
+        method: method,
+        type: type,
+        level: level,
+        versionGroup: versionGroup,
+      ),
+    );
+  }
+
+  moves.sort((a, b) {
+    final levelA = a.level ?? 999;
+    final levelB = b.level ?? 999;
+    final levelComparison = levelA.compareTo(levelB);
+    if (levelComparison != 0) {
+      return levelComparison;
+    }
+    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+  });
+
+  return moves;
+}
+
+PokemonEvolutionChain? _parseEvolutionChain(
+  Map<String, dynamic>? species, {
+  int? currentSpeciesId,
+}) {
+  if (species == null) {
+    return null;
+  }
+
+  final chain = species['pokemon_v2_evolutionchain'] as Map<String, dynamic>?;
+  if (chain == null) {
+    return null;
+  }
+
+  final speciesEntries =
+      chain['pokemon_v2_pokemonspecies'] as List<dynamic>? ?? [];
+  if (speciesEntries.isEmpty) {
+    return null;
+  }
+
+  final Map<int, _EvolutionSpeciesData> speciesData =
+      <int, _EvolutionSpeciesData>{};
+  final Map<int, List<String>> conditionsByTarget =
+      <int, List<String>>{};
+
+  for (final dynamic entry in speciesEntries) {
+    final speciesMap = entry as Map<String, dynamic>?;
+    if (speciesMap == null) {
+      continue;
+    }
+
+    final speciesId = speciesMap['id'] as int?;
+    if (speciesId == null) {
+      continue;
+    }
+
+    final fallbackName = speciesMap['name'] as String? ?? '';
+    final localizedNames =
+        speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+    final name = _resolveLocalizedName(localizedNames, fallbackName);
+
+    final order = speciesMap['order'] as int? ?? 0;
+    final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
+
+    String imageUrl = '';
+    final pokemons = speciesMap['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
+    for (final dynamic pokemonEntry in pokemons) {
+      final pokemonMap = pokemonEntry as Map<String, dynamic>?;
+      if (pokemonMap == null) {
+        continue;
+      }
+      final candidate = _extractSpriteUrl(pokemonMap['pokemon_v2_pokemonsprites']);
+      if (candidate.isNotEmpty) {
+        imageUrl = candidate;
+        break;
+      }
+    }
+
+    speciesData[speciesId] = _EvolutionSpeciesData(
+      id: speciesId,
+      name: name,
+      order: order,
+      fromSpeciesId: fromSpeciesId,
+      imageUrl: imageUrl,
+    );
+
+    final evolutions =
+        speciesMap['pokemon_v2_pokemonevolutions'] as List<dynamic>? ?? [];
+    for (final dynamic evoEntry in evolutions) {
+      final evoMap = evoEntry as Map<String, dynamic>?;
+      if (evoMap == null) {
+        continue;
+      }
+      final evolvedId = evoMap['evolved_species_id'];
+      if (evolvedId is! int) {
+        continue;
+      }
+      final description = _describeEvolutionCondition(evoMap);
+      if (description.isEmpty) {
+        continue;
+      }
+      final conditions =
+          conditionsByTarget.putIfAbsent(evolvedId, () => <String>[]);
+      conditions.add(description);
+    }
+  }
+
+  if (speciesData.isEmpty) {
+    return null;
+  }
+
+  final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
+  speciesData.forEach((int id, _EvolutionSpeciesData data) {
+    final conditions =
+        List<String>.from(conditionsByTarget[id] ?? const <String>[]);
+    if (conditions.isEmpty && data.fromSpeciesId != null) {
+      conditions.add('Requisitos no especificados');
+    }
+    nodes.add(
+      PokemonEvolutionNode(
+        speciesId: data.id,
+        name: data.name,
+        imageUrl: data.imageUrl,
+        order: data.order,
+        fromSpeciesId: data.fromSpeciesId,
+        conditions: conditions,
+      ),
+    );
+  });
+
+  final Map<int?, List<PokemonEvolutionNode>> groupedByParent =
+      <int?, List<PokemonEvolutionNode>>{};
+  for (final node in nodes) {
+    final parent = node.fromSpeciesId;
+    final siblings = groupedByParent.putIfAbsent(
+      parent,
+      () => <PokemonEvolutionNode>[],
+    );
+    siblings.add(node);
+  }
+
+  List<PokemonEvolutionNode> currentLevel =
+      List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
+  currentLevel.sort((a, b) => a.order.compareTo(b.order));
+
+  final List<List<PokemonEvolutionNode>> groups = <List<PokemonEvolutionNode>>[];
+
+  if (currentLevel.isEmpty) {
+    nodes.sort((a, b) => a.order.compareTo(b.order));
+    groups.add(List<PokemonEvolutionNode>.from(nodes));
+  } else {
+    while (currentLevel.isNotEmpty) {
+      groups.add(List<PokemonEvolutionNode>.from(currentLevel));
+      final List<PokemonEvolutionNode> nextLevel = <PokemonEvolutionNode>[];
+      for (final node in currentLevel) {
+        final children = groupedByParent[node.speciesId];
+        if (children == null || children.isEmpty) {
+          continue;
+        }
+        children.sort((a, b) => a.order.compareTo(b.order));
+        nextLevel.addAll(children);
+      }
+      currentLevel = nextLevel;
+    }
+  }
+
+  return PokemonEvolutionChain(
+    groups: groups,
+    currentSpeciesId: currentSpeciesId,
+  );
+}
+
+String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
+  if (entries != null) {
+    for (final dynamic entry in entries) {
+      final map = entry as Map<String, dynamic>?;
+      final name = map?['name'];
+      if (name is String && name.isNotEmpty) {
+        return name;
+      }
+    }
+  }
+  return fallback;
+}
+
+String _describeEvolutionCondition(Map<String, dynamic> evolution) {
+  final List<String> details = <String>[];
+
+  final minLevel = evolution['min_level'];
+  if (minLevel is int && minLevel > 0) {
+    details.add('Nivel $minLevel');
+  }
+
+  final triggerMap =
+      evolution['pokemon_v2_evolutiontrigger'] as Map<String, dynamic>?;
+  final trigger = triggerMap?['name'] as String?;
+  if (trigger != null && trigger.isNotEmpty && trigger != 'level-up') {
+    details.add('Método: ${_formatGraphqlLabel(trigger)}');
+  }
+
+  final itemMap = evolution['pokemon_v2_item'] as Map<String, dynamic>?;
+  final item = itemMap?['name'] as String?;
+  if (item != null && item.isNotEmpty) {
+    details.add('Objeto: ${_formatGraphqlLabel(item)}');
+  }
+
+  final moveMap = evolution['pokemon_v2_move'] as Map<String, dynamic>?;
+  final move = moveMap?['name'] as String?;
+  if (move != null && move.isNotEmpty) {
+    details.add('Movimiento: ${_formatGraphqlLabel(move)}');
+  }
+
+  final locationMap =
+      evolution['pokemon_v2_location'] as Map<String, dynamic>?;
+  final location = locationMap?['name'] as String?;
+  if (location != null && location.isNotEmpty) {
+    details.add('Lugar: ${_formatGraphqlLabel(location)}');
+  }
+
+  final typeMap = evolution['pokemon_v2_type'] as Map<String, dynamic>?;
+  final type = typeMap?['name'] as String?;
+  if (type != null && type.isNotEmpty) {
+    details.add('Tipo requerido: ${_formatGraphqlLabel(type)}');
+  }
+
+  final timeOfDay = evolution['time_of_day'];
+  if (timeOfDay is String && timeOfDay.isNotEmpty) {
+    details.add('Momento: ${_formatGraphqlLabel(timeOfDay)}');
+  }
+
+  final minHappiness = evolution['min_happiness'];
+  if (minHappiness is int && minHappiness > 0) {
+    details.add('Felicidad mínima: $minHappiness');
+  }
+
+  final minAffection = evolution['min_affection'];
+  if (minAffection is int && minAffection > 0) {
+    details.add('Afecto mínimo: $minAffection');
+  }
+
+  final minBeauty = evolution['min_beauty'];
+  if (minBeauty is int && minBeauty > 0) {
+    details.add('Belleza mínima: $minBeauty');
+  }
+
+  final relativePhysicalStats = evolution['relative_physical_stats'];
+  if (relativePhysicalStats is int) {
+    if (relativePhysicalStats > 0) {
+      details.add('Ataque > Defensa');
+    } else if (relativePhysicalStats < 0) {
+      details.add('Ataque < Defensa');
+    } else {
+      details.add('Ataque = Defensa');
+    }
+  }
+
+  final gender = evolution['gender'];
+  if (gender is int) {
+    if (gender == 1) {
+      details.add('Solo hembra');
+    } else if (gender == 2) {
+      details.add('Solo macho');
+    }
+  }
+
+  if (details.isEmpty) {
+    return '';
+  }
+
+  return details.join(' · ');
+}
+
+String _formatGraphqlLabel(String value) {
+  final cleaned = value.replaceAll('-', ' ').replaceAll('_', ' ');
+  final parts = cleaned.split(RegExp(r'\s+'))..removeWhere((part) => part.isEmpty);
+  if (parts.isEmpty) {
+    return value;
+  }
+
+  return parts
+      .map((part) => part[0].toUpperCase() + part.substring(1))
+      .join(' ');
 }
 
 List<TypeMatchup> _buildTypeMatchups(
