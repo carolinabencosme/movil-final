@@ -270,6 +270,18 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
           ),
           const SizedBox(height: 16),
           _InfoSectionCard(
+            title: 'Evoluciones',
+            child: pokemon.evolutions.isEmpty
+                ? const Text('Sin información de evoluciones disponible.')
+                : pokemon.evolutions.length > 1
+                    ? _EvolutionChain(
+                        evolutions: pokemon.evolutions,
+                        capitalize: widget.capitalize,
+                      )
+                    : const Text('Este Pokémon no tiene evoluciones disponibles.'),
+          ),
+          const SizedBox(height: 16),
+          _InfoSectionCard(
             title: 'Debilidades',
             child: _WeaknessSection(
               matchups: pokemon.typeMatchups,
@@ -419,6 +431,111 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EvolutionChain extends StatelessWidget {
+  const _EvolutionChain({
+    required this.evolutions,
+    required this.capitalize,
+  });
+
+  final List<PokemonEvolutionStage> evolutions;
+  final String Function(String) capitalize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (int index = 0; index < evolutions.length; index++) ...[
+            _EvolutionStageItem(
+              stage: evolutions[index],
+              capitalize: capitalize,
+            ),
+            if (index < evolutions.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: colorScheme.primary.withOpacity(0.7),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EvolutionStageItem extends StatelessWidget {
+  const _EvolutionStageItem({
+    required this.stage,
+    required this.capitalize,
+  });
+
+  final PokemonEvolutionStage stage;
+  final String Function(String) capitalize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final backgroundColor = stage.isCurrent
+        ? colorScheme.primaryContainer.withOpacity(0.9)
+        : colorScheme.surface.withOpacity(0.95);
+    final borderColor = stage.isCurrent
+        ? colorScheme.primary
+        : colorScheme.outline.withOpacity(0.3);
+
+    return Container(
+      width: 120,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: stage.isCurrent
+            ? [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.18),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PokemonArtwork(
+            imageUrl: stage.imageUrl,
+            size: 90,
+            borderRadius: 20,
+            padding: const EdgeInsets.all(12),
+            showShadow: false,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            capitalize(stage.name),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: stage.isCurrent
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurface,
             ),
           ),
         ],
