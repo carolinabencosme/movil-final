@@ -87,6 +87,7 @@ class PokemonDetail {
     required this.stats,
     required this.characteristics,
     required this.typeMatchups,
+    required this.evolutions,
   });
 
   final int id;
@@ -97,6 +98,7 @@ class PokemonDetail {
   final List<PokemonStat> stats;
   final PokemonCharacteristics characteristics;
   final List<TypeMatchup> typeMatchups;
+  final List<PokemonEvolutionStage> evolutions;
 
   factory PokemonDetail.fromGraphQL(
     Map<String, dynamic> json, {
@@ -198,6 +200,7 @@ class PokemonDetail {
 
     final species =
         json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
+    final currentSpeciesId = species?['id'] as int?;
     final speciesNames =
         species?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
     String category = '';
@@ -225,6 +228,11 @@ class PokemonDetail {
 
     final typeMatchups =
         _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
+    final evolutions = _buildEvolutionChain(
+      species,
+      currentSpeciesId,
+      json['id'] as int?,
+    );
 
     return PokemonDetail(
       id: json['id'] as int? ?? 0,
@@ -235,6 +243,7 @@ class PokemonDetail {
       stats: stats,
       characteristics: characteristics,
       typeMatchups: typeMatchups,
+      evolutions: evolutions,
     );
   }
 }
@@ -259,6 +268,24 @@ class PokemonAbilityDetail {
   final String name;
   final String description;
   final bool isHidden;
+}
+
+class PokemonEvolutionStage {
+  const PokemonEvolutionStage({
+    required this.speciesId,
+    required this.name,
+    required this.imageUrl,
+    required this.order,
+    this.pokemonId,
+    this.isCurrent = false,
+  });
+
+  final int speciesId;
+  final String name;
+  final String imageUrl;
+  final int order;
+  final int? pokemonId;
+  final bool isCurrent;
 }
 
 class PokemonCharacteristics {
@@ -330,6 +357,79 @@ List<TypeMatchup> _buildTypeMatchups(
 
   matchups.sort((a, b) => b.multiplier.compareTo(a.multiplier));
   return matchups;
+}
+
+List<PokemonEvolutionStage> _buildEvolutionChain(
+  Map<String, dynamic>? species,
+  int? currentSpeciesId,
+  int? currentPokemonId,
+) {
+  if (species == null) {
+    return <PokemonEvolutionStage>[];
+  }
+
+  final chain =
+      species['pokemon_v2_evolutionchain'] as Map<String, dynamic>?;
+  final speciesEntries =
+      chain?['pokemon_v2_pokemonspecies'] as List<dynamic>? ?? [];
+
+  final List<PokemonEvolutionStage> stages = <PokemonEvolutionStage>[];
+
+  for (final dynamic entry in speciesEntries) {
+    final stage = entry as Map<String, dynamic>?;
+    if (stage == null) {
+      continue;
+    }
+
+    final speciesId = stage['id'];
+    if (speciesId is! int) {
+      continue;
+    }
+
+    final order = stage['order'] as int? ?? 0;
+    String displayName = stage['name'] as String? ?? '';
+    final localizedNames =
+        stage['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+    for (final dynamic nameEntry in localizedNames) {
+      final map = nameEntry as Map<String, dynamic>?;
+      final localized = map?['name'];
+      if (localized is String && localized.isNotEmpty) {
+        displayName = localized;
+        break;
+      }
+    }
+
+    int? pokemonId;
+    String imageUrl = '';
+
+    final pokemonEntries =
+        stage['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
+    if (pokemonEntries.isNotEmpty) {
+      final pokemon = pokemonEntries.first as Map<String, dynamic>?;
+      if (pokemon != null) {
+        pokemonId = pokemon['id'] as int?;
+        imageUrl = _extractSpriteUrl(pokemon['pokemon_v2_pokemonsprites']);
+      }
+    }
+
+    final isCurrent = (pokemonId != null && currentPokemonId != null)
+        ? pokemonId == currentPokemonId
+        : (currentSpeciesId != null && speciesId == currentSpeciesId);
+
+    stages.add(
+      PokemonEvolutionStage(
+        speciesId: speciesId,
+        pokemonId: pokemonId,
+        name: displayName,
+        imageUrl: imageUrl,
+        order: order,
+        isCurrent: isCurrent,
+      ),
+    );
+  }
+
+  stages.sort((a, b) => a.order.compareTo(b.order));
+  return stages;
 }
 
 String _extractSpriteUrl(dynamic spriteEntries) {
