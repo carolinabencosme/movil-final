@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -48,6 +49,20 @@ const String _backgroundTextureSvg = '''
   <circle cx="200" cy="200" r="48" fill="url(#halo)"/>
 </svg>
 ''';
+
+class _DetailTabConfig {
+  const _DetailTabConfig({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+}
+
+const List<_DetailTabConfig> _detailTabConfigs = [
+  _DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
+  _DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
+  _DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
+  _DetailTabConfig(icon: Icons.upcoming_rounded, label: 'Futuras'),
+];
 
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
@@ -488,20 +503,61 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                       preferredSize: const Size.fromHeight(72),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 12, top: 8),
-                        child: TabBar(
-                          controller: tabController,
-                          tabs: const [
-                            Tab(text: 'Información'),
-                            Tab(text: 'Estadísticas'),
-                            Tab(text: 'Matchups'),
-                            Tab(text: 'Futuras'),
-                          ],
-                          indicatorColor: onTypeColor,
-                          indicatorWeight: 3,
-                          labelColor: onTypeColor,
-                          unselectedLabelColor: onTypeColor.withOpacity(0.7),
-                          labelStyle: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                        child: Theme(
+                          data: theme.copyWith(
+                            tabBarTheme: theme.tabBarTheme.copyWith(
+                              indicatorSize: TabBarIndicatorSize.tab,
+                              labelPadding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
+                              overlayColor: MaterialStateProperty.all(
+                                Colors.transparent,
+                              ),
+                              splashFactory: NoSplash.splashFactory,
+                            ),
+                          ),
+                          child: ChipTheme(
+                            data: ChipTheme.of(context).copyWith(
+                              backgroundColor: Colors.transparent,
+                              selectedColor: onTypeColor.withOpacity(0.18),
+                              disabledColor: Colors.transparent,
+                              padding: EdgeInsets.zero,
+                              shape: const StadiumBorder(),
+                              labelStyle:
+                                  theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: onTypeColor,
+                              ),
+                            ),
+                            child: TabBar(
+                              controller: tabController,
+                              isScrollable: true,
+                              indicator: _PillUnderlineTabIndicator(
+                                borderSide: BorderSide(
+                                  color: onTypeColor.withOpacity(0.18),
+                                  width: 40,
+                                ),
+                                insets: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              labelColor: onTypeColor,
+                              unselectedLabelColor:
+                                  onTypeColor.withOpacity(0.72),
+                              tabs: [
+                                for (var i = 0;
+                                    i < _detailTabConfigs.length;
+                                    i++)
+                                  Tab(
+                                    child: _ElasticTabChip(
+                                      controller: tabController,
+                                      index: i,
+                                      config: _detailTabConfigs[i],
+                                      foregroundColor: onTypeColor,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -573,6 +629,98 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
         },
       ),
     );
+  }
+}
+
+class _ElasticTabChip extends StatelessWidget {
+  const _ElasticTabChip({
+    required this.controller,
+    required this.index,
+    required this.config,
+    required this.foregroundColor,
+  });
+
+  final TabController controller;
+  final int index;
+  final _DetailTabConfig config;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AnimatedBuilder(
+      animation: controller.animation!,
+      builder: (context, _) {
+        final double animationValue = controller.animation!.value;
+        final double distance =
+            (animationValue - index).abs().clamp(0.0, 1.0).toDouble();
+        final double activation = (1 - distance).clamp(0.0, 1.0).toDouble();
+        final curvedActivation = CurvedAnimation(
+          parent: AlwaysStoppedAnimation<double>(activation),
+          curve: Curves.elasticOut,
+        ).value;
+        final scale = ui.lerpDouble(0.94, 1.08, curvedActivation) ?? 1.0;
+        final Color textColor = Color.lerp(
+              foregroundColor.withOpacity(0.65),
+              foregroundColor,
+              curvedActivation,
+            ) ??
+            foregroundColor;
+
+        return Transform.scale(
+          scale: scale,
+          child: Chip(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            backgroundColor: Colors.transparent,
+            avatar: Icon(
+              config.icon,
+              size: 18,
+              color: textColor,
+            ),
+            label: Text(
+              config.label,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            shape: const StadiumBorder(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PillUnderlineTabIndicator extends UnderlineTabIndicator {
+  const _PillUnderlineTabIndicator({
+    required super.borderSide,
+    super.insets = EdgeInsets.zero,
+  });
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    assert(configuration.size != null);
+    final Rect rect = offset & configuration.size!;
+    final TextDirection textDirection =
+        configuration.textDirection ?? TextDirection.ltr;
+    final Rect indicator = insets.resolve(textDirection).deflateRect(rect);
+    final double indicatorHeight = math.min(borderSide.width, indicator.height);
+    final double top =
+        indicator.top + (indicator.height - indicatorHeight) / 2.0;
+    final Rect pillRect = Rect.fromLTWH(
+      indicator.left,
+      top,
+      indicator.width,
+      indicatorHeight,
+    );
+    final Paint paint = borderSide.toPaint()..style = PaintingStyle.fill;
+    final RRect rRect = RRect.fromRectAndRadius(
+      pillRect,
+      Radius.circular(indicatorHeight / 2.0),
+    );
+    canvas.drawRRect(rRect, paint);
   }
 }
 
