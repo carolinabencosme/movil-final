@@ -15,8 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _showGrid = false;
-  late final PageController _pageController;
-  int _activePage = 0;
 
   final List<_SectionInfo> _sections = const [
     _SectionInfo(
@@ -318,51 +316,31 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.88);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _showGrid = true);
     });
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _openSection([_SectionInfo? section]) {
-    final _SectionInfo? target;
-    if (section != null) {
-      target = section;
-    } else if (_sections.isNotEmpty &&
-        _activePage >= 0 &&
-        _activePage < _sections.length) {
-      target = _sections[_activePage];
-    } else {
-      target = null;
-    }
-
-    if (target == null) return;
-
+  void _openSection(_SectionInfo section) {
     Widget destination;
-    switch (target.title) {
+    switch (section.title) {
       case 'Pokédex':
         destination = PokedexScreen(
-          heroTag: target.heroTag,
-          accentColor: target.color,
-          title: target.title,
+          heroTag: section.heroTag,
+          accentColor: section.color,
+          title: section.title,
         );
         break;
       case 'Abilities':
         destination = AbilitiesScreen(
-          heroTag: target.heroTag,
-          accentColor: target.color,
-          title: target.title,
+          heroTag: section.heroTag,
+          accentColor: section.color,
+          title: section.title,
         );
         break;
       default:
-        destination = SectionPlaceholderScreen(info: target);
+        destination = SectionPlaceholderScreen(info: section);
     }
 
     Navigator.of(context).push(
@@ -398,6 +376,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'Breeding Guides',
       'Berry Farming',
     ];
+
+    final _SectionInfo? pokedexSection =
+        _sections.isNotEmpty ? _sections.first : null;
 
     return Scaffold(
       body: SafeArea(
@@ -459,56 +440,32 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      SliverAppBar(
-                        pinned: true,
-                        automaticallyImplyLeading: false,
-                        expandedHeight: heroHeight,
-                        collapsedHeight: heroHeight * 0.6,
-                        elevation: 0,
-                        backgroundColor:
-                            Theme.of(context).scaffoldBackgroundColor,
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                PageView.builder(
-                                  controller: _pageController,
-                                  onPageChanged: (index) {
-                                    setState(() => _activePage = index);
-                                  },
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount: _sections.length,
-                                  itemBuilder: (context, index) {
-                                    final info = _sections[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 12,
-                                      ),
-                                      child: _HomeSectionCard(
-                                        info: info,
-                                        onTap: _openSection,
-                                        isHero: true,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                Positioned(
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 12,
-                                  child: _SectionPageIndicator(
-                                    itemCount: _sections.length,
-                                    activeIndex: _activePage,
+                      if (pokedexSection != null)
+                        SliverAppBar(
+                          pinned: true,
+                          automaticallyImplyLeading: false,
+                          expandedHeight: heroHeight,
+                          collapsedHeight: heroHeight * 0.6,
+                          elevation: 0,
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
+                          flexibleSpace: FlexibleSpaceBar(
+                            background: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: FractionallySizedBox(
+                                  widthFactor: 0.92,
+                                  child: _HomeSectionCard(
+                                    info: pokedexSection,
+                                    onTap: () => _openSection(pokedexSection),
+                                    isHero: false,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
                       SliverGrid(
                         delegate: SliverChildBuilderDelegate(
@@ -617,115 +574,121 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
     final double cornerRadius = isHero ? 36 : 28;
     final double pressedScale = isHero ? 0.975 : 0.965;
 
-    return Hero(
-      tag: widget.info.heroTag,
-      child: Material(
-        color: Colors.transparent,
-        child: AnimatedScale(
-          scale: _pressed ? pressedScale : 1,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          child: InkWell(
-            onTap: widget.onTap,
-            onTapDown: (_) => _setPressed(true),
-            onTapCancel: () => _setPressed(false),
-            onTapUp: (_) => _setPressed(false),
-            borderRadius: BorderRadius.circular(cornerRadius),
-            child: Card(
-              clipBehavior: Clip.antiAlias,
-              elevation: isHero ? 16 : 10,
-              shadowColor: widget.info.color.withOpacity(0.45),
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(cornerRadius),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double basePadding = isHero ? 28 : 22;
-                  final double verticalPadding = isHero ? 30 : 24;
-                  final double maxTextWidth =
-                      constraints.maxWidth * (isHero ? 0.68 : 0.74);
+    final card = Material(
+      color: Colors.transparent,
+      child: AnimatedScale(
+        scale: _pressed ? pressedScale : 1,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        child: InkWell(
+          onTap: widget.onTap,
+          onTapDown: (_) => _setPressed(true),
+          onTapCancel: () => _setPressed(false),
+          onTapUp: (_) => _setPressed(false),
+          borderRadius: BorderRadius.circular(cornerRadius),
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: isHero ? 16 : 10,
+            shadowColor: widget.info.color.withOpacity(0.45),
+            margin: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(cornerRadius),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double basePadding = isHero ? 28 : 22;
+                final double verticalPadding = isHero ? 30 : 24;
+                final double maxTextWidth =
+                    constraints.maxWidth * (isHero ? 0.68 : 0.74);
 
-                  final List<_SectionGraphic> graphics =
-                      widget.info.graphics.isNotEmpty
-                          ? widget.info.graphics
-                          : [
-                              _SectionGraphic.icon(
-                                icon: widget.info.icon,
-                                color: Colors.white,
-                                opacity: 0.94,
-                              ),
-                            ];
-
-                  return Stack(
-                    fit: StackFit.expand,
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                widget.info.color
-                                    .withOpacity(isHero ? 0.96 : 0.92),
-                                widget.info.color
-                                    .withOpacity(isHero ? 0.8 : 0.78),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                final List<_SectionGraphic> graphics =
+                    widget.info.graphics.isNotEmpty
+                        ? widget.info.graphics
+                        : [
+                            _SectionGraphic.icon(
+                              icon: widget.info.icon,
+                              color: Colors.white,
+                              opacity: 0.94,
                             ),
-                          ),
-                        ),
-                      ),
-                      ..._buildBackgroundAccents(
-                        constraints: constraints,
-                        fallbackRadius: cornerRadius,
-                      ),
-                      Positioned(
-                        right: basePadding - (isHero ? 8 : 6),
-                        top: verticalPadding - (isHero ? 8 : 6),
-                        child: _buildGraphicGroup(
-                          constraints: constraints,
-                          graphics: graphics,
-                        ),
-                      ),
-                      Positioned(
-                        left: basePadding,
-                        bottom: verticalPadding,
-                        right: basePadding,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: maxTextWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                widget.info.title,
-                                style: titleStyle,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: isHero ? 12 : 10),
-                              Text(
-                                widget.info.subtitle,
-                                style: subtitleStyle,
-                                maxLines: isHero ? 3 : 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                          ];
+
+                return Stack(
+                  fit: StackFit.expand,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              widget.info.color
+                                  .withOpacity(isHero ? 0.96 : 0.92),
+                              widget.info.color
+                                  .withOpacity(isHero ? 0.8 : 0.78),
                             ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                    ..._buildBackgroundAccents(
+                      constraints: constraints,
+                      fallbackRadius: cornerRadius,
+                    ),
+                    Positioned(
+                      right: basePadding - (isHero ? 8 : 6),
+                      top: verticalPadding - (isHero ? 8 : 6),
+                      child: _buildGraphicGroup(
+                        constraints: constraints,
+                        graphics: graphics,
+                      ),
+                    ),
+                    Positioned(
+                      left: basePadding,
+                      bottom: verticalPadding,
+                      right: basePadding,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: maxTextWidth,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.info.title,
+                              style: titleStyle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: isHero ? 12 : 10),
+                            Text(
+                              widget.info.subtitle,
+                              style: subtitleStyle,
+                              maxLines: isHero ? 3 : 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
       ),
+    );
+
+    if (!isHero) {
+      return card;
+    }
+
+    return Hero(
+      tag: widget.info.heroTag,
+      child: card,
     );
   }
 
@@ -839,41 +802,6 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
         ),
       );
     }).toList();
-  }
-}
-
-class _SectionPageIndicator extends StatelessWidget {
-  const _SectionPageIndicator({
-    required this.itemCount,
-    required this.activeIndex,
-  });
-
-  final int itemCount;
-  final int activeIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    if (itemCount <= 1) {
-      return const SizedBox.shrink();
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(itemCount, (index) {
-        final bool isActive = index == activeIndex;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 6,
-          width: isActive ? 20 : 8,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(isActive ? 0.9 : 0.45),
-            borderRadius: BorderRadius.circular(3),
-          ),
-        );
-      }),
-    );
   }
 }
 
