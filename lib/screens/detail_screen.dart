@@ -63,7 +63,6 @@ class DetailScreen extends StatelessWidget {
         options: QueryOptions(
           document: gql(getPokemonDetailsQuery),
           fetchPolicy: FetchPolicy.networkOnly,
-          nextFetchPolicy: FetchPolicy.networkOnly,
           cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
           carryForwardDataOnException: false,
           errorPolicy: ErrorPolicy.ignore,
@@ -1731,7 +1730,7 @@ class _StatBar extends StatelessWidget {
 class _PokemonDetailErrorView extends StatelessWidget {
   const _PokemonDetailErrorView({this.onRetry});
 
-  final Future<QueryResult<Object?>> Function()? onRetry;
+  final Future<QueryResult<Object?>?> Function()? onRetry;
 
   @override
   Widget build(BuildContext context) {
