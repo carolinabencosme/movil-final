@@ -63,6 +63,9 @@ class DetailScreen extends StatelessWidget {
         options: QueryOptions(
           document: gql(getPokemonDetailsQuery),
           fetchPolicy: FetchPolicy.networkOnly,
+          nextFetchPolicy: FetchPolicy.networkOnly,
+          cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
+          carryForwardDataOnException: false,
           errorPolicy: ErrorPolicy.ignore,
           variables: {
             'id': pokemonId,
@@ -70,7 +73,9 @@ class DetailScreen extends StatelessWidget {
           },
         ),
         builder: (result, {fetchMore, refetch}) {
-          if (result.isLoading && result.data == null) {
+          final data = result.data?['pokemon'] as Map<String, dynamic>?;
+
+          if (result.isLoading && data == null) {
             return _LoadingDetailView(
               heroTag: resolvedHeroTag,
               imageUrl: previewImage,
@@ -78,29 +83,24 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
-          if (result.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (result.hasException) {
-            debugPrint('Error al cargar el detalle del Pokémon: ${result.exception}');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Error al cargar la información. Intenta nuevamente más tarde.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
+          if (result.hasException && data == null) {
+            debugPrint(
+              'Error al cargar el detalle del Pokémon: ${result.exception}',
+            );
+            return _PokemonDetailErrorView(
+              onRetry: refetch,
             );
           }
-
-          final data = result.data?['pokemon'] as Map<String, dynamic>?;
 
           if (data == null) {
             return const Center(
               child: Text('No se encontró información para este Pokémon.'),
+            );
+          }
+
+          if (result.hasException) {
+            debugPrint(
+              'Se recibieron datos parciales con errores: ${result.exception}',
             );
           }
 
@@ -116,10 +116,21 @@ class DetailScreen extends StatelessWidget {
             onRefresh: () async {
               await refetch?.call();
             },
-            child: _PokemonDetailBody(
-              pokemon: pokemon,
-              resolvedHeroTag: resolvedHeroTag,
-              capitalize: _capitalize,
+            child: Stack(
+              children: [
+                _PokemonDetailBody(
+                  pokemon: pokemon,
+                  resolvedHeroTag: resolvedHeroTag,
+                  capitalize: _capitalize,
+                ),
+                if (result.isLoading)
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
+              ],
             ),
           );
         },
@@ -1712,6 +1723,57 @@ class _StatBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PokemonDetailErrorView extends StatelessWidget {
+  const _PokemonDetailErrorView({this.onRetry});
+
+  final Future<QueryResult<Object?>> Function()? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off,
+              size: 48,
+              color: colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () async {
+                  try {
+                    await onRetry!.call();
+                  } catch (error, stackTrace) {
+                    debugPrint('Error al reintentar la carga: $error');
+                    debugPrint('$stackTrace');
+                  }
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
