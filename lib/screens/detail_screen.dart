@@ -1,4 +1,7 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
@@ -26,6 +29,25 @@ const Map<String, String> _typeEmojis = {
   'steel': '⚙️',
   'fairy': '🧚',
 };
+
+const String _backgroundTextureSvg = '''
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="white" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" stroke="white" stroke-width="12" stroke-linecap="round" stroke-opacity="0.18">
+    <path d="M50 200h300"/>
+    <path d="M200 50v300"/>
+    <circle cx="200" cy="200" r="160"/>
+    <circle cx="200" cy="200" r="110" stroke-opacity="0.12" stroke-width="10"/>
+    <circle cx="200" cy="200" r="60" stroke-opacity="0.1" stroke-width="8"/>
+  </g>
+  <circle cx="200" cy="200" r="48" fill="url(#halo)"/>
+</svg>
+''';
 
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
@@ -222,44 +244,133 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 return [
                   SliverAppBar(
                     pinned: true,
-                    expandedHeight: 320,
+                    expandedHeight: 360,
                     backgroundColor: typeColor,
                     foregroundColor: onTypeColor,
                     surfaceTintColor: typeColor,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(widget.capitalize(pokemon.name)),
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  typeColor,
-                                  typeColor.withOpacity(0.65),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 24),
-                              child: Hero(
-                                tag: widget.resolvedHeroTag,
-                                child: PokemonArtwork(
-                                  imageUrl: pokemon.imageUrl,
-                                  size: 220,
-                                  borderRadius: 36,
-                                  padding: const EdgeInsets.all(24),
+                    flexibleSpace: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final settings = context
+                            .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+                        final currentExtent = settings?.currentExtent ?? constraints.maxHeight;
+                        final maxExtent = settings?.maxExtent ?? constraints.maxHeight;
+                        final minExtent = settings?.minExtent ?? kToolbarHeight;
+                        final extentDelta = maxExtent - minExtent;
+                        final expansionFactor = extentDelta <= 0
+                            ? 0.0
+                            : ((currentExtent - minExtent) / extentDelta)
+                                .clamp(0.0, 1.0);
+                        final parallaxFactor = 1 - expansionFactor;
+                        final particleOpacity =
+                            (ui.lerpDouble(0.35, 0.85, expansionFactor) ?? 0.35)
+                                .clamp(0.0, 1.0);
+                        final particleOffset =
+                            ui.lerpDouble(-0.08, 0.14, parallaxFactor) ?? 0.0;
+
+                        return FlexibleSpaceBar(
+                          title: Text(widget.capitalize(pokemon.name)),
+                          background: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        typeColor,
+                                        Color.alphaBlend(
+                                          typeColor.withOpacity(0.45),
+                                          theme.colorScheme.surface,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: RadialGradient(
+                                      center: const Alignment(0, -0.4),
+                                      radius: 1.05,
+                                      colors: [
+                                        typeColor.withOpacity(0.75),
+                                        typeColor.withOpacity(0.1),
+                                      ],
+                                      stops: const [0.0, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: Opacity(
+                                    opacity: 0.35,
+                                    child: SvgPicture.string(
+                                      _backgroundTextureSvg,
+                                      fit: BoxFit.cover,
+                                      colorFilter: ColorFilter.mode(
+                                        onTypeColor.withOpacity(0.25),
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: ClipRect(
+                                  child: BackdropFilter(
+                                    filter: ui.ImageFilter.blur(
+                                      sigmaX: 18,
+                                      sigmaY: 18,
+                                    ),
+                                    child: Container(
+                                      color: typeColor.withOpacity(0.08),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: AnimatedSlide(
+                                    duration: const Duration(milliseconds: 360),
+                                    curve: Curves.easeOutCubic,
+                                    offset: Offset(0, particleOffset),
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(milliseconds: 320),
+                                      curve: Curves.easeOut,
+                                      opacity: particleOpacity,
+                                      child: _ParticleField(
+                                        color: onTypeColor.withOpacity(0.4),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 18),
+                                  child: Hero(
+                                    tag: widget.resolvedHeroTag,
+                                    child: PokemonArtwork(
+                                      imageUrl: pokemon.imageUrl,
+                                      size: 210,
+                                      borderRadius: 36,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                     bottom: PreferredSize(
                       preferredSize: const Size.fromHeight(72),
@@ -350,6 +461,62 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
         },
       ),
     );
+  }
+}
+
+class _ParticleField extends StatelessWidget {
+  const _ParticleField({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _ParticlePainter(color),
+    );
+  }
+}
+
+class _ParticlePainter extends CustomPainter {
+  const _ParticlePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shortestSide = size.shortestSide;
+    final baseRadius = shortestSide * 0.06;
+    final blurPaint = Paint()
+      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 8);
+
+    final clusters = <Offset>[
+      Offset(size.width * 0.2, size.height * 0.35),
+      Offset(size.width * 0.8, size.height * 0.42),
+      Offset(size.width * 0.65, size.height * 0.18),
+      Offset(size.width * 0.35, size.height * 0.72),
+      Offset(size.width * 0.55, size.height * 0.58),
+    ];
+
+    for (final offset in clusters) {
+      final gradientPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            color,
+            color.withOpacity(0),
+          ],
+        ).createShader(
+          Rect.fromCircle(center: offset, radius: baseRadius * 1.8),
+        );
+
+      canvas.drawCircle(offset, baseRadius * 1.6, gradientPaint);
+      blurPaint.color = color.withOpacity(0.35);
+      canvas.drawCircle(offset, baseRadius, blurPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
