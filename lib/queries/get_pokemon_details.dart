@@ -62,7 +62,7 @@ const String getPokemonDetailsQuery = r'''
                   name
                 }
               }
-              pokemon_v2_pokemon_speciesByEvolved_species_id: pokemon_v2_pokemonspecyByEvolved_species_id {
+              pokemon_v2_pokemon_speciesByEvolved_species_id: pokemon_v2_pokemon_species {
                 id
                 name
                 pokemon_v2_pokemonspeciesnames(
