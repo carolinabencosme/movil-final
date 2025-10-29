@@ -227,7 +227,11 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
     ThemeData theme,
     ColorScheme colorScheme,
     PokemonDetail pokemon,
+    double maxWidth,
   ) {
+    final effectiveMaxWidth = maxWidth.isFinite && maxWidth > 0
+        ? maxWidth
+        : 220.0;
     final textTheme = theme.textTheme;
     final idText = '#${pokemon.id.toString().padLeft(4, '0')}';
     final heightText = _formatHeight(pokemon.characteristics.height);
@@ -288,7 +292,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 220),
+          constraints: BoxConstraints(maxWidth: effectiveMaxWidth),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,6 +359,13 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
       child: Builder(
         builder: (context) {
           final tabController = DefaultTabController.of(context)!;
+          final mediaQuery = MediaQuery.of(context);
+          final size = mediaQuery.size;
+          final isLandscape = mediaQuery.orientation == Orientation.landscape;
+          final portraitHeight = math.min(360.0, size.height * 0.45);
+          final landscapeHeight = math.min(320.0, size.height * 0.6);
+          final expandedHeight = isLandscape ? landscapeHeight : portraitHeight;
+
           return DecoratedBox(
             decoration: BoxDecoration(color: backgroundTint),
             child: NestedScrollView(
@@ -362,7 +373,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 return [
                   SliverAppBar(
                     pinned: true,
-                    expandedHeight: 360,
+                    expandedHeight: expandedHeight,
                     backgroundColor: typeColor,
                     foregroundColor: onTypeColor,
                     surfaceTintColor: typeColor,
@@ -384,6 +395,11 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                 .clamp(0.0, 1.0);
                         final particleOffset =
                             ui.lerpDouble(-0.08, 0.14, parallaxFactor) ?? 0.0;
+                        final imageSize = math.min(
+                          210.0,
+                          math.min(constraints.maxWidth, constraints.maxHeight) *
+                              0.55,
+                        );
 
                         return FlexibleSpaceBar(
                           title: Text(widget.capitalize(pokemon.name)),
@@ -472,6 +488,13 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                   builder: (context, constraints) {
                                     final isCompact =
                                         constraints.maxWidth < 460;
+                                    final summaryMaxWidth = math.min(
+                                      260.0,
+                                      math.max(
+                                        0.0,
+                                        constraints.maxWidth - 48,
+                                      ),
+                                    );
                                     final alignment = isCompact
                                         ? Alignment.topCenter
                                         : Alignment.bottomRight;
@@ -487,6 +510,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                           theme,
                                           colorScheme,
                                           pokemon,
+                                          summaryMaxWidth,
                                         ),
                                       ),
                                     );
@@ -501,13 +525,11 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                     tag: widget.resolvedHeroTag,
                                     child: PokemonArtwork(
                                       imageUrl: pokemon.imageUrl,
-                                      size: 210,
+                                      size: imageSize,
                                       borderRadius: 36,
-                                      padding: const EdgeInsets.fromLTRB(
-                                        24,
-                                        16,
-                                        48,
-                                        16,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
                                       ),
                                     ),
                                   ),
