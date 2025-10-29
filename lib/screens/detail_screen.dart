@@ -83,11 +83,12 @@ class DetailScreen extends StatelessWidget {
           }
 
           if (result.hasException) {
+            debugPrint('Error al cargar el detalle del Pokémon: ${result.exception}');
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Ocurrió un error al cargar el detalle.\n${result.exception}',
+                  'Error al cargar la información. Intenta nuevamente más tarde.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
