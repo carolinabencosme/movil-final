@@ -113,6 +113,7 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
+          final outerRefetch = refetch;
           final data =
               result.data?['pokemon_v2_pokemon_by_pk'] as Map<String, dynamic>?;
 
@@ -122,23 +123,76 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
-          final typeEfficacies =
-              result.data?['pokemon_v2_typeefficacy'] as List<dynamic>? ?? [];
+          final basePokemon = PokemonDetail.fromGraphQL(data);
 
-          final pokemon = PokemonDetail.fromGraphQL(
-            data,
-            typeEfficacies: typeEfficacies,
-          );
+          if (basePokemon.typeIds.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                if (outerRefetch != null) {
+                  await outerRefetch();
+                }
+              },
+              child: _PokemonDetailBody(
+                pokemon: basePokemon,
+                resolvedHeroTag: resolvedHeroTag,
+                capitalize: _capitalize,
+              ),
+            );
+          }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              await refetch?.call();
-            },
-            child: _PokemonDetailBody(
-              pokemon: pokemon,
-              resolvedHeroTag: resolvedHeroTag,
-              capitalize: _capitalize,
+          return Query(
+            options: QueryOptions(
+              document: gql(getTypeEfficacyForTypesQuery),
+              variables: {
+                'targetTypeIds': basePokemon.typeIds,
+                'limit': 256,
+              },
             ),
+            builder: (typeResult, {fetchMore, refetch}) {
+              final efficacies =
+                  typeResult.data?['pokemon_v2_typeefficacy'] as List<dynamic>? ?? [];
+              final pokemon = PokemonDetail.fromGraphQL(
+                data,
+                typeEfficacies: efficacies,
+              );
+
+              final hasMatchupData = efficacies.isNotEmpty;
+              final isMatchupsLoading = typeResult.isLoading && !hasMatchupData;
+              final matchupError =
+                  typeResult.hasException && !hasMatchupData
+                      ? typeResult.exception.toString()
+                      : null;
+
+              Future<void> handleRefresh() async {
+                final futures = <Future<void>>[];
+
+                if (outerRefetch != null) {
+                  futures.add(outerRefetch().then((_) {}));
+                }
+
+                final innerRefetch = refetch;
+                if (innerRefetch != null) {
+                  futures.add(innerRefetch().then((_) {}));
+                }
+
+                if (futures.isEmpty) {
+                  return;
+                }
+
+                await Future.wait(futures);
+              }
+
+              return RefreshIndicator(
+                onRefresh: handleRefresh,
+                child: _PokemonDetailBody(
+                  pokemon: pokemon,
+                  resolvedHeroTag: resolvedHeroTag,
+                  capitalize: _capitalize,
+                  isMatchupsLoading: isMatchupsLoading,
+                  matchupsError: matchupError,
+                ),
+              );
+            },
           );
         },
       ),
@@ -151,11 +205,15 @@ class _PokemonDetailBody extends StatefulWidget {
     required this.pokemon,
     required this.resolvedHeroTag,
     required this.capitalize,
+    this.isMatchupsLoading = false,
+    this.matchupsError,
   });
 
   final PokemonDetail pokemon;
   final String resolvedHeroTag;
   final String Function(String) capitalize;
+  final bool isMatchupsLoading;
+  final String? matchupsError;
 
   @override
   State<_PokemonDetailBody> createState() => _PokemonDetailBodyState();
@@ -286,6 +344,8 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
             child: _WeaknessSection(
               matchups: pokemon.typeMatchups,
               formatLabel: _formatLabel,
+              isLoading: widget.isMatchupsLoading,
+              errorMessage: widget.matchupsError,
             ),
           ),
           const SizedBox(height: 16),
@@ -428,6 +488,8 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                   child: _TypeMatchupSection(
                     matchups: pokemon.typeMatchups,
                     formatLabel: _formatLabel,
+                    isLoading: widget.isMatchupsLoading,
+                    errorMessage: widget.matchupsError,
                   ),
                 ),
               ],
@@ -662,10 +724,14 @@ class _WeaknessSection extends StatefulWidget {
   const _WeaknessSection({
     required this.matchups,
     required this.formatLabel,
+    this.isLoading = false,
+    this.errorMessage,
   });
 
   final List<TypeMatchup> matchups;
   final String Function(String) formatLabel;
+  final bool isLoading;
+  final String? errorMessage;
 
   @override
   State<_WeaknessSection> createState() => _WeaknessSectionState();
@@ -682,6 +748,28 @@ class _WeaknessSectionState extends State<_WeaknessSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isLoading && widget.matchups.isEmpty) {
+      return const _InlineSectionLoader(label: 'Cargando debilidades...');
+    }
+
+    final errorMessage = widget.errorMessage;
+    if (errorMessage != null && widget.matchups.isEmpty) {
+      final theme = Theme.of(context);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('No se pudieron cargar las debilidades.'),
+          const SizedBox(height: 4),
+          Text(
+            errorMessage,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
+      );
+    }
+
     final weaknesses = widget.matchups
         .where((matchup) => matchup.multiplier > 1.0)
         .toList()
@@ -811,6 +899,43 @@ class _WeaknessChip extends StatelessWidget {
   }
 }
 
+class _InlineSectionLoader extends StatelessWidget {
+  const _InlineSectionLoader({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.2,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              colorScheme.primary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CharacteristicTile extends StatelessWidget {
   const _CharacteristicTile({
     required this.icon,
@@ -929,13 +1054,40 @@ class _TypeMatchupSection extends StatelessWidget {
   const _TypeMatchupSection({
     required this.matchups,
     required this.formatLabel,
+    this.isLoading = false,
+    this.errorMessage,
   });
 
   final List<TypeMatchup> matchups;
   final String Function(String) formatLabel;
+  final bool isLoading;
+  final String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading && matchups.isEmpty) {
+      return const _InlineSectionLoader(
+        label: 'Cargando resistencias e inmunidades...',
+      );
+    }
+
+    if (errorMessage != null && matchups.isEmpty) {
+      final theme = Theme.of(context);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('No se pudieron cargar las resistencias.'),
+          const SizedBox(height: 4),
+          Text(
+            errorMessage!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
+      );
+    }
+
     final resistances = matchups
         .where((matchup) => matchup.multiplier > 0 && matchup.multiplier < 0.99)
         .toList()

@@ -72,7 +72,16 @@ const String getPokemonDetailsQuery = r'''
         sprites
       }
     }
-    pokemon_v2_typeefficacy {
+  }
+''';
+
+const String getTypeEfficacyForTypesQuery = r'''
+  query GetTypeEfficacyForTypes($targetTypeIds: [Int!]!, $limit: Int = 256) {
+    pokemon_v2_typeefficacy(
+      where: {target_type_id: {_in: $targetTypeIds}}
+      limit: $limit
+      order_by: {damage_type_id: asc}
+    ) {
       damage_factor
       damage_type_id
       target_type_id

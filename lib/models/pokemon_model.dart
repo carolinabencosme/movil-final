@@ -83,6 +83,7 @@ class PokemonDetail {
     required this.name,
     required this.imageUrl,
     required this.types,
+    required this.typeIds,
     required this.abilities,
     required this.stats,
     required this.characteristics,
@@ -94,6 +95,7 @@ class PokemonDetail {
   final String name;
   final String imageUrl;
   final List<String> types;
+  final List<int> typeIds;
   final List<PokemonAbilityDetail> abilities;
   final List<PokemonStat> stats;
   final PokemonCharacteristics characteristics;
@@ -106,7 +108,7 @@ class PokemonDetail {
   }) {
     final typeEntries = json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [];
     final List<String> types = <String>[];
-    final Set<int> typeIds = <int>{};
+    final Set<int> typeIdSet = <int>{};
 
     for (final dynamic entry in typeEntries) {
       final type = entry as Map<String, dynamic>?;
@@ -120,7 +122,7 @@ class PokemonDetail {
 
       final typeId = typeInfo['id'];
       if (typeId is int) {
-        typeIds.add(typeId);
+        typeIdSet.add(typeId);
       }
     }
 
@@ -226,8 +228,10 @@ class PokemonDetail {
       category: category,
     );
 
-    final typeMatchups =
-        _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
+    final typeMatchups = _buildTypeMatchups(
+      typeIdSet,
+      typeEfficacies.whereType<Map<String, dynamic>>(),
+    );
     final evolutions = _buildEvolutionChain(
       species,
       currentSpeciesId,
@@ -239,6 +243,7 @@ class PokemonDetail {
       name: json['name'] as String? ?? '',
       imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
       types: types,
+      typeIds: List<int>.unmodifiable(typeIdSet),
       abilities: abilities,
       stats: stats,
       characteristics: characteristics,
