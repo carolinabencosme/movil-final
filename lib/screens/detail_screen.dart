@@ -556,9 +556,9 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                       },
                     ),
                     bottom: PreferredSize(
-                      preferredSize: const Size.fromHeight(72),
+                      preferredSize: const Size.fromHeight(64),
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 12, top: 8),
+                        padding: const EdgeInsets.only(bottom: 10, top: 6),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final isCompact = constraints.maxWidth < 360;
@@ -612,7 +612,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                               child: ChipTheme(
                                 data: ChipTheme.of(context).copyWith(
                                   backgroundColor: Colors.transparent,
-                                  selectedColor: onTypeColor.withOpacity(0.18),
+                                  selectedColor: Colors.transparent,
                                   disabledColor: Colors.transparent,
                                   padding: EdgeInsets.zero,
                                   shape: const StadiumBorder(),
@@ -621,14 +621,10 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                                 child: TabBar(
                                   controller: tabController,
                                   isScrollable: true,
-                                  indicator: _PillUnderlineTabIndicator(
+                                  indicator: const UnderlineTabIndicator(
                                     borderSide: BorderSide(
-                                      color: onTypeColor.withOpacity(0.18),
-                                      width: 28,
-                                    ),
-                                    insets: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
+                                      color: Colors.transparent,
+                                      width: 0,
                                     ),
                                   ),
                                   labelColor: onTypeColor,
@@ -882,6 +878,23 @@ class _ElasticTabChip extends StatelessWidget {
               curvedActivation,
             ) ??
             foregroundColor;
+        final Color borderColor = Color.lerp(
+              foregroundColor.withOpacity(0.32),
+              foregroundColor,
+              curvedActivation,
+            ) ??
+            foregroundColor;
+        final double borderWidth =
+            ui.lerpDouble(1.0, 2.0, curvedActivation) ?? 1.0;
+        final double shadowOpacity =
+            ui.lerpDouble(0.0, 0.28, curvedActivation) ?? 0.0;
+        final List<Shadow> contentShadows = [
+          Shadow(
+            color: Colors.black.withOpacity(shadowOpacity),
+            offset: const Offset(0, 1),
+            blurRadius: ui.lerpDouble(1.0, 4.0, curvedActivation) ?? 1.0,
+          ),
+        ];
 
         return Transform.scale(
           scale: scale,
@@ -892,47 +905,25 @@ class _ElasticTabChip extends StatelessWidget {
               config.icon,
               size: 18,
               color: textColor,
+              shadows: contentShadows,
             ),
             label: Text(
               config.label,
-              style: textStyle.copyWith(color: textColor),
+              style: textStyle.copyWith(
+                color: textColor,
+                shadows: contentShadows,
+              ),
             ),
-            shape: const StadiumBorder(),
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: borderColor,
+                width: borderWidth,
+              ),
+            ),
           ),
         );
       },
     );
-  }
-}
-
-class _PillUnderlineTabIndicator extends UnderlineTabIndicator {
-  const _PillUnderlineTabIndicator({
-    required super.borderSide,
-    super.insets = EdgeInsets.zero,
-  });
-
-  @override
-  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
-    assert(configuration.size != null);
-    final Rect rect = offset & configuration.size!;
-    final TextDirection textDirection =
-        configuration.textDirection ?? TextDirection.ltr;
-    final Rect indicator = insets.resolve(textDirection).deflateRect(rect);
-    final double indicatorHeight = math.min(borderSide.width, indicator.height);
-    final double top =
-        indicator.top + (indicator.height - indicatorHeight) / 2.0;
-    final Rect pillRect = Rect.fromLTWH(
-      indicator.left,
-      top,
-      indicator.width,
-      indicatorHeight,
-    );
-    final Paint paint = borderSide.toPaint()..style = PaintingStyle.fill;
-    final RRect rRect = RRect.fromRectAndRadius(
-      pillRect,
-      Radius.circular(indicatorHeight / 2.0),
-    );
-    canvas.drawRRect(rRect, paint);
   }
 }
 
