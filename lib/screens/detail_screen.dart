@@ -3,28 +3,8 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
+import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
-
-const Map<String, Color> _pokemonTypeColors = {
-  'normal': Color(0xFFA8A77A),
-  'fire': Color(0xFFEE8130),
-  'water': Color(0xFF6390F0),
-  'electric': Color(0xFFF7D02C),
-  'grass': Color(0xFF7AC74C),
-  'ice': Color(0xFF96D9D6),
-  'fighting': Color(0xFFC22E28),
-  'poison': Color(0xFFA33EA1),
-  'ground': Color(0xFFE2BF65),
-  'flying': Color(0xFFA98FF3),
-  'psychic': Color(0xFFF95587),
-  'bug': Color(0xFFA6B91A),
-  'rock': Color(0xFFB6A136),
-  'ghost': Color(0xFF735797),
-  'dragon': Color(0xFF6F35FC),
-  'dark': Color(0xFF705746),
-  'steel': Color(0xFFB7B7CE),
-  'fairy': Color(0xFFD685AD),
-};
 
 const Map<String, String> _typeEmojis = {
   'normal': '⭐️',
@@ -198,7 +178,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
   }
 
   Color _resolveTypeColor(String type, ColorScheme colorScheme) {
-    final color = _pokemonTypeColors[type.toLowerCase()];
+    final color = pokemonTypeColors[type.toLowerCase()];
     return color ?? colorScheme.primary;
   }
 
@@ -667,7 +647,7 @@ class _WeaknessChip extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final typeKey = matchup.type.toLowerCase();
-    final typeColor = _pokemonTypeColors[typeKey] ?? colorScheme.primary;
+    final typeColor = pokemonTypeColors[typeKey] ?? colorScheme.primary;
     final emoji = _typeEmojis[typeKey];
     final background = Color.alphaBlend(
       typeColor.withOpacity(0.16),
@@ -832,7 +812,7 @@ class _MovesSectionState extends State<_MovesSection> {
               final move = filteredMoves[index];
               final typeKey = move.type?.toLowerCase() ?? '';
               final typeColor =
-                  _pokemonTypeColors[typeKey] ?? colorScheme.primary;
+                  pokemonTypeColors[typeKey] ?? colorScheme.primary;
               final emoji = _typeEmojis[typeKey];
               final typeLabel = move.type == null || move.type!.isEmpty
                   ? '—'
@@ -1396,7 +1376,7 @@ class _TypeMatchupChip extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final typeColor =
-        _pokemonTypeColors[matchup.type.toLowerCase()] ?? colorScheme.primary;
+        pokemonTypeColors[matchup.type.toLowerCase()] ?? colorScheme.primary;
     final background = Color.alphaBlend(
       typeColor.withOpacity(0.16),
       colorScheme.surface.withOpacity(0.95),
