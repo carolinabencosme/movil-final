@@ -370,6 +370,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final double tileHeight = math.max(220, tileWidth + 56);
     final double childAspectRatio =
         tileWidth > 0 ? tileWidth / tileHeight : 0.95;
+    final double heroWidth = math.max(0, size.width - (pageHorizontalPadding * 2));
+    final double heroHeight =
+        heroWidth > 0 ? math.max(280, heroWidth * 0.58) : 280;
     const quickAccess = [
       'Gym Leaders & Elite 4',
       'Natures',
@@ -442,10 +445,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (heroSection != null) ...[
                         const SliverToBoxAdapter(child: SizedBox(height: 12)),
                         SliverToBoxAdapter(
-                          child: _HomeSectionCard(
-                            info: heroSection,
-                            onTap: () => _openSection(heroSection),
-                            isHero: true,
+                          child: SizedBox(
+                            height: heroHeight,
+                            child: _HomeSectionCard(
+                              info: heroSection,
+                              onTap: () => _openSection(heroSection),
+                              isHero: true,
+                              heroHeight: heroHeight,
+                            ),
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -519,11 +526,13 @@ class _HomeSectionCard extends StatefulWidget {
     required this.info,
     required this.onTap,
     this.isHero = false,
+    this.heroHeight,
   });
 
   final _SectionInfo info;
   final VoidCallback onTap;
   final bool isHero;
+  final double? heroHeight;
 
   @override
   State<_HomeSectionCard> createState() => _HomeSectionCardState();
@@ -540,6 +549,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final bool isHero = widget.isHero;
+    final double? heroHeight = widget.heroHeight;
     final baseTitleStyle = isHero
         ? textTheme.headlineMedium ?? textTheme.headlineSmall
         : textTheme.titleLarge ?? textTheme.titleMedium;
@@ -587,6 +597,16 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                 final double verticalPadding = isHero ? 30 : 24;
                 final double maxTextWidth =
                     constraints.maxWidth * (isHero ? 0.68 : 0.74);
+                final bool needsHeroHeight =
+                    !constraints.hasBoundedHeight && heroHeight != null;
+                final BoxConstraints effectiveConstraints = needsHeroHeight
+                    ? BoxConstraints(
+                        minWidth: constraints.minWidth,
+                        maxWidth: constraints.maxWidth,
+                        minHeight: constraints.minHeight,
+                        maxHeight: heroHeight!,
+                      )
+                    : constraints;
 
                 final List<_SectionGraphic> graphics =
                     widget.info.graphics.isNotEmpty
@@ -599,7 +619,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                             ),
                           ];
 
-                return Stack(
+                final stack = Stack(
                   fit: StackFit.expand,
                   clipBehavior: Clip.none,
                   children: [
@@ -620,14 +640,14 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                       ),
                     ),
                     ..._buildBackgroundAccents(
-                      constraints: constraints,
+                      constraints: effectiveConstraints,
                       fallbackRadius: cornerRadius,
                     ),
                     Positioned(
                       right: basePadding - (isHero ? 8 : 6),
                       top: verticalPadding - (isHero ? 8 : 6),
                       child: _buildGraphicGroup(
-                        constraints: constraints,
+                        constraints: effectiveConstraints,
                         graphics: graphics,
                       ),
                     ),
@@ -662,6 +682,15 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                     ),
                   ],
                 );
+
+                if (needsHeroHeight) {
+                  return SizedBox(
+                    height: heroHeight,
+                    child: stack,
+                  );
+                }
+
+                return stack;
               },
             ),
           ),
