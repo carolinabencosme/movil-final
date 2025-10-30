@@ -371,6 +371,7 @@ class _DetailErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final retry = onRetry;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -412,10 +413,10 @@ class _DetailErrorState extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton.icon(
-              onPressed: onRetry == null
+              onPressed: retry == null
                   ? null
                   : () async {
-                      await onRetry!();
+                      await retry();
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9C27B0),
