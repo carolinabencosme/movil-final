@@ -669,59 +669,39 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
               body: AnimatedBuilder(
                 animation: tabAnimation,
                 builder: (context, _) {
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 320),
-                    transitionBuilder: (child, animation) {
-                      final offsetAnimation = Tween<Offset>(
-                        begin: const Offset(0.05, 0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      ));
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: offsetAnimation,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: TabBarView(
-                      key: ValueKey<int>(tabController.index),
-                      controller: tabController,
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        _PokemonInfoTab(
-                          pokemon: pokemon,
-                          formatLabel: _formatLabel,
-                          formatHeight: _formatHeight,
-                          formatWeight: _formatWeight,
-                          mainAbility: mainAbility,
-                          abilitySubtitle: abilitySubtitle,
-                          sectionBackground: sectionBackground,
-                          sectionBorder: sectionBorder,
-                        ),
-                        _PokemonStatsTab(
-                          pokemon: pokemon,
-                          formatLabel: _formatLabel,
-                          sectionBackground: sectionBackground,
-                          sectionBorder: sectionBorder,
-                        ),
-                        _PokemonMatchupsTab(
-                          pokemon: pokemon,
-                          formatLabel: _formatLabel,
-                          sectionBackground: sectionBackground,
-                          sectionBorder: sectionBorder,
-                        ),
-                        _PokemonFutureTab(
-                          pokemon: pokemon,
-                          formatLabel: _formatLabel,
-                          sectionBackground: sectionBackground,
-                          sectionBorder: sectionBorder,
-                        ),
-                      ],
-                    ),
+                  return TabBarView(
+                    controller: tabController,
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      _PokemonInfoTab(
+                        pokemon: pokemon,
+                        formatLabel: _formatLabel,
+                        formatHeight: _formatHeight,
+                        formatWeight: _formatWeight,
+                        mainAbility: mainAbility,
+                        abilitySubtitle: abilitySubtitle,
+                        sectionBackground: sectionBackground,
+                        sectionBorder: sectionBorder,
+                      ),
+                      _PokemonStatsTab(
+                        pokemon: pokemon,
+                        formatLabel: _formatLabel,
+                        sectionBackground: sectionBackground,
+                        sectionBorder: sectionBorder,
+                      ),
+                      _PokemonMatchupsTab(
+                        pokemon: pokemon,
+                        formatLabel: _formatLabel,
+                        sectionBackground: sectionBackground,
+                        sectionBorder: sectionBorder,
+                      ),
+                      _PokemonFutureTab(
+                        pokemon: pokemon,
+                        formatLabel: _formatLabel,
+                        sectionBackground: sectionBackground,
+                        sectionBorder: sectionBorder,
+                      ),
+                    ],
                   );
                 },
               ),
