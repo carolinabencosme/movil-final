@@ -1019,51 +1019,62 @@ class _FiltersSheetState extends State<FiltersSheet> {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                controller: widget.scrollController,
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSortSection(theme),
-                    const SizedBox(height: 24),
-                    _buildFilterSection(
-                      title: 'Tipos',
-                      options: widget.availableTypes,
-                      selectedValues: _selectedTypes,
-                      labelBuilder: _capitalize,
-                      emptyMessage: 'No hay tipos disponibles por ahora.',
-                      onToggle: _toggleType,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context)
+                    .copyWith(scrollbars: false),
+                child: Scrollbar(
+                  controller: widget.scrollController,
+                  interactive: false,
+                  child: SingleChildScrollView(
+                    controller: widget.scrollController,
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSortSection(theme),
+                        const SizedBox(height: 24),
+                        _buildFilterSection(
+                          title: 'Tipos',
+                          options: widget.availableTypes,
+                          selectedValues: _selectedTypes,
+                          labelBuilder: _capitalize,
+                          emptyMessage:
+                              'No hay tipos disponibles por ahora.',
+                          onToggle: _toggleType,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildFilterSection(
+                          title: 'Generaciones',
+                          options: widget.availableGenerations,
+                          selectedValues: _selectedGenerations,
+                          labelBuilder: _formatGenerationLabel,
+                          emptyMessage:
+                              'No hay generaciones disponibles por ahora.',
+                          onToggle: _toggleGeneration,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildFilterSection(
+                          title: 'Regiones',
+                          options: widget.availableRegions,
+                          selectedValues: _selectedRegions,
+                          labelBuilder: _formatRegionLabel,
+                          emptyMessage:
+                              'No hay regiones disponibles por ahora.',
+                          onToggle: _toggleRegion,
+                        ),
+                        const SizedBox(height: 24),
+                        _buildFilterSection(
+                          title: 'Formas',
+                          options: widget.availableShapes,
+                          selectedValues: _selectedShapes,
+                          labelBuilder: _formatShapeLabel,
+                          emptyMessage:
+                              'No hay formas disponibles por ahora.',
+                          onToggle: _toggleShape,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    _buildFilterSection(
-                      title: 'Generaciones',
-                      options: widget.availableGenerations,
-                      selectedValues: _selectedGenerations,
-                      labelBuilder: _formatGenerationLabel,
-                      emptyMessage:
-                          'No hay generaciones disponibles por ahora.',
-                      onToggle: _toggleGeneration,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildFilterSection(
-                      title: 'Regiones',
-                      options: widget.availableRegions,
-                      selectedValues: _selectedRegions,
-                      labelBuilder: _formatRegionLabel,
-                      emptyMessage: 'No hay regiones disponibles por ahora.',
-                      onToggle: _toggleRegion,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildFilterSection(
-                      title: 'Formas',
-                      options: widget.availableShapes,
-                      selectedValues: _selectedShapes,
-                      labelBuilder: _formatShapeLabel,
-                      emptyMessage: 'No hay formas disponibles por ahora.',
-                      onToggle: _toggleShape,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
