@@ -253,7 +253,6 @@ class _PokemonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final retry = onRetry;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -413,10 +412,10 @@ class _DetailErrorState extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: ElevatedButton.icon(
-              onPressed: retry == null
+              onPressed: onRetry == null
                   ? null
                   : () async {
-                      await retry();
+                      await onRetry!();
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9C27B0),
