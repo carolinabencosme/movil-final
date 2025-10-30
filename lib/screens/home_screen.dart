@@ -357,6 +357,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final List<_SectionInfo> sections = _sections;
+    final _SectionInfo? heroSection =
+        sections.isNotEmpty ? sections.first : null;
+    final List<_SectionInfo> otherSections =
+        sections.length > 1 ? sections.sublist(1) : <_SectionInfo>[];
     const double pageHorizontalPadding = 20;
     const double gridSpacing = 16;
     final Size size = MediaQuery.of(context).size;
@@ -433,28 +437,42 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 24),
                           ],
-                      ),
-                    ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                      SliverGrid(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final section = sections[index];
-                            return _HomeSectionCard(
-                              info: section,
-                              onTap: () => _openSection(section),
-                            );
-                          },
-                          childCount: sections.length,
-                        ),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: gridSpacing,
-                          crossAxisSpacing: gridSpacing,
-                          childAspectRatio: childAspectRatio,
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                      if (heroSection != null) ...[
+                        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                        SliverToBoxAdapter(
+                          child: _HomeSectionCard(
+                            info: heroSection,
+                            onTap: () => _openSection(heroSection),
+                            isHero: true,
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      ],
+                      if (otherSections.isNotEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.only(bottom: 28),
+                          sliver: SliverGrid(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final section = otherSections[index];
+                                return _HomeSectionCard(
+                                  info: section,
+                                  onTap: () => _openSection(section),
+                                );
+                              },
+                              childCount: otherSections.length,
+                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: gridSpacing,
+                              crossAxisSpacing: gridSpacing,
+                              childAspectRatio: childAspectRatio,
+                            ),
+                          ),
+                        ),
                       SliverToBoxAdapter(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
