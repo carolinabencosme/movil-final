@@ -35,15 +35,16 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor ?? const Color(0xFF9C27B0);
+    final heroTag = widget.heroTag;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F1E7),
       appBar: AppBar(
         backgroundColor: accentColor,
         foregroundColor: Colors.white,
-        title: widget.heroTag != null
+        title: heroTag != null
             ? Hero(
-                tag: widget.heroTag!,
+                tag: heroTag,
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
@@ -303,6 +304,7 @@ class _AbilitiesErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final retry = onRetry;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -321,10 +323,10 @@ class _AbilitiesErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: onRetry == null
+              onPressed: retry == null
                   ? null
                   : () async {
-                      await onRetry!.call();
+                      await retry();
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9C27B0),

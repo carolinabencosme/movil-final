@@ -127,7 +127,20 @@ class AuthScope extends InheritedNotifier<AuthController> {
     final scope = context.dependOnInheritedWidgetOfExactType<AuthScope>();
     assert(scope != null,
         'AuthScope.of() called with a context that does not contain an AuthScope.');
-    return scope!.notifier!;
+    if (scope == null) {
+      throw StateError(
+        'AuthScope.of() called with a context that does not contain an AuthScope.',
+      );
+    }
+
+    final controller = scope.notifier;
+    if (controller == null) {
+      throw StateError(
+        'AuthScope.of() called with an AuthScope that has a null notifier.',
+      );
+    }
+
+    return controller;
   }
 
   static AuthController? maybeOf(BuildContext context) {

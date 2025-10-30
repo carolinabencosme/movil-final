@@ -387,8 +387,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
       if (!mounted) return;
 
-      if (result.hasException) {
-        _handleError(result.exception!, reset: reset);
+      final operationException = result.exception;
+      if (result.hasException && operationException != null) {
+        _handleError(operationException, reset: reset);
         return;
       }
 
@@ -605,14 +606,15 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor;
+    final heroTag = widget.heroTag;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: accentColor,
         foregroundColor: accentColor != null ? Colors.white : null,
-        title: widget.heroTag != null
+        title: heroTag != null
             ? Hero(
-                tag: widget.heroTag!,
+                tag: heroTag,
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
