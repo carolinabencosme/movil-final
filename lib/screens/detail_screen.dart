@@ -395,9 +395,12 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
 
           return DecoratedBox(
             decoration: BoxDecoration(color: backgroundTint),
-            child: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
+            child: Column(
+              children: [
+                Expanded(
+                  child: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) {
+                      return [
                   SliverAppBar(
                     pinned: true,
                     expandedHeight: expandedHeight,
@@ -567,102 +570,6 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                         );
                       },
                     ),
-                    bottom: PreferredSize(
-                      preferredSize: const Size.fromHeight(64),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 10, top: 6),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isCompact = constraints.maxWidth < 360;
-                            final double widePadding =
-                                constraints.maxWidth /
-                                    (_detailTabConfigs.length * 2.6);
-                            final double horizontalPadding = isCompact
-                                ? 8
-                                : math.max(
-                                    12.0,
-                                    math.min(widePadding, 24.0),
-                                  );
-                            final TextStyle baseTitle =
-                                theme.textTheme.titleMedium ??
-                                    const TextStyle();
-                            final double baseFontSize =
-                                baseTitle.fontSize ?? 16;
-                            final TextStyle tabTextStyle = baseTitle.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: onTypeColor,
-                              height: 1.2,
-                              fontSize: isCompact
-                                  ? math.max(baseFontSize - 2, 12)
-                                  : baseFontSize,
-                            );
-
-                            if (isCompact) {
-                              return _CompactTabSelector(
-                                controller: tabController,
-                                configs: _detailTabConfigs,
-                                foregroundColor: onTypeColor,
-                                textStyle: tabTextStyle.copyWith(
-                                  color: onTypeColor.withOpacity(0.9),
-                                ),
-                              );
-                            }
-
-                            return Theme(
-                              data: theme.copyWith(
-                                tabBarTheme: theme.tabBarTheme.copyWith(
-                                  indicatorSize: TabBarIndicatorSize.tab,
-                                  labelPadding: EdgeInsets.symmetric(
-                                    horizontal: horizontalPadding,
-                                  ),
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.transparent,
-                                  ),
-                                  splashFactory: NoSplash.splashFactory,
-                                ),
-                              ),
-                              child: ChipTheme(
-                                data: ChipTheme.of(context).copyWith(
-                                  backgroundColor: Colors.transparent,
-                                  selectedColor: Colors.transparent,
-                                  disabledColor: Colors.transparent,
-                                  padding: EdgeInsets.zero,
-                                  shape: const StadiumBorder(),
-                                  labelStyle: tabTextStyle,
-                                ),
-                                child: TabBar(
-                                  controller: tabController,
-                                  isScrollable: true,
-                                  indicator: const UnderlineTabIndicator(
-                                    borderSide: BorderSide(
-                                      color: Colors.transparent,
-                                      width: 0,
-                                    ),
-                                  ),
-                                  labelColor: onTypeColor,
-                                  unselectedLabelColor:
-                                      onTypeColor.withOpacity(0.72),
-                                  tabs: [
-                                    for (var i = 0;
-                                        i < _detailTabConfigs.length;
-                                        i++)
-                                      Tab(
-                                        child: _ElasticTabChip(
-                                          controller: tabController,
-                                          index: i,
-                                          config: _detailTabConfigs[i],
-                                          foregroundColor: onTypeColor,
-                                          textStyle: tabTextStyle,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
                   ),
                 ];
               },
@@ -706,8 +613,132 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 },
               ),
             ),
+          ),
+                _DetailBottomBar(
+                  tabController: tabController,
+                  typeColor: typeColor,
+                  foregroundColor: onTypeColor,
+                ),
+              ],
+            ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DetailBottomBar extends StatelessWidget {
+  const _DetailBottomBar({
+    required this.tabController,
+    required this.typeColor,
+    required this.foregroundColor,
+  });
+
+  final TabController tabController;
+  final Color typeColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final backgroundColor =
+        Color.alphaBlend(typeColor.withOpacity(0.07), colorScheme.surface);
+    final borderColor = typeColor.withOpacity(0.16);
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: Border(top: BorderSide(color: borderColor, width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 360;
+            final double widePadding =
+                constraints.maxWidth / (_detailTabConfigs.length * 2.6);
+            final double horizontalPadding = isCompact
+                ? 8
+                : math.max(12.0, math.min(widePadding, 24.0));
+            final TextStyle baseTitle =
+                theme.textTheme.titleMedium ?? const TextStyle();
+            final double baseFontSize = baseTitle.fontSize ?? 16;
+            final TextStyle tabTextStyle = baseTitle.copyWith(
+              fontWeight: FontWeight.w600,
+              color: foregroundColor,
+              height: 1.2,
+              fontSize:
+                  isCompact ? math.max(baseFontSize - 2, 12) : baseFontSize,
+            );
+
+            if (isCompact) {
+              return _CompactTabSelector(
+                controller: tabController,
+                configs: _detailTabConfigs,
+                foregroundColor: foregroundColor,
+                textStyle: tabTextStyle.copyWith(
+                  color: foregroundColor.withOpacity(0.9),
+                ),
+              );
+            }
+
+            return Theme(
+              data: theme.copyWith(
+                tabBarTheme: theme.tabBarTheme.copyWith(
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelPadding:
+                      EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  overlayColor: MaterialStateProperty.all(Colors.transparent),
+                  splashFactory: NoSplash.splashFactory,
+                ),
+              ),
+              child: ChipTheme(
+                data: ChipTheme.of(context).copyWith(
+                  backgroundColor: Colors.transparent,
+                  selectedColor: Colors.transparent,
+                  disabledColor: Colors.transparent,
+                  padding: EdgeInsets.zero,
+                  shape: const StadiumBorder(),
+                  labelStyle: tabTextStyle,
+                ),
+                child: TabBar(
+                  controller: tabController,
+                  isScrollable: true,
+                  indicator: const UnderlineTabIndicator(
+                    borderSide: BorderSide(
+                      color: Colors.transparent,
+                      width: 0,
+                    ),
+                  ),
+                  labelColor: foregroundColor,
+                  unselectedLabelColor: foregroundColor.withOpacity(0.72),
+                  tabs: [
+                    for (var i = 0; i < _detailTabConfigs.length; i++)
+                      Tab(
+                        child: _ElasticTabChip(
+                          controller: tabController,
+                          index: i,
+                          config: _detailTabConfigs[i],
+                          foregroundColor: foregroundColor,
+                          textStyle: tabTextStyle,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
