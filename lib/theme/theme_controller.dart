@@ -32,7 +32,20 @@ class ThemeScope extends InheritedNotifier<ThemeController> {
         context.dependOnInheritedWidgetOfExactType<ThemeScope>();
     assert(scope != null,
         'ThemeScope.of() called with a context that does not contain a ThemeScope.');
-    return scope!.notifier!;
+    if (scope == null) {
+      throw StateError(
+        'ThemeScope.of() called with a context that does not contain a ThemeScope.',
+      );
+    }
+
+    final controller = scope.notifier;
+    if (controller == null) {
+      throw StateError(
+        'ThemeScope.of() called with a ThemeScope that has a null notifier.',
+      );
+    }
+
+    return controller;
   }
 
   static ThemeController? maybeOf(BuildContext context) {

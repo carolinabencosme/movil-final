@@ -34,6 +34,11 @@ const Map<String, String> _typeEmojis = {
   'fairy': '🧚',
 };
 
+Animation<double> _resolveTabControllerAnimation(TabController controller) {
+  return controller.animation ??
+      AlwaysStoppedAnimation<double>(controller.index.toDouble());
+}
+
 const String _backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -366,7 +371,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
       length: 4,
       child: Builder(
         builder: (context) {
-          final tabController = DefaultTabController.of(context)!;
+          final TabController? maybeTabController =
+              DefaultTabController.of(context);
+          if (maybeTabController == null) {
+            return const SizedBox.shrink();
+          }
+          final tabController = maybeTabController;
+          final Animation<double> tabAnimation =
+              _resolveTabControllerAnimation(tabController);
           const double collapsedHeight = kToolbarHeight + 72.0;
           final mediaQuery = MediaQuery.of(context);
           final size = mediaQuery.size;
@@ -655,7 +667,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
                 ];
               },
               body: AnimatedBuilder(
-                animation: tabController.animation!,
+                animation: tabAnimation,
                 builder: (context, _) {
                   return AnimatedSwitcher(
                     duration: const Duration(milliseconds: 320),
@@ -736,11 +748,13 @@ class _CompactTabSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Animation<double> resolvedAnimation =
+        _resolveTabControllerAnimation(controller);
+
     return AnimatedBuilder(
-      animation: controller.animation!,
+      animation: resolvedAnimation,
       builder: (context, _) {
-        final double animationValue =
-            controller.animation?.value ?? controller.index.toDouble();
+        final double animationValue = resolvedAnimation.value;
         final int selectedIndex = animationValue.round();
         final int clampedIndex = selectedIndex < 0
             ? 0
@@ -860,10 +874,13 @@ class _ElasticTabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Animation<double> resolvedAnimation =
+        _resolveTabControllerAnimation(controller);
+
     return AnimatedBuilder(
-      animation: controller.animation!,
+      animation: resolvedAnimation,
       builder: (context, _) {
-        final double animationValue = controller.animation!.value;
+        final double animationValue = resolvedAnimation.value;
         final double distance =
             (animationValue - index).abs().clamp(0.0, 1.0).toDouble();
         final double activation = (1 - distance).clamp(0.0, 1.0).toDouble();
@@ -2973,6 +2990,7 @@ class _PokemonDetailErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final retry = onRetry;
 
     return Center(
       child: Padding(
@@ -2993,12 +3011,12 @@ class _PokemonDetailErrorView extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            if (onRetry != null) ...[
+            if (retry != null) ...[
               const SizedBox(height: 20),
               FilledButton.icon(
                 onPressed: () async {
                   try {
-                    await onRetry!.call();
+                    await retry();
                   } catch (error, stackTrace) {
                     debugPrint('Error al reintentar la carga: $error');
                     debugPrint('$stackTrace');

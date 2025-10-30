@@ -726,12 +726,13 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
     final Color? effectiveColor =
         baseColor?.withOpacity(graphic.opacity);
 
-    if (graphic.asset != null) {
+    final assetPath = graphic.asset;
+    if (assetPath != null) {
       return SizedBox(
         width: size,
         height: size,
         child: Image.asset(
-          graphic.asset!,
+          assetPath,
           color: effectiveColor,
           colorBlendMode:
               effectiveColor != null ? BlendMode.srcIn : null,
@@ -760,15 +761,11 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 
     return widget.info.accents.map((accent) {
       final double width = accent.width ??
-          (accent.widthFactor != null
-              ? baseDimension * accent.widthFactor!
-              : baseDimension * 0.58);
+          baseDimension * (accent.widthFactor ?? 0.58);
       final double height = accent.height ??
-          (accent.heightFactor != null
-              ? baseDimension * accent.heightFactor!
-              : (accent.shape == BoxShape.circle
-                  ? width
-                  : baseDimension * 0.2));
+          (accent.shape == BoxShape.circle
+              ? width
+              : baseDimension * (accent.heightFactor ?? 0.2));
 
       return Positioned(
         top: accent.top,

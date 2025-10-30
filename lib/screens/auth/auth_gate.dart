@@ -53,8 +53,11 @@ class _AuthGateState extends State<AuthGate> {
         return LoginScreen(
           controller: widget.controller,
           onShowRegister: () {
-            _navigatorKey.currentState!
-                .pushNamed(RegisterScreen.routeName);
+            final navigatorState = _navigatorKey.currentState;
+            if (navigatorState == null) {
+              return;
+            }
+            navigatorState.pushNamed(RegisterScreen.routeName);
           },
         );
       },
@@ -68,7 +71,10 @@ class _AuthGateState extends State<AuthGate> {
         return RegisterScreen(
           controller: widget.controller,
           onShowLogin: () {
-            final navigatorState = _navigatorKey.currentState!;
+            final navigatorState = _navigatorKey.currentState;
+            if (navigatorState == null) {
+              return;
+            }
             if (navigatorState.canPop()) {
               navigatorState.pop();
             } else {
