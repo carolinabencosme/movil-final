@@ -361,6 +361,7 @@ class PokemonEvolutionChain {
     final Map<int, List<String>> conditionsByTarget =
         <int, List<String>>{};
     final Map<int, int> parentByTarget = <int, int>{};
+    final Map<int, int> evolutionEntryCountByTarget = <int, int>{};
 
     for (final dynamic entry in speciesEntries) {
       final speciesMap = entry as Map<String, dynamic>?;
@@ -412,10 +413,15 @@ class PokemonEvolutionChain {
           continue;
         }
 
+        evolutionEntryCountByTarget.update(
+          evolvedId,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
         parentByTarget[evolvedId] = speciesId;
 
         final description = _describeEvolutionCondition(evoMap);
-        if (description.isEmpty) {
+        if (description == null || description.isEmpty) {
           continue;
         }
         final conditions =
@@ -433,7 +439,8 @@ class PokemonEvolutionChain {
       final parentId = parentByTarget[id] ?? data.fromSpeciesId;
       final conditions =
           List<String>.from(conditionsByTarget[id] ?? const <String>[]);
-      if (conditions.isEmpty && parentId != null) {
+      final entryCount = evolutionEntryCountByTarget[id] ?? 0;
+      if (conditions.isEmpty && parentId != null && entryCount > 0) {
         conditions.add('Requisitos no especificados');
       }
       nodes.add(
@@ -710,7 +717,20 @@ String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
   return fallback;
 }
 
-String _describeEvolutionCondition(Map<String, dynamic> evolution) {
+String _resolveLocalizedEntityName(
+  Map<String, dynamic>? entity,
+  String namesKey,
+) {
+  if (entity == null) {
+    return '';
+  }
+
+  final fallback = entity['name'] as String? ?? '';
+  final names = entity[namesKey] as List<dynamic>?;
+  return _resolveLocalizedName(names, fallback);
+}
+
+String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
   final List<String> details = <String>[];
 
   final minLevel = evolution['min_level'];
@@ -728,11 +748,125 @@ String _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Belleza mínima: $minBeauty');
   }
 
+  final minAffection = evolution['min_affection'];
+  if (minAffection is int && minAffection > 0) {
+    details.add('Afecto mínimo: $minAffection');
+  }
+
+  final itemName = _resolveLocalizedEntityName(
+    evolution['item'] as Map<String, dynamic>?,
+    'pokemon_v2_itemnames',
+  );
+  if (itemName.isNotEmpty) {
+    details.add('Usar: $itemName');
+  }
+
+  final heldItemName = _resolveLocalizedEntityName(
+    evolution['held_item'] as Map<String, dynamic>?,
+    'pokemon_v2_itemnames',
+  );
+  if (heldItemName.isNotEmpty) {
+    details.add('Subir de nivel sosteniendo $heldItemName');
+  }
+
+  final locationName = _resolveLocalizedEntityName(
+    evolution['location'] as Map<String, dynamic>?,
+    'pokemon_v2_locationnames',
+  );
+  if (locationName.isNotEmpty) {
+    details.add('Subir de nivel en $locationName');
+  }
+
+  final knownMoveName = _resolveLocalizedEntityName(
+    evolution['known_move'] as Map<String, dynamic>?,
+    'pokemon_v2_movenames',
+  );
+  if (knownMoveName.isNotEmpty) {
+    details.add('Debe conocer $knownMoveName');
+  }
+
+  final knownMoveTypeName = _resolveLocalizedEntityName(
+    evolution['known_move_type'] as Map<String, dynamic>?,
+    'pokemon_v2_typenames',
+  );
+  if (knownMoveTypeName.isNotEmpty) {
+    details.add('Debe conocer un movimiento de tipo $knownMoveTypeName');
+  }
+
+  final partySpeciesName = _resolveLocalizedEntityName(
+    evolution['party_species'] as Map<String, dynamic>?,
+    'pokemon_v2_pokemonspeciesnames',
+  );
+  if (partySpeciesName.isNotEmpty) {
+    details.add('Tener a $partySpeciesName en el equipo');
+  }
+
+  final partyTypeName = _resolveLocalizedEntityName(
+    evolution['party_type'] as Map<String, dynamic>?,
+    'pokemon_v2_typenames',
+  );
+  if (partyTypeName.isNotEmpty) {
+    details.add('Tener un Pokémon de tipo $partyTypeName en el equipo');
+  }
+
+  final tradeSpeciesName = _resolveLocalizedEntityName(
+    evolution['trade_species'] as Map<String, dynamic>?,
+    'pokemon_v2_pokemonspeciesnames',
+  );
+  if (tradeSpeciesName.isNotEmpty) {
+    details.add('Intercambiar con $tradeSpeciesName');
+  }
+
+  final needsOverworldRain = evolution['needs_overworld_rain'];
+  final bool needsRain = (needsOverworldRain is bool && needsOverworldRain) ||
+      (needsOverworldRain is int && needsOverworldRain != 0);
+  if (needsRain) {
+    details.add('Debe llover en el mundo');
+  }
+
+  final relativeStats = evolution['relative_physical_stats'];
+  if (relativeStats is int) {
+    final relativeDescription = switch (relativeStats) {
+      1 => 'El Ataque debe ser mayor que la Defensa',
+      -1 => 'El Ataque debe ser menor que la Defensa',
+      0 => 'El Ataque y la Defensa deben ser iguales',
+      _ => null,
+    };
+    if (relativeDescription != null) {
+      details.add(relativeDescription);
+    }
+  }
+
+  final genderId = evolution['gender_id'];
+  if (genderId is int) {
+    if (genderId == 1) {
+      details.add('Debe ser hembra');
+    } else if (genderId == 2) {
+      details.add('Debe ser macho');
+    }
+  }
+
+  final bool? turnUpsideDown = evolution['turn_upside_down'] as bool?;
+  if (turnUpsideDown == true) {
+    details.add('Girar el dispositivo');
+  }
+
   final triggerMap =
       evolution['pokemon_v2_evolutiontrigger'] as Map<String, dynamic>?;
   final trigger = triggerMap?['name'] as String?;
   if (trigger != null && trigger.isNotEmpty && trigger != 'level-up') {
-    details.add('Método: ${_formatGraphqlLabel(trigger)}');
+    switch (trigger) {
+      case 'trade':
+        if (tradeSpeciesName.isEmpty) {
+          details.add('Intercambiar');
+        }
+        break;
+      case 'use-item':
+        // Ya cubierto por el objeto específico.
+        break;
+      default:
+        details.add('Método: ${_formatGraphqlLabel(trigger)}');
+    }
   }
 
   final timeOfDay = evolution['time_of_day'];
@@ -740,11 +874,7 @@ String _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Momento: ${_formatGraphqlLabel(timeOfDay)}');
   }
 
-  if (details.isEmpty) {
-    return '';
-  }
-
-  return details.join(' · ');
+  return details.isEmpty ? null : details.join(' · ');
 }
 
 String _formatGraphqlLabel(String value) {

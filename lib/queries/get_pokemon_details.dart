@@ -39,9 +39,87 @@ const String getPokemonDetailsQuery = r'''
               min_level
               min_happiness
               min_beauty
+              min_affection
               time_of_day
+              gender_id
+              needs_overworld_rain
+              relative_physical_stats
+              trade_species_id
+              turn_upside_down
               pokemon_v2_evolutiontrigger {
                 name
+              }
+              item: pokemon_v2_item {
+                name
+                pokemon_v2_itemnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              held_item: pokemon_v2_itemByHeldItemId {
+                name
+                pokemon_v2_itemnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              location: pokemon_v2_location {
+                name
+                pokemon_v2_locationnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              known_move: pokemon_v2_move {
+                name
+                pokemon_v2_movenames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              known_move_type: pokemon_v2_typeByKnownMoveTypeId {
+                name
+                pokemon_v2_typenames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              party_species: pokemon_v2_pokemonspecyByPartySpeciesId {
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              party_type: pokemon_v2_typeByPartyTypeId {
+                name
+                pokemon_v2_typenames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              trade_species: pokemon_v2_pokemonspecyByTradeSpeciesId {
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
               }
             }
             pokemon_v2_pokemons(limit: 1) {
