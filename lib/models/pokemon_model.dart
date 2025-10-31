@@ -243,7 +243,8 @@ class PokemonDetail {
     final weight = json['weight'] as int? ?? 0;
 
     final speciesId = species?['id'] as int?;
-    final evolutionChain = _parseEvolutionChain(
+    final evolutionChain =
+        PokemonEvolutionChain.fromGraphQL(
       species,
       currentSpeciesId: speciesId,
     );
@@ -298,13 +299,245 @@ class PokemonMove {
 class PokemonEvolutionChain {
   const PokemonEvolutionChain({
     required this.groups,
+    required this.paths,
     this.currentSpeciesId,
   });
 
   final List<List<PokemonEvolutionNode>> groups;
+  final List<List<PokemonEvolutionNode>> paths;
   final int? currentSpeciesId;
 
-  bool get isEmpty => groups.isEmpty || groups.every((group) => group.isEmpty);
+  bool get isEmpty {
+    final hasGroups =
+        groups.isNotEmpty && groups.any((group) => group.isNotEmpty);
+    final hasPaths = paths.isNotEmpty && paths.any((path) => path.isNotEmpty);
+    return !hasGroups && !hasPaths;
+  }
+
+  static PokemonEvolutionChain? fromGraphQL(
+    Map<String, dynamic>? species, {
+    int? currentSpeciesId,
+  }) {
+    if (species == null) {
+      return null;
+    }
+
+    final chain = species['evolution_chain'] as Map<String, dynamic>?;
+    if (chain == null) {
+      return null;
+    }
+
+    final speciesEntries = chain['species_list'] as List<dynamic>? ?? [];
+    if (speciesEntries.isEmpty) {
+      return null;
+    }
+
+    final Map<int, String> nameById = <int, String>{};
+
+    for (final dynamic entry in speciesEntries) {
+      final speciesMap = entry as Map<String, dynamic>?;
+      if (speciesMap == null) {
+        continue;
+      }
+
+      final speciesId = speciesMap['id'] as int?;
+      if (speciesId == null) {
+        continue;
+      }
+
+      final fallbackName = speciesMap['name'] as String? ?? '';
+      final localizedNames =
+          speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
+      final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
+      nameById[speciesId] = resolvedName;
+    }
+
+    if (nameById.isEmpty) {
+      return null;
+    }
+
+    final Map<int, _EvolutionSpeciesData> speciesData =
+        <int, _EvolutionSpeciesData>{};
+    final Map<int, List<String>> conditionsByTarget =
+        <int, List<String>>{};
+    final Map<int, int> parentByTarget = <int, int>{};
+
+    for (final dynamic entry in speciesEntries) {
+      final speciesMap = entry as Map<String, dynamic>?;
+      if (speciesMap == null) {
+        continue;
+      }
+
+      final speciesId = speciesMap['id'] as int?;
+      if (speciesId == null) {
+        continue;
+      }
+
+      final order = speciesMap['order'] as int? ?? 0;
+      final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
+
+      String imageUrl = '';
+      final pokemons = speciesMap['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
+      for (final dynamic pokemonEntry in pokemons) {
+        final pokemonMap = pokemonEntry as Map<String, dynamic>?;
+        if (pokemonMap == null) {
+          continue;
+        }
+        final candidate =
+            _extractSpriteUrl(pokemonMap['pokemon_v2_pokemonsprites']);
+        if (candidate.isNotEmpty) {
+          imageUrl = candidate;
+          break;
+        }
+      }
+
+      speciesData[speciesId] = _EvolutionSpeciesData(
+        id: speciesId,
+        name: nameById[speciesId] ?? '',
+        order: order,
+        fromSpeciesId: fromSpeciesId,
+        imageUrl: imageUrl,
+      );
+
+      final evolutions =
+          speciesMap['pokemon_v2_pokemonevolutions'] as List<dynamic>? ?? [];
+      for (final dynamic evoEntry in evolutions) {
+        final evoMap = evoEntry as Map<String, dynamic>?;
+        if (evoMap == null) {
+          continue;
+        }
+
+        final evolvedId = evoMap['evolved_species_id'] as int?;
+        if (evolvedId == null) {
+          continue;
+        }
+
+        parentByTarget[evolvedId] = speciesId;
+
+        final description = _describeEvolutionCondition(evoMap);
+        if (description.isEmpty) {
+          continue;
+        }
+        final conditions =
+            conditionsByTarget.putIfAbsent(evolvedId, () => <String>[]);
+        conditions.add(description);
+      }
+    }
+
+    if (speciesData.isEmpty) {
+      return null;
+    }
+
+    final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
+    speciesData.forEach((int id, _EvolutionSpeciesData data) {
+      final parentId = parentByTarget[id] ?? data.fromSpeciesId;
+      final conditions =
+          List<String>.from(conditionsByTarget[id] ?? const <String>[]);
+      if (conditions.isEmpty && parentId != null) {
+        conditions.add('Requisitos no especificados');
+      }
+      nodes.add(
+        PokemonEvolutionNode(
+          speciesId: data.id,
+          name: data.name,
+          imageUrl: data.imageUrl,
+          order: data.order,
+          fromSpeciesId: parentId,
+          conditions: conditions,
+        ),
+      );
+    });
+
+    final Map<int?, List<PokemonEvolutionNode>> groupedByParent =
+        <int?, List<PokemonEvolutionNode>>{};
+    for (final node in nodes) {
+      final parent = node.fromSpeciesId;
+      final siblings = groupedByParent.putIfAbsent(
+        parent,
+        () => <PokemonEvolutionNode>[],
+      );
+      siblings.add(node);
+    }
+
+    List<PokemonEvolutionNode> currentLevel =
+        List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
+    currentLevel.sort((a, b) => a.order.compareTo(b.order));
+
+    final List<List<PokemonEvolutionNode>> groups = <List<PokemonEvolutionNode>>[];
+
+    if (currentLevel.isEmpty) {
+      nodes.sort((a, b) => a.order.compareTo(b.order));
+      groups.add(List<PokemonEvolutionNode>.from(nodes));
+    } else {
+      while (currentLevel.isNotEmpty) {
+        groups.add(List<PokemonEvolutionNode>.from(currentLevel));
+        final List<PokemonEvolutionNode> nextLevel = <PokemonEvolutionNode>[];
+        for (final node in currentLevel) {
+          final children = groupedByParent[node.speciesId];
+          if (children == null || children.isEmpty) {
+            continue;
+          }
+          children.sort((a, b) => a.order.compareTo(b.order));
+          nextLevel.addAll(children);
+        }
+        currentLevel = nextLevel;
+      }
+    }
+
+    final paths = PokemonEvolutionChain.buildPaths(groupedByParent);
+
+    return PokemonEvolutionChain(
+      groups: groups,
+      paths: paths,
+      currentSpeciesId: currentSpeciesId,
+    );
+  }
+
+  static List<List<PokemonEvolutionNode>> buildPaths(
+    Map<int?, List<PokemonEvolutionNode>> groupedByParent,
+  ) {
+    final List<List<PokemonEvolutionNode>> paths = <List<PokemonEvolutionNode>>[];
+
+    final List<PokemonEvolutionNode> roots =
+        List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
+
+    if (roots.isEmpty) {
+      final fallback = groupedByParent.values
+          .expand((nodes) => nodes)
+          .toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
+      if (fallback.isNotEmpty) {
+        paths.add(fallback);
+      }
+      return paths;
+    }
+
+    void dfs(PokemonEvolutionNode node, List<PokemonEvolutionNode> current) {
+      final List<PokemonEvolutionNode> next =
+          List<PokemonEvolutionNode>.from(current)..add(node);
+      final List<PokemonEvolutionNode> children =
+          List<PokemonEvolutionNode>.from(
+        groupedByParent[node.speciesId] ?? const <PokemonEvolutionNode>[],
+      )
+            ..sort((a, b) => a.order.compareTo(b.order));
+
+      if (children.isEmpty) {
+        paths.add(next);
+        return;
+      }
+
+      for (final child in children) {
+        dfs(child, next);
+      }
+    }
+
+    roots.sort((a, b) => a.order.compareTo(b.order));
+    for (final root in roots) {
+      dfs(root, const <PokemonEvolutionNode>[]);
+    }
+
+    return paths;
+  }
 }
 
 class PokemonEvolutionNode {
@@ -462,182 +695,6 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
   });
 
   return moves;
-}
-
-PokemonEvolutionChain? _parseEvolutionChain(
-  Map<String, dynamic>? species, {
-  int? currentSpeciesId,
-}) {
-  if (species == null) {
-    return null;
-  }
-
-  final chain = species['evolution_chain'] as Map<String, dynamic>?;
-  if (chain == null) {
-    return null;
-  }
-
-  final speciesEntries = chain['species_list'] as List<dynamic>? ?? [];
-  if (speciesEntries.isEmpty) {
-    return null;
-  }
-
-  final Map<int, String> nameById = <int, String>{};
-
-  for (final dynamic entry in speciesEntries) {
-    final speciesMap = entry as Map<String, dynamic>?;
-    if (speciesMap == null) {
-      continue;
-    }
-
-    final speciesId = speciesMap['id'] as int?;
-    if (speciesId == null) {
-      continue;
-    }
-
-    final fallbackName = speciesMap['name'] as String? ?? '';
-    final localizedNames =
-        speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
-    final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
-    nameById[speciesId] = resolvedName;
-  }
-
-  if (nameById.isEmpty) {
-    return null;
-  }
-
-  final Map<int, _EvolutionSpeciesData> speciesData =
-      <int, _EvolutionSpeciesData>{};
-  final Map<int, List<String>> conditionsByTarget =
-      <int, List<String>>{};
-  final Map<int, int> parentByTarget = <int, int>{};
-
-  for (final dynamic entry in speciesEntries) {
-    final speciesMap = entry as Map<String, dynamic>?;
-    if (speciesMap == null) {
-      continue;
-    }
-
-    final speciesId = speciesMap['id'] as int?;
-    if (speciesId == null) {
-      continue;
-    }
-
-    final order = speciesMap['order'] as int? ?? 0;
-    final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
-
-    String imageUrl = '';
-    final pokemons = speciesMap['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
-    for (final dynamic pokemonEntry in pokemons) {
-      final pokemonMap = pokemonEntry as Map<String, dynamic>?;
-      if (pokemonMap == null) {
-        continue;
-      }
-      final candidate =
-          _extractSpriteUrl(pokemonMap['pokemon_v2_pokemonsprites']);
-      if (candidate.isNotEmpty) {
-        imageUrl = candidate;
-        break;
-      }
-    }
-
-    speciesData[speciesId] = _EvolutionSpeciesData(
-      id: speciesId,
-      name: nameById[speciesId] ?? '',
-      order: order,
-      fromSpeciesId: fromSpeciesId,
-      imageUrl: imageUrl,
-    );
-
-    final evolutions =
-        speciesMap['pokemon_v2_pokemonevolutions'] as List<dynamic>? ?? [];
-    for (final dynamic evoEntry in evolutions) {
-      final evoMap = evoEntry as Map<String, dynamic>?;
-      if (evoMap == null) {
-        continue;
-      }
-
-      final evolvedId = evoMap['evolved_species_id'] as int?;
-      if (evolvedId == null) {
-        continue;
-      }
-
-      parentByTarget[evolvedId] = speciesId;
-
-      final description = _describeEvolutionCondition(evoMap);
-      if (description.isEmpty) {
-        continue;
-      }
-      final conditions =
-          conditionsByTarget.putIfAbsent(evolvedId, () => <String>[]);
-      conditions.add(description);
-    }
-  }
-
-  if (speciesData.isEmpty) {
-    return null;
-  }
-
-  final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
-  speciesData.forEach((int id, _EvolutionSpeciesData data) {
-    final parentId = parentByTarget[id] ?? data.fromSpeciesId;
-    final conditions =
-        List<String>.from(conditionsByTarget[id] ?? const <String>[]);
-    if (conditions.isEmpty && parentId != null) {
-      conditions.add('Requisitos no especificados');
-    }
-    nodes.add(
-      PokemonEvolutionNode(
-        speciesId: data.id,
-        name: data.name,
-        imageUrl: data.imageUrl,
-        order: data.order,
-        fromSpeciesId: parentId,
-        conditions: conditions,
-      ),
-    );
-  });
-
-  final Map<int?, List<PokemonEvolutionNode>> groupedByParent =
-      <int?, List<PokemonEvolutionNode>>{};
-  for (final node in nodes) {
-    final parent = node.fromSpeciesId;
-    final siblings = groupedByParent.putIfAbsent(
-      parent,
-      () => <PokemonEvolutionNode>[],
-    );
-    siblings.add(node);
-  }
-
-  List<PokemonEvolutionNode> currentLevel =
-      List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
-  currentLevel.sort((a, b) => a.order.compareTo(b.order));
-
-  final List<List<PokemonEvolutionNode>> groups = <List<PokemonEvolutionNode>>[];
-
-  if (currentLevel.isEmpty) {
-    nodes.sort((a, b) => a.order.compareTo(b.order));
-    groups.add(List<PokemonEvolutionNode>.from(nodes));
-  } else {
-    while (currentLevel.isNotEmpty) {
-      groups.add(List<PokemonEvolutionNode>.from(currentLevel));
-      final List<PokemonEvolutionNode> nextLevel = <PokemonEvolutionNode>[];
-      for (final node in currentLevel) {
-        final children = groupedByParent[node.speciesId];
-        if (children == null || children.isEmpty) {
-          continue;
-        }
-        children.sort((a, b) => a.order.compareTo(b.order));
-        nextLevel.addAll(children);
-      }
-      currentLevel = nextLevel;
-    }
-  }
-
-  return PokemonEvolutionChain(
-    groups: groups,
-    currentSpeciesId: currentSpeciesId,
-  );
 }
 
 String _resolveLocalizedName(List<dynamic>? entries, String fallback) {

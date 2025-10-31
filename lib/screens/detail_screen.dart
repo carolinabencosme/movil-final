@@ -1714,35 +1714,25 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var index = 0; index < chain.groups.length; index++) ...[
-          _EvolutionStageRow(
-            nodes: chain.groups[index],
-            currentSpeciesId: currentSpeciesId,
-            formatLabel: formatLabel,
-          ),
-          if (index < chain.groups.length - 1)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Icon(
-                  Icons.arrow_downward_rounded,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.65),
-                ),
-              ),
+    return Wrap(
+      spacing: 16,
+      runSpacing: 24,
+      alignment: WrapAlignment.center,
+      children: chain.paths
+          .map(
+            (path) => _EvolutionPathColumn(
+              nodes: path,
+              currentSpeciesId: currentSpeciesId,
+              formatLabel: formatLabel,
             ),
-        ],
-      ],
+          )
+          .toList(),
     );
   }
 }
 
-class _EvolutionStageRow extends StatelessWidget {
-  const _EvolutionStageRow({
+class _EvolutionPathColumn extends StatelessWidget {
+  const _EvolutionPathColumn({
     required this.nodes,
     required this.currentSpeciesId,
     required this.formatLabel,
@@ -1761,27 +1751,36 @@ class _EvolutionStageRow extends StatelessWidget {
     final mediaWidth = MediaQuery.of(context).size.width;
     final double rawMaxWidth = mediaWidth < 480 ? mediaWidth - 64 : 260;
     final double maxWidth = rawMaxWidth.clamp(180.0, 320.0).toDouble();
+    final theme = Theme.of(context);
+    final arrowColor =
+        theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      children: nodes
-          .map(
-            (node) => ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: 180,
-                maxWidth: maxWidth,
-              ),
-              child: _EvolutionStageCard(
-                node: node,
-                isCurrent: currentSpeciesId != null &&
-                    currentSpeciesId == node.speciesId,
-                formatLabel: formatLabel,
-              ),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: 180,
+        maxWidth: maxWidth,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < nodes.length; index++) ...[
+            _EvolutionStageCard(
+              node: nodes[index],
+              isCurrent: currentSpeciesId != null &&
+                  currentSpeciesId == nodes[index].speciesId,
+              formatLabel: formatLabel,
             ),
-          )
-          .toList(),
+            if (index < nodes.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Icon(
+                  Icons.arrow_downward_rounded,
+                  color: arrowColor,
+                ),
+              ),
+          ],
+        ],
+      ),
     );
   }
 }
