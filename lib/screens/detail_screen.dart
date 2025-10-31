@@ -711,7 +711,6 @@ class _CharacteristicTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Container(
       width: 165,
-      constraints: const BoxConstraints(minHeight: 88),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colorScheme.surface.withOpacity(0.95),
