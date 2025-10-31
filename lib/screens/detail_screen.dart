@@ -34,11 +34,6 @@ const Map<String, String> _typeEmojis = {
   'fairy': '🧚',
 };
 
-Animation<double> _resolveTabControllerAnimation(TabController controller) {
-  return controller.animation ??
-      AlwaysStoppedAnimation<double>(controller.index.toDouble());
-}
-
 const String _backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -166,21 +161,35 @@ class DetailScreen extends StatelessWidget {
             onRefresh: () async {
               await refetch?.call();
             },
-            child: Stack(
-              children: [
-                _PokemonDetailBody(
-                  pokemon: pokemon,
-                  resolvedHeroTag: resolvedHeroTag,
-                  capitalize: _capitalize,
-                ),
-                if (result.isLoading)
-                  const Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: LinearProgressIndicator(minHeight: 2),
-                  ),
-              ],
+            child: SafeArea(
+              child: Builder(
+                builder: (context) {
+                  final mediaQuery = MediaQuery.of(context);
+                  final bottomPadding =
+                      48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
+
+                  return Stack(
+                    children: [
+                      SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: bottomPadding),
+                        child: _PokemonDetailBody(
+                          pokemon: pokemon,
+                          resolvedHeroTag: resolvedHeroTag,
+                          capitalize: _capitalize,
+                        ),
+                      ),
+                      if (result.isLoading)
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
+                    ],
+                  );
+                },
+              ),
             ),
           );
         },
@@ -234,6 +243,241 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
 
   Color _resolveTypeColor(String type, ColorScheme colorScheme) {
     return _resolveStaticTypeColor(type, colorScheme);
+  }
+
+  Widget _buildHeroHeader({
+    required BuildContext context,
+    required ThemeData theme,
+    required PokemonDetail pokemon,
+    required Color typeColor,
+    required Color onTypeColor,
+  }) {
+    final mediaQuery = MediaQuery.of(context);
+    final size = mediaQuery.size;
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    const double collapsedHeight = kToolbarHeight + 72.0;
+    final portraitHeight = math.max(
+      collapsedHeight,
+      math.min(360.0, size.height * 0.45),
+    );
+    final landscapeHeight = math.max(
+      collapsedHeight,
+      math.min(320.0, size.height * 0.6),
+    );
+    final headerHeight = isLandscape ? landscapeHeight : portraitHeight;
+    final imageSize = math.min(
+      210.0,
+      math.min(size.width, headerHeight) * 0.55,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: SizedBox(
+          height: headerHeight,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        typeColor,
+                        Color.alphaBlend(
+                          typeColor.withOpacity(0.45),
+                          theme.colorScheme.surface,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -0.4),
+                      radius: 1.05,
+                      colors: [
+                        typeColor.withOpacity(0.75),
+                        typeColor.withOpacity(0.1),
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.35,
+                    child: SvgPicture.string(
+                      _backgroundTextureSvg,
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        onTypeColor.withOpacity(0.25),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(
+                      sigmaX: 18,
+                      sigmaY: 18,
+                    ),
+                    child: Container(
+                      color: typeColor.withOpacity(0.08),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.55,
+                    child: _ParticleField(
+                      color: onTypeColor.withOpacity(0.4),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 24,
+                right: 24,
+                top: 24,
+                child: Text(
+                  widget.capitalize(pokemon.name),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                        color: onTypeColor,
+                        fontWeight: FontWeight.w800,
+                      ) ??
+                      TextStyle(
+                        color: onTypeColor,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              Positioned.fill(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 460;
+                    final summaryMaxWidth = math.min(
+                      260.0,
+                      math.max(
+                        0.0,
+                        constraints.maxWidth - 48,
+                      ),
+                    );
+                    final alignment =
+                        isCompact ? Alignment.topCenter : Alignment.bottomRight;
+                    final EdgeInsets padding = isCompact
+                        ? const EdgeInsets.fromLTRB(24, 120, 24, 24)
+                        : const EdgeInsets.fromLTRB(0, 0, 24, 24);
+
+                    return Align(
+                      alignment: alignment,
+                      child: Padding(
+                        padding: padding,
+                        child: _buildFloatingSummaryCard(
+                          theme,
+                          theme.colorScheme,
+                          pokemon,
+                          summaryMaxWidth,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: Hero(
+                    tag: widget.resolvedHeroTag,
+                    child: PokemonArtwork(
+                      imageUrl: pokemon.imageUrl,
+                      size: imageSize,
+                      borderRadius: 36,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionSummary(
+    ThemeData theme,
+    Color typeColor,
+    Color onTypeColor,
+  ) {
+    final colorScheme = theme.colorScheme;
+    final backgroundColor =
+        Color.alphaBlend(typeColor.withOpacity(0.07), colorScheme.surface);
+    final borderColor = typeColor.withOpacity(0.16);
+    final chipBackground =
+        Color.alphaBlend(onTypeColor.withOpacity(0.06), backgroundColor);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: _detailTabConfigs
+              .map(
+                (config) => Chip(
+                  avatar: Icon(
+                    config.icon,
+                    color: onTypeColor,
+                    size: 18,
+                  ),
+                  label: Text(
+                    config.label,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                          color: onTypeColor.withOpacity(0.9),
+                          fontWeight: FontWeight.w600,
+                        ) ??
+                        TextStyle(
+                          color: onTypeColor.withOpacity(0.9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  backgroundColor: chipBackground,
+                  side: BorderSide(color: onTypeColor.withOpacity(0.24)),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: const StadiumBorder(),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
   }
 
   Widget _buildFloatingSummaryCard(
@@ -367,590 +611,54 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
         Color.alphaBlend(typeColor.withOpacity(0.08), colorScheme.surfaceVariant);
     final sectionBorder = typeColor.withOpacity(0.25);
 
-    return DefaultTabController(
-      length: 4,
-      child: Builder(
-        builder: (context) {
-          final TabController? maybeTabController =
-              DefaultTabController.of(context);
-          if (maybeTabController == null) {
-            return const SizedBox.shrink();
-          }
-          final tabController = maybeTabController;
-          final Animation<double> tabAnimation =
-              _resolveTabControllerAnimation(tabController);
-          const double collapsedHeight = kToolbarHeight + 72.0;
-          final mediaQuery = MediaQuery.of(context);
-          final size = mediaQuery.size;
-          final isLandscape = mediaQuery.orientation == Orientation.landscape;
-          final portraitHeight = math.max(
-            collapsedHeight,
-            math.min(360.0, size.height * 0.45),
-          );
-          final landscapeHeight = math.max(
-            collapsedHeight,
-            math.min(320.0, size.height * 0.6),
-          );
-          final expandedHeight = isLandscape ? landscapeHeight : portraitHeight;
-
-          return DecoratedBox(
-            decoration: BoxDecoration(color: backgroundTint),
-            child: Column(
-              children: [
-                Expanded(
-                  child: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) {
-                      return [
-                  SliverAppBar(
-                    pinned: true,
-                    expandedHeight: expandedHeight,
-                    backgroundColor: typeColor,
-                    foregroundColor: onTypeColor,
-                    surfaceTintColor: typeColor,
-                    flexibleSpace: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final settings = context
-                            .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
-                        final currentExtent = settings?.currentExtent ?? constraints.maxHeight;
-                        final maxExtent = settings?.maxExtent ?? constraints.maxHeight;
-                        final minExtent = settings?.minExtent ?? kToolbarHeight;
-                        final extentDelta = maxExtent - minExtent;
-                        final expansionFactor = extentDelta <= 0
-                            ? 0.0
-                            : ((currentExtent - minExtent) / extentDelta)
-                                .clamp(0.0, 1.0);
-                        final parallaxFactor = 1 - expansionFactor;
-                        final particleOpacity =
-                            (ui.lerpDouble(0.35, 0.85, expansionFactor) ?? 0.35)
-                                .clamp(0.0, 1.0);
-                        final particleOffset =
-                            ui.lerpDouble(-0.08, 0.14, parallaxFactor) ?? 0.0;
-                        final imageSize = math.min(
-                          210.0,
-                          math.min(constraints.maxWidth, constraints.maxHeight) *
-                              0.55,
-                        );
-
-                        return FlexibleSpaceBar(
-                          title: Text(widget.capitalize(pokemon.name)),
-                          background: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Positioned.fill(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        typeColor,
-                                        Color.alphaBlend(
-                                          typeColor.withOpacity(0.45),
-                                          theme.colorScheme.surface,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: RadialGradient(
-                                      center: const Alignment(0, -0.4),
-                                      radius: 1.05,
-                                      colors: [
-                                        typeColor.withOpacity(0.75),
-                                        typeColor.withOpacity(0.1),
-                                      ],
-                                      stops: const [0.0, 1.0],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: Opacity(
-                                    opacity: 0.35,
-                                    child: SvgPicture.string(
-                                      _backgroundTextureSvg,
-                                      fit: BoxFit.cover,
-                                      colorFilter: ColorFilter.mode(
-                                        onTypeColor.withOpacity(0.25),
-                                        BlendMode.srcIn,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: ClipRect(
-                                  child: BackdropFilter(
-                                    filter: ui.ImageFilter.blur(
-                                      sigmaX: 18,
-                                      sigmaY: 18,
-                                    ),
-                                    child: Container(
-                                      color: typeColor.withOpacity(0.08),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: AnimatedSlide(
-                                    duration: const Duration(milliseconds: 360),
-                                    curve: Curves.easeOutCubic,
-                                    offset: Offset(0, particleOffset),
-                                    child: AnimatedOpacity(
-                                      duration: const Duration(milliseconds: 320),
-                                      curve: Curves.easeOut,
-                                      opacity: particleOpacity,
-                                      child: _ParticleField(
-                                        color: onTypeColor.withOpacity(0.4),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final isCompact =
-                                        constraints.maxWidth < 460;
-                                    final summaryMaxWidth = math.min(
-                                      260.0,
-                                      math.max(
-                                        0.0,
-                                        constraints.maxWidth - 48,
-                                      ),
-                                    );
-                                    final alignment = isCompact
-                                        ? Alignment.topCenter
-                                        : Alignment.bottomRight;
-                                    final padding = isCompact
-                                        ? const EdgeInsets.fromLTRB(24, 24, 24, 0)
-                                        : const EdgeInsets.fromLTRB(0, 0, 24, 24);
-
-                                    return Align(
-                                      alignment: alignment,
-                                      child: Padding(
-                                        padding: padding,
-                                        child: _buildFloatingSummaryCard(
-                                          theme,
-                                          colorScheme,
-                                          pokemon,
-                                          summaryMaxWidth,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomCenter,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 18),
-                                  child: Hero(
-                                    tag: widget.resolvedHeroTag,
-                                    child: PokemonArtwork(
-                                      imageUrl: pokemon.imageUrl,
-                                      size: imageSize,
-                                      borderRadius: 36,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ];
-              },
-              body: AnimatedBuilder(
-                animation: tabAnimation,
-                builder: (context, _) {
-                  return TabBarView(
-                    controller: tabController,
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _PokemonInfoTab(
-                        pokemon: pokemon,
-                        formatLabel: _formatLabel,
-                        formatHeight: _formatHeight,
-                        formatWeight: _formatWeight,
-                        mainAbility: mainAbility,
-                        abilitySubtitle: abilitySubtitle,
-                        sectionBackground: sectionBackground,
-                        sectionBorder: sectionBorder,
-                      ),
-                      _PokemonStatsTab(
-                        pokemon: pokemon,
-                        formatLabel: _formatLabel,
-                        sectionBackground: sectionBackground,
-                        sectionBorder: sectionBorder,
-                      ),
-                      _PokemonMatchupsTab(
-                        pokemon: pokemon,
-                        formatLabel: _formatLabel,
-                        sectionBackground: sectionBackground,
-                        sectionBorder: sectionBorder,
-                      ),
-                      _PokemonFutureTab(
-                        pokemon: pokemon,
-                        formatLabel: _formatLabel,
-                        sectionBackground: sectionBackground,
-                        sectionBorder: sectionBorder,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
+    return DecoratedBox(
+      decoration: BoxDecoration(color: backgroundTint),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeroHeader(
+            context: context,
+            theme: theme,
+            pokemon: pokemon,
+            typeColor: typeColor,
+            onTypeColor: onTypeColor,
           ),
-                _DetailBottomBar(
-                  tabController: tabController,
-                  typeColor: typeColor,
-                  foregroundColor: onTypeColor,
-                ),
-              ],
-            ),
-          );
-        },
+          _buildSectionSummary(theme, typeColor, onTypeColor),
+          const SizedBox(height: 24),
+          _PokemonInfoTab(
+            pokemon: pokemon,
+            formatLabel: _formatLabel,
+            formatHeight: _formatHeight,
+            formatWeight: _formatWeight,
+            mainAbility: mainAbility,
+            abilitySubtitle: abilitySubtitle,
+            sectionBackground: sectionBackground,
+            sectionBorder: sectionBorder,
+          ),
+          const SizedBox(height: 24),
+          _PokemonStatsTab(
+            pokemon: pokemon,
+            formatLabel: _formatLabel,
+            sectionBackground: sectionBackground,
+            sectionBorder: sectionBorder,
+          ),
+          const SizedBox(height: 24),
+          _PokemonMatchupsTab(
+            pokemon: pokemon,
+            formatLabel: _formatLabel,
+            sectionBackground: sectionBackground,
+            sectionBorder: sectionBorder,
+          ),
+          const SizedBox(height: 24),
+          _PokemonFutureTab(
+            pokemon: pokemon,
+            formatLabel: _formatLabel,
+            sectionBackground: sectionBackground,
+            sectionBorder: sectionBorder,
+          ),
+          const SizedBox(height: 32),
+        ],
       ),
-    );
-  }
-}
-
-class _DetailBottomBar extends StatelessWidget {
-  const _DetailBottomBar({
-    required this.tabController,
-    required this.typeColor,
-    required this.foregroundColor,
-  });
-
-  final TabController tabController;
-  final Color typeColor;
-  final Color foregroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final backgroundColor =
-        Color.alphaBlend(typeColor.withOpacity(0.07), colorScheme.surface);
-    final borderColor = typeColor.withOpacity(0.16);
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border(top: BorderSide(color: borderColor, width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 360;
-            final double widePadding =
-                constraints.maxWidth / (_detailTabConfigs.length * 2.6);
-            final double horizontalPadding = isCompact
-                ? 8
-                : math.max(12.0, math.min(widePadding, 24.0));
-            final TextStyle baseTitle =
-                theme.textTheme.titleMedium ?? const TextStyle();
-            final double baseFontSize = baseTitle.fontSize ?? 16;
-            final TextStyle tabTextStyle = baseTitle.copyWith(
-              fontWeight: FontWeight.w600,
-              color: foregroundColor,
-              height: 1.2,
-              fontSize:
-                  isCompact ? math.max(baseFontSize - 2, 12) : baseFontSize,
-            );
-
-            if (isCompact) {
-              return _CompactTabSelector(
-                controller: tabController,
-                configs: _detailTabConfigs,
-                foregroundColor: foregroundColor,
-                textStyle: tabTextStyle.copyWith(
-                  color: foregroundColor.withOpacity(0.9),
-                ),
-              );
-            }
-
-            return Theme(
-              data: theme.copyWith(
-                tabBarTheme: theme.tabBarTheme.copyWith(
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelPadding:
-                      EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  overlayColor: MaterialStateProperty.all(Colors.transparent),
-                  splashFactory: NoSplash.splashFactory,
-                ),
-              ),
-              child: ChipTheme(
-                data: ChipTheme.of(context).copyWith(
-                  backgroundColor: Colors.transparent,
-                  selectedColor: Colors.transparent,
-                  disabledColor: Colors.transparent,
-                  padding: EdgeInsets.zero,
-                  shape: const StadiumBorder(),
-                  labelStyle: tabTextStyle,
-                ),
-                child: TabBar(
-                  controller: tabController,
-                  isScrollable: true,
-                  indicator: const UnderlineTabIndicator(
-                    borderSide: BorderSide(
-                      color: Colors.transparent,
-                      width: 0,
-                    ),
-                  ),
-                  labelColor: foregroundColor,
-                  unselectedLabelColor: foregroundColor.withOpacity(0.72),
-                  tabs: [
-                    for (var i = 0; i < _detailTabConfigs.length; i++)
-                      Tab(
-                        child: _ElasticTabChip(
-                          controller: tabController,
-                          index: i,
-                          config: _detailTabConfigs[i],
-                          foregroundColor: foregroundColor,
-                          textStyle: tabTextStyle,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactTabSelector extends StatelessWidget {
-  const _CompactTabSelector({
-    required this.controller,
-    required this.configs,
-    required this.foregroundColor,
-    this.textStyle,
-  });
-
-  final TabController controller;
-  final List<_DetailTabConfig> configs;
-  final Color foregroundColor;
-  final TextStyle? textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final Animation<double> resolvedAnimation =
-        _resolveTabControllerAnimation(controller);
-
-    return AnimatedBuilder(
-      animation: resolvedAnimation,
-      builder: (context, _) {
-        final double animationValue = resolvedAnimation.value;
-        final int selectedIndex = animationValue.round();
-        final int clampedIndex = selectedIndex < 0
-            ? 0
-            : (selectedIndex >= configs.length
-                ? configs.length - 1
-                : selectedIndex);
-        final List<bool> selections = List<bool>.generate(
-          configs.length,
-          (index) => index == clampedIndex,
-        );
-
-        return ToggleButtons(
-          isSelected: selections,
-          onPressed: (index) {
-            if (index < 0 || index >= configs.length) {
-              return;
-            }
-            controller.animateTo(index);
-          },
-          borderRadius: const BorderRadius.all(Radius.circular(999)),
-          constraints: const BoxConstraints(minHeight: 40, minWidth: 0),
-          renderBorder: true,
-          borderWidth: 1,
-          borderColor: foregroundColor.withOpacity(0.4),
-          selectedBorderColor: foregroundColor,
-          color: foregroundColor.withOpacity(0.72),
-          selectedColor: foregroundColor,
-          fillColor: Colors.transparent,
-          hoverColor: Colors.transparent,
-          focusColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          children: [
-            for (var i = 0; i < configs.length; i++)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: _CompactTabSelectorItem(
-                  config: configs[i],
-                  textStyle: textStyle,
-                  isSelected: selections[i],
-                  foregroundColor: foregroundColor,
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _CompactTabSelectorItem extends StatelessWidget {
-  const _CompactTabSelectorItem({
-    required this.config,
-    required this.textStyle,
-    required this.isSelected,
-    required this.foregroundColor,
-  });
-
-  final _DetailTabConfig config;
-  final TextStyle? textStyle;
-  final bool isSelected;
-  final Color foregroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color effectiveColor =
-        isSelected ? foregroundColor : foregroundColor.withOpacity(0.75);
-    final TextStyle baseStyle = (textStyle ?? const TextStyle()).copyWith(
-      color: effectiveColor,
-      shadows: [
-        Shadow(
-          color: Colors.black.withOpacity(0.18),
-          offset: const Offset(0, 1),
-          blurRadius: 2,
-        ),
-      ],
-    );
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          config.icon,
-          size: 18,
-          color: effectiveColor,
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            config.label,
-            maxLines: 1,
-            overflow: TextOverflow.fade,
-            softWrap: false,
-            style: baseStyle,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ElasticTabChip extends StatelessWidget {
-  const _ElasticTabChip({
-    required this.controller,
-    required this.index,
-    required this.config,
-    required this.foregroundColor,
-    required this.textStyle,
-  });
-
-  final TabController controller;
-  final int index;
-  final _DetailTabConfig config;
-  final Color foregroundColor;
-  final TextStyle textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final Animation<double> resolvedAnimation =
-        _resolveTabControllerAnimation(controller);
-
-    return AnimatedBuilder(
-      animation: resolvedAnimation,
-      builder: (context, _) {
-        final double animationValue = resolvedAnimation.value;
-        final double distance =
-            (animationValue - index).abs().clamp(0.0, 1.0).toDouble();
-        final double activation = (1 - distance).clamp(0.0, 1.0).toDouble();
-        final curvedActivation = CurvedAnimation(
-          parent: AlwaysStoppedAnimation<double>(activation),
-          curve: Curves.elasticOut,
-        ).value;
-        final scale = ui.lerpDouble(0.94, 1.08, curvedActivation) ?? 1.0;
-        final Color textColor = Color.lerp(
-              foregroundColor.withOpacity(0.65),
-              foregroundColor,
-              curvedActivation,
-            ) ??
-            foregroundColor;
-        final Color borderColor = Color.lerp(
-              foregroundColor.withOpacity(0.32),
-              foregroundColor,
-              curvedActivation,
-            ) ??
-            foregroundColor;
-        final double borderWidth =
-            ui.lerpDouble(1.0, 2.0, curvedActivation) ?? 1.0;
-        final double shadowOpacity =
-            ui.lerpDouble(0.0, 0.28, curvedActivation) ?? 0.0;
-        final List<Shadow> contentShadows = [
-          Shadow(
-            color: Colors.black.withOpacity(shadowOpacity),
-            offset: const Offset(0, 1),
-            blurRadius: ui.lerpDouble(1.0, 4.0, curvedActivation) ?? 1.0,
-          ),
-        ];
-
-        return Transform.scale(
-          scale: scale,
-          child: Chip(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            backgroundColor: Colors.transparent,
-            avatar: Icon(
-              config.icon,
-              size: 18,
-              color: textColor,
-              shadows: contentShadows,
-            ),
-            label: Text(
-              config.label,
-              style: textStyle.copyWith(
-                color: textColor,
-                shadows: contentShadows,
-              ),
-            ),
-            shape: StadiumBorder(
-              side: BorderSide(
-                color: borderColor,
-                width: borderWidth,
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -1038,7 +746,7 @@ class _PokemonInfoTab extends StatelessWidget {
     final characteristics = pokemon.characteristics;
     final padding = _responsiveDetailTabPadding(context);
 
-    return SingleChildScrollView(
+    return Padding(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1232,7 +940,7 @@ class _PokemonStatsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = _responsiveDetailTabPadding(context);
 
-    return SingleChildScrollView(
+    return Padding(
       padding: padding,
       child: _InfoSectionCard(
         title: 'Estadísticas',
@@ -1272,7 +980,7 @@ class _PokemonMatchupsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = _responsiveDetailTabPadding(context);
 
-    return SingleChildScrollView(
+    return Padding(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1319,7 +1027,7 @@ class _PokemonFutureTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = _responsiveDetailTabPadding(context);
 
-    return SingleChildScrollView(
+    return Padding(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
