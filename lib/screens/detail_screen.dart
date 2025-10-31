@@ -1602,87 +1602,38 @@ class _CharacteristicsSection extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (items.length <= 3) {
-          return Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: items
-                .map(
-                  (item) => SizedBox(
-                    width: 170,
-                    child: _CharacteristicTile(
-                      icon: item.icon,
-                      label: item.label,
-                      value: item.value,
-                    ),
-                  ),
-                )
-                .toList(),
-          );
-        }
+        const spacing = 14.0;
+        const runSpacing = 14.0;
+        const maxTileWidth = 220.0;
 
-        final crossAxisCount = _characteristicCrossAxisCount(
-          constraints.maxWidth,
-          items.length,
-        );
+        final maxWidth = constraints.maxWidth;
+        final rawColumns =
+            ((maxWidth + spacing) / (maxTileWidth + spacing)).floor();
+        final columns = math.max(1, math.min(items.length, rawColumns));
+        final tileWidth = columns > 1
+            ? (maxWidth - (columns - 1) * spacing) / columns
+            : maxWidth;
+        final effectiveTileWidth =
+            columns > 1 ? math.min(tileWidth, maxTileWidth) : tileWidth;
 
-        if (items.length <= 6) {
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 1.45,
-            ),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _CharacteristicTile(
-                icon: item.icon,
-                label: item.label,
-                value: item.value,
-              );
-            },
-          );
-        }
-
-        return CustomScrollView(
-          shrinkWrap: true,
-          primary: false,
-          physics: const NeverScrollableScrollPhysics(),
-          slivers: [
-            SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 1, // Ajusta esto si necesitas un aspecto diferente
+        return Wrap(
+          spacing: spacing,
+          runSpacing: runSpacing,
+          alignment: columns == 1 ? WrapAlignment.center : WrapAlignment.start,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: effectiveTileWidth,
+                child: _CharacteristicTile(
+                  icon: item.icon,
+                  label: item.label,
+                  value: item.value,
+                ),
               ),
-              delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                  final item = items[index];
-                  return _CharacteristicTile(
-                    icon: item.icon,
-                    label: item.label,
-                    value: item.value,
-                  );
-                },
-                childCount: items.length,
-              ),
-            ),
           ],
         );
       },
     );
-  }
-
-  int _characteristicCrossAxisCount(double maxWidth, int itemCount) {
-    final raw = (maxWidth / 210).floor();
-    var count = raw < 2 ? 2 : raw;
-    count = math.min(count, math.min(itemCount, 4));
-    return count;
   }
 }
 
@@ -2300,7 +2251,6 @@ class _CharacteristicTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
-      constraints: const BoxConstraints(minWidth: 150, minHeight: 100),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colorScheme.surface.withOpacity(0.95),
@@ -2318,6 +2268,9 @@ class _CharacteristicTile extends StatelessWidget {
               color: colorScheme.onSurface.withOpacity(0.75),
               fontWeight: FontWeight.w600,
             ),
+            softWrap: true,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
@@ -2325,6 +2278,9 @@ class _CharacteristicTile extends StatelessWidget {
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
+            softWrap: true,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
