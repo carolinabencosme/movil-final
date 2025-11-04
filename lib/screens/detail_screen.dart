@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'dart:ui' show clampDouble;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -125,8 +126,10 @@ class DetailScreen extends StatelessWidget {
         ),
         builder: (result, {fetchMore, refetch}) {
           // Debug logging
-          debugPrint('Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-          debugPrint('Query result data keys: ${result.data?.keys.toList()}');
+          if (kDebugMode) {
+            debugPrint('Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            debugPrint('Query result data keys: ${result.data?.keys.toList()}');
+          }
           
           final data = result.data?['pokemon'] as Map<String, dynamic>?;
 
@@ -148,7 +151,9 @@ class DetailScreen extends StatelessWidget {
           }
 
           if (data == null) {
-            debugPrint('Pokemon data is null. Full result: ${result.data}');
+            if (kDebugMode) {
+              debugPrint('Pokemon data is null. Full result: ${result.data}');
+            }
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1749,7 +1754,9 @@ class _EvolutionSection extends StatelessWidget {
           );
           return allShareRoot;
         } catch (e) {
-          debugPrint('Error detecting branching evolution: $e');
+          if (kDebugMode) {
+            debugPrint('Error detecting branching evolution: $e');
+          }
           return false;
         }
       }
@@ -1869,11 +1876,13 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   runSpacing: _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
+                    final calculatedWidth = (maxWidth / _evolutionBranchGridColumns) - _evolutionBranchSpacing;
+                    final branchWidth = math.min(
+                      _evolutionBranchMaxWidth,
+                      math.max(150.0, calculatedWidth), // Minimum width of 150px
+                    );
                     return SizedBox(
-                      width: math.min(
-                        _evolutionBranchMaxWidth,
-                        maxWidth / _evolutionBranchGridColumns - _evolutionBranchSpacing,
-                      ),
+                      width: branchWidth,
                       child: _EvolutionBranch(
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
