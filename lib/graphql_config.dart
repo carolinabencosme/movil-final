@@ -12,7 +12,7 @@ ValueNotifier<GraphQLClient> initGraphQLClient() {
 
   final Policies defaultQueryPolicies = Policies(
     fetch: FetchPolicy.networkOnly,
-    error: ErrorPolicy.ignore,
+    error: ErrorPolicy.all, // Changed from ignore to all to see errors
     cacheReread: CacheRereadPolicy.ignoreAll,
   );
 
@@ -25,7 +25,7 @@ ValueNotifier<GraphQLClient> initGraphQLClient() {
         query: defaultQueryPolicies,
         mutate: Policies(
           fetch: FetchPolicy.networkOnly,
-          error: ErrorPolicy.none,
+          error: ErrorPolicy.all, // Changed from none to all
           cacheReread: CacheRereadPolicy.ignoreAll,
         ),
       ),

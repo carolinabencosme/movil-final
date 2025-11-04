@@ -119,7 +119,7 @@ class DetailScreen extends StatelessWidget {
           document: gql(getPokemonDetailsQuery),
           fetchPolicy: FetchPolicy.networkOnly,
           cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
-          errorPolicy: ErrorPolicy.ignore,
+          errorPolicy: ErrorPolicy.all, // Changed from ignore to all to see errors
           variables: {
             'id': pokemonId,
             'languageId': _defaultLanguageId,
@@ -130,6 +130,9 @@ class DetailScreen extends StatelessWidget {
           if (kDebugMode) {
             debugPrint('[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
             debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+            if (result.hasException) {
+              debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
+            }
           }
           
           // Extract the first pokemon from the list query result
