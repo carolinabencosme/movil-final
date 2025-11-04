@@ -4,11 +4,11 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Pokemon Detail Screen                 │
+│                    Pokémon Detail Screen                 │
 ├─────────────────────────────────────────────────────────┤
 │                                                           │
 │                    [Hero Header]                         │
-│                   Pokemon Image                          │
+│                   Pokémon Image                          │
 │                   Basic Info Card                        │
 │                                                           │
 ├─────────────────────────────────────────────────────────┤
@@ -45,7 +45,7 @@
 
 ### 1. Information Tab (Información) 📊
 **Content:**
-- Pokemon types with chips
+- Pokémon types with chips
 - Basic data cards (height, weight)
 - Main ability display
 - Full characteristics section
@@ -173,8 +173,8 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
 
 ## User Interaction Flow
 
-1. User opens Pokemon detail screen
-2. Hero animation shows Pokemon image
+1. User opens Pokémon detail screen
+2. Hero animation shows Pokémon image
 3. Default tab (Information) is displayed
 4. User can:
    - Swipe left/right to change tabs
@@ -229,7 +229,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
 - Content: Adjusted contrast for dark environments
 
 ### Type-Based Theming
-- TabBar background tinted with Pokemon's primary type color
+- TabBar background tinted with Pokémon's primary type color
 - Indicator color matches type color
 - Consistent with overall app theming
 

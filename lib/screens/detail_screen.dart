@@ -644,6 +644,10 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
         Color.alphaBlend(typeColor.withOpacity(0.08), colorScheme.surfaceVariant);
     final sectionBorder = typeColor.withOpacity(0.25);
 
+    // Calculate bottom padding for safe area
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPadding = 48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
+
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
       child: Column(
@@ -664,7 +668,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 // Información Tab
                 SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonInfoTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
@@ -679,7 +683,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 // Estadísticas Tab
                 SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonStatsTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
@@ -690,7 +694,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 // Matchups Tab
                 SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonMatchupsTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
@@ -701,7 +705,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 // Futuras Tab
                 SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonFutureTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
