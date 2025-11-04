@@ -58,15 +58,6 @@ const String getPokemonDetailsQuery = r'''
                   name
                 }
               }
-              held_item: pokemon_v2_itemByHeldItemId {
-                name
-                pokemon_v2_itemnames(
-                  where: {language_id: {_eq: $languageId}}
-                  limit: 1
-                ) {
-                  name
-                }
-              }
               location: pokemon_v2_location {
                 name
                 pokemon_v2_locationnames(
