@@ -777,20 +777,28 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Subir de nivel en $locationName');
   }
 
-  final knownMoveName = _resolveLocalizedEntityName(
-    evolution['known_move'] as Map<String, dynamic>?,
-    'pokemon_v2_movenames',
-  );
-  if (knownMoveName.isNotEmpty) {
-    details.add('Debe conocer $knownMoveName');
-  }
-
-  final knownMoveTypeName = _resolveLocalizedEntityName(
-    evolution['known_move_type'] as Map<String, dynamic>?,
-    'pokemon_v2_typenames',
-  );
-  if (knownMoveTypeName.isNotEmpty) {
-    details.add('Debe conocer un movimiento de tipo $knownMoveTypeName');
+  final knownMove = evolution['known_move'] as Map<String, dynamic>?;
+  if (knownMove != null) {
+    final knownMoveName = _resolveLocalizedEntityName(
+      knownMove,
+      'pokemon_v2_movenames',
+    );
+    if (knownMoveName.isNotEmpty) {
+      details.add('Debe conocer $knownMoveName');
+    } else {
+      // Fallback: if move data exists but no specific name is available,
+      // try to show the type requirement (edge case, unlikely in practice)
+      final knownMoveType = knownMove['pokemon_v2_type'] as Map<String, dynamic>?;
+      if (knownMoveType != null) {
+        final knownMoveTypeName = _resolveLocalizedEntityName(
+          knownMoveType,
+          'pokemon_v2_typenames',
+        );
+        if (knownMoveTypeName.isNotEmpty) {
+          details.add('Debe conocer un movimiento de tipo $knownMoveTypeName');
+        }
+      }
+    }
   }
 
   final partySpeciesName = _resolveLocalizedEntityName(
