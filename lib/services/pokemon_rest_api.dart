@@ -40,11 +40,15 @@ class PokemonRestApi {
           }
         }
         
+        // Fetch ability details
+        final abilities = await _fetchAbilityDetails(pokemonData);
+        
         // Combine all data
         return {
           'pokemon': pokemonData,
           'species': speciesData,
           'evolution': evolutionData,
+          'abilities': abilities,
         };
       } else {
         if (kDebugMode) {
@@ -60,6 +64,39 @@ class PokemonRestApi {
     }
   }
 
+  /// Fetch detailed ability information
+  static Future<Map<String, Map<String, dynamic>>> _fetchAbilityDetails(
+    Map<String, dynamic> pokemonData,
+  ) async {
+    final abilityDetails = <String, Map<String, dynamic>>{};
+    final abilities = pokemonData['abilities'] as List<dynamic>?;
+    
+    if (abilities == null) return abilityDetails;
+    
+    for (final abilityEntry in abilities) {
+      final ability = abilityEntry as Map<String, dynamic>?;
+      final abilityInfo = ability?['ability'] as Map<String, dynamic>?;
+      final abilityUrl = abilityInfo?['url'] as String?;
+      final abilityName = abilityInfo?['name'] as String?;
+      
+      if (abilityUrl != null && abilityName != null) {
+        try {
+          final response = await http.get(Uri.parse(abilityUrl));
+          if (response.statusCode == 200) {
+            final detailData = json.decode(response.body) as Map<String, dynamic>;
+            abilityDetails[abilityName] = detailData;
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[REST API] Error fetching ability $abilityName: $e');
+          }
+        }
+      }
+    }
+    
+    return abilityDetails;
+  }
+
   /// Convert REST API data to GraphQL-like structure for compatibility
   static Map<String, dynamic>? convertToGraphQLStructure(
     Map<String, dynamic>? restData,
@@ -69,6 +106,7 @@ class PokemonRestApi {
     final pokemon = restData['pokemon'] as Map<String, dynamic>?;
     final species = restData['species'] as Map<String, dynamic>?;
     final evolution = restData['evolution'] as Map<String, dynamic>?;
+    final abilityDetails = restData['abilities'] as Map<String, Map<String, dynamic>>? ?? {};
 
     if (pokemon == null) return null;
 
@@ -119,7 +157,7 @@ class PokemonRestApi {
             .toList() ??
         [];
 
-    // Extract abilities
+    // Extract abilities with detailed information
     final abilities = (pokemon['abilities'] as List<dynamic>?)
             ?.map((a) {
               final ability = a as Map<String, dynamic>?;
@@ -127,19 +165,55 @@ class PokemonRestApi {
               final slot = ability?['slot'] as int? ?? 0;
               final abilityInfo = ability?['ability'] as Map<String, dynamic>?;
               final abilityName = abilityInfo?['name'] as String?;
+              
               if (abilityName != null) {
+                // Get detailed ability information if available
+                final detailData = abilityDetails[abilityName];
+                String displayName = abilityName;
+                String shortEffect = 'See ability details for more information.';
+                String fullEffect = 'This ability provides special effects during battle.';
+                
+                if (detailData != null) {
+                  // Extract English name
+                  final names = detailData['names'] as List<dynamic>?;
+                  if (names != null) {
+                    for (final nameEntry in names) {
+                      final entry = nameEntry as Map<String, dynamic>?;
+                      final language = entry?['language'] as Map<String, dynamic>?;
+                      if (language?['name'] == 'en') {
+                        displayName = entry?['name'] as String? ?? abilityName;
+                        break;
+                      }
+                    }
+                  }
+                  
+                  // Extract English effect text
+                  final effectEntries = detailData['effect_entries'] as List<dynamic>?;
+                  if (effectEntries != null) {
+                    for (final effectEntry in effectEntries) {
+                      final entry = effectEntry as Map<String, dynamic>?;
+                      final language = entry?['language'] as Map<String, dynamic>?;
+                      if (language?['name'] == 'en') {
+                        shortEffect = entry?['short_effect'] as String? ?? shortEffect;
+                        fullEffect = entry?['effect'] as String? ?? fullEffect;
+                        break;
+                      }
+                    }
+                  }
+                }
+                
                 return {
                   'is_hidden': isHidden,
                   'slot': slot,
                   'pokemon_v2_ability': {
                     'name': abilityName,
                     'pokemon_v2_abilitynames': [
-                      {'name': abilityName},
+                      {'name': displayName},
                     ],
                     'pokemon_v2_abilityeffecttexts': [
                       {
-                        'short_effect': 'See ability details for more information.',
-                        'effect': 'This ability provides special effects during battle.',
+                        'short_effect': shortEffect,
+                        'effect': fullEffect,
                       },
                     ],
                   },
