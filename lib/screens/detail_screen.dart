@@ -11,7 +11,6 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
-import '../services/pokemon_rest_api.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 
@@ -83,7 +82,7 @@ EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
       .copyWith(top: 24, bottom: 32);
 }
 
-class DetailScreen extends StatefulWidget {
+class DetailScreen extends StatelessWidget {
   const DetailScreen({
     super.key,
     required this.pokemonId,
@@ -97,20 +96,6 @@ class DetailScreen extends StatefulWidget {
   final PokemonListItem? initialPokemon;
   final String? heroTag;
 
-  @override
-  State<DetailScreen> createState() => _DetailScreenState();
-}
-
-class _DetailScreenState extends State<DetailScreen> {
-  // Error message constants
-  static const String _loadErrorMessage = 'No se pudo cargar la información del Pokémon';
-  static const String _errorPrefix = 'Error al cargar: ';
-  
-  bool _useRestApiFallback = false;
-  bool _isLoadingRest = false;
-  Map<String, dynamic>? _restData;
-  String? _restError;
-
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -118,285 +103,133 @@ class _DetailScreenState extends State<DetailScreen> {
     return value[0].toUpperCase() + value.substring(1);
   }
 
-  /// Trigger REST API fallback when GraphQL fails
-  void _triggerRestApiFallback() {
-    if (!_useRestApiFallback && !_isLoadingRest) {
-      Future.microtask(() => _loadFromRestApi());
-    }
-  }
-
-  Future<void> _loadFromRestApi() async {
-    if (_isLoadingRest) return;
-
-    setState(() {
-      _isLoadingRest = true;
-      _restError = null;
-    });
-
-    if (kDebugMode) {
-      debugPrint('[Pokemon Detail] Fetching from REST API fallback for ID: ${widget.pokemonId}');
-    }
-
-    try {
-      final restData = await PokemonRestApi.fetchPokemonDetail(widget.pokemonId);
-      if (restData != null) {
-        final convertedData = PokemonRestApi.convertToGraphQLStructure(restData);
-        setState(() {
-          _restData = convertedData;
-          _isLoadingRest = false;
-          _useRestApiFallback = true;
-        });
-        if (kDebugMode) {
-          debugPrint('[Pokemon Detail] Successfully loaded from REST API');
-        }
-      } else {
-        setState(() {
-          _restError = _loadErrorMessage;
-          _isLoadingRest = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _restError = '$_errorPrefix$e';
-        _isLoadingRest = false;
-      });
-      if (kDebugMode) {
-        debugPrint('[Pokemon Detail] REST API error: $e');
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final resolvedHeroTag = widget.heroTag ?? 'pokemon-image-${widget.pokemonId}';
+    final resolvedHeroTag = heroTag ?? 'pokemon-image-$pokemonId';
     final previewName =
-        widget.initialPokemon != null ? _capitalize(widget.initialPokemon!.name) : null;
-    final previewImage = widget.initialPokemon?.imageUrl ?? '';
+        initialPokemon != null ? _capitalize(initialPokemon!.name) : null;
+    final previewImage = initialPokemon?.imageUrl ?? '';
 
     return Scaffold(
       appBar: AppBar(
         title: Text(previewName ?? 'Detalles del Pokémon'),
       ),
-      body: _useRestApiFallback
-          ? _buildRestApiView(resolvedHeroTag, previewName, previewImage)
-          : Query(
-              options: QueryOptions(
-                document: gql(getPokemonDetailsQuery),
-                fetchPolicy: FetchPolicy.networkOnly,
-                cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
-                errorPolicy: ErrorPolicy.ignore,
-                variables: {
-                  'id': widget.pokemonId,
-                  'languageId': DetailScreen._defaultLanguageId,
-                },
-              ),
-              builder: (result, {fetchMore, refetch}) {
-                // Debug logging for Pokemon detail data fetching
-                if (kDebugMode) {
-                  debugPrint('[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-                  debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
-                }
-                
-                // Extract the first pokemon from the list query result
-                final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
-                final data = (pokemonList?.isNotEmpty ?? false)
-                    ? pokemonList?.first as Map<String, dynamic>?
-                    : null;
-
-                // If GraphQL fails or returns no data, try REST API fallback
-                if (!result.isLoading && data == null) {
-                  if (kDebugMode) {
-                    debugPrint('[Pokemon Detail] GraphQL returned no data, switching to REST API fallback');
-                  }
-                  _triggerRestApiFallback();
-                }
-
-                if (result.isLoading && data == null) {
-                  return _LoadingDetailView(
-                    heroTag: resolvedHeroTag,
-                    imageUrl: previewImage,
-                    name: previewName,
-                  );
-                }
-
-                if (result.hasException && data == null) {
-                  if (kDebugMode) {
-                    debugPrint(
-                      'Error al cargar el detalle del Pokémon: ${result.exception}',
-                    );
-                  }
-                  // Show error but trigger REST fallback
-                  _triggerRestApiFallback();
-                  return _LoadingDetailView(
-                    heroTag: resolvedHeroTag,
-                    imageUrl: previewImage,
-                    name: previewName,
-                  );
-                }
-
-                if (data == null) {
-                  if (kDebugMode) {
-                    debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
-                  }
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('No se encontró información para este Pokémon.'),
-                        const SizedBox(height: 16),
-                        if (refetch != null)
-                          ElevatedButton(
-                            onPressed: () async {
-                              await refetch();
-                            },
-                            child: const Text('Reintentar'),
-                          ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (result.hasException) {
-                  debugPrint(
-                    'Se recibieron datos parciales con errores: ${result.exception}',
-                  );
-                }
-
-                final typeEfficacies =
-                    result.data?['type_efficacy'] as List<dynamic>? ?? [];
-
-                final pokemon = PokemonDetail.fromGraphQL(
-                  data,
-                  typeEfficacies: typeEfficacies,
-                );
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    await refetch?.call();
-                  },
-                  child: SafeArea(
-                    child: Builder(
-                      builder: (context) {
-                        final mediaQuery = MediaQuery.of(context);
-                        final bottomPadding =
-                            48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
-
-                        return Stack(
-                          children: [
-                            SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: EdgeInsets.only(bottom: bottomPadding),
-                              child: _PokemonDetailBody(
-                                pokemon: pokemon,
-                                resolvedHeroTag: resolvedHeroTag,
-                                capitalize: _capitalize,
-                              ),
-                            ),
-                            if (result.isLoading)
-                              const Positioned(
-                                left: 0,
-                                right: 0,
-                                top: 0,
-                                child: LinearProgressIndicator(minHeight: 2),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-
-  Widget _buildRestApiView(String resolvedHeroTag, String? previewName, String previewImage) {
-    if (_isLoadingRest) {
-      return _LoadingDetailView(
-        heroTag: resolvedHeroTag,
-        imageUrl: previewImage,
-        name: previewName,
-      );
-    }
-
-    if (_restError != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.cloud_off,
-                size: 48,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _loadFromRestApi,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_restData == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('No se encontró información para este Pokémon.'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadFromRestApi,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Build type efficacies from REST data
-    final typeEfficacies = <Map<String, dynamic>>[];
-
-    final pokemon = PokemonDetail.fromGraphQL(
-      _restData!,
-      typeEfficacies: typeEfficacies,
-    );
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _loadFromRestApi();
-      },
-      child: SafeArea(
-        child: Builder(
-          builder: (context) {
-            final mediaQuery = MediaQuery.of(context);
-            final bottomPadding =
-                48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
-
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.only(bottom: bottomPadding),
-              child: _PokemonDetailBody(
-                pokemon: pokemon,
-                resolvedHeroTag: resolvedHeroTag,
-                capitalize: _capitalize,
-              ),
-            );
+      body: Query(
+        options: QueryOptions(
+          document: gql(getPokemonDetailsQuery),
+          fetchPolicy: FetchPolicy.networkOnly,
+          cacheRereadPolicy: CacheRereadPolicy.ignoreAll,
+          errorPolicy: ErrorPolicy.all, // Changed from ignore to all to see errors
+          variables: {
+            'id': pokemonId,
+            'languageId': _defaultLanguageId,
           },
         ),
+        builder: (result, {fetchMore, refetch}) {
+          // Debug logging for Pokemon detail data fetching
+          if (kDebugMode) {
+            debugPrint('[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+            if (result.hasException) {
+              debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
+            }
+          }
+          
+          // Extract the first pokemon from the list query result
+          final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
+          final data = (pokemonList?.isNotEmpty ?? false)
+              ? pokemonList?.first as Map<String, dynamic>?
+              : null;
+
+          if (result.isLoading && data == null) {
+            return _LoadingDetailView(
+              heroTag: resolvedHeroTag,
+              imageUrl: previewImage,
+              name: previewName,
+            );
+          }
+
+          if (result.hasException && data == null) {
+            debugPrint(
+              'Error al cargar el detalle del Pokémon: ${result.exception}',
+            );
+            return _PokemonDetailErrorView(
+              onRetry: refetch,
+            );
+          }
+
+          if (data == null) {
+            if (kDebugMode) {
+              debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
+            }
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No se encontró información para este Pokémon.'),
+                  const SizedBox(height: 16),
+                  if (refetch != null)
+                    ElevatedButton(
+                      onPressed: () async {
+                        await refetch();
+                      },
+                      child: const Text('Reintentar'),
+                    ),
+                ],
+              ),
+            );
+          }
+
+          if (result.hasException) {
+            debugPrint(
+              'Se recibieron datos parciales con errores: ${result.exception}',
+            );
+          }
+
+          final typeEfficacies =
+              result.data?['type_efficacy'] as List<dynamic>? ?? [];
+
+          final pokemon = PokemonDetail.fromGraphQL(
+            data,
+            typeEfficacies: typeEfficacies,
+          );
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await refetch?.call();
+            },
+            child: SafeArea(
+              child: Builder(
+                builder: (context) {
+                  final mediaQuery = MediaQuery.of(context);
+                  final bottomPadding =
+                      48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
+
+                  return Stack(
+                    children: [
+                      SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: bottomPadding),
+                        child: _PokemonDetailBody(
+                          pokemon: pokemon,
+                          resolvedHeroTag: resolvedHeroTag,
+                          capitalize: _capitalize,
+                        ),
+                      ),
+                      if (result.isLoading)
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
   }
