@@ -2329,31 +2329,39 @@ class _AbilitiesCarousel extends StatefulWidget {
 
 class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
   late PageController _pageController;
+  double _currentViewportFraction = 0.88;
 
   @override
   void initState() {
     super.initState();
-    _initializeController();
+    _pageController = PageController(viewportFraction: _currentViewportFraction);
   }
 
   @override
   void didUpdateWidget(_AbilitiesCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.abilities != widget.abilities) {
+    if (oldWidget.abilities.length != widget.abilities.length) {
+      // Only recreate if the number of abilities changed
       _pageController.dispose();
-      _initializeController();
+      _pageController = PageController(viewportFraction: _currentViewportFraction);
     }
-  }
-
-  void _initializeController() {
-    // Initialize with responsive viewport fraction
-    _pageController = PageController(viewportFraction: 0.88);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _updateViewportFractionIfNeeded(double newFraction) {
+    if ((_currentViewportFraction - newFraction).abs() > 0.01) {
+      // Only update if difference is significant
+      setState(() {
+        _currentViewportFraction = newFraction;
+        _pageController.dispose();
+        _pageController = PageController(viewportFraction: newFraction);
+      });
+    }
   }
 
   @override
@@ -2364,11 +2372,12 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
         final isCompactWidth = constraints.maxWidth < 560;
         final viewportFraction = isCompactWidth ? 0.88 : 0.52;
         
-        // Update viewport fraction if needed
-        if (_pageController.viewportFraction != viewportFraction) {
-          _pageController.dispose();
-          _pageController = PageController(viewportFraction: viewportFraction);
-        }
+        // Schedule viewport fraction update after build if needed
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _updateViewportFractionIfNeeded(viewportFraction);
+          }
+        });
 
         final cardWidth = clampDouble(
           constraints.maxWidth * viewportFraction,
