@@ -1736,11 +1736,16 @@ class _EvolutionSection extends StatelessWidget {
     if (chain.paths.length > 1) {
       // Check if paths share a common root (branching from one Pokemon)
       if (chain.paths.isNotEmpty && chain.paths.first.isNotEmpty) {
-        final firstRoot = chain.paths.first.first.speciesId;
-        final allShareRoot = chain.paths.every(
-          (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
-        );
-        return allShareRoot;
+        try {
+          final firstRoot = chain.paths.first.first.speciesId;
+          final allShareRoot = chain.paths.every(
+            (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
+          );
+          return allShareRoot;
+        } catch (e) {
+          debugPrint('Error detecting branching evolution: $e');
+          return false;
+        }
       }
     }
     return false;
@@ -1785,6 +1790,15 @@ class _EvolutionSection extends StatelessWidget {
 /// This widget is used when a Pokemon has multiple possible evolution paths,
 /// like Eevee. It shows the base Pokemon at the top and all possible evolution
 /// branches below in a grid or column layout depending on screen width.
+/// 
+/// Example for Eevee:
+/// ```
+///        Eevee
+///          ↓
+///    ┌─────┼─────┐
+///    ↓     ↓     ↓
+/// Vaporeon Jolteon Flareon ...
+/// ```
 class _BranchingEvolutionTree extends StatelessWidget {
   const _BranchingEvolutionTree({
     required this.chain,
