@@ -944,47 +944,9 @@ class _PokemonInfoTab extends StatelessWidget {
             variant: InfoSectionCardVariant.angled,
             padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
             child: pokemon.abilities.isNotEmpty
-                ? LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size = MediaQuery.sizeOf(context);
-                      final isCompactWidth = constraints.maxWidth < 560;
-                      final viewportFraction = isCompactWidth ? 0.88 : 0.52;
-                      final cardWidth = clampDouble(
-                        constraints.maxWidth * viewportFraction,
-                        220,
-                        constraints.maxWidth,
-                      );
-                      final baseHeight = size.height * (isCompactWidth ? 0.28 : 0.32);
-                      final cardHeight = clampDouble(
-                        baseHeight,
-                        isCompactWidth ? 160 : 200,
-                        isCompactWidth ? 220 : 260,
-                      );
-                      final controller = PageController(viewportFraction: viewportFraction);
-
-                      return SizedBox(
-                        height: cardHeight,
-                        child: PageView.builder(
-                          controller: controller,
-                          padEnds: pokemon.abilities.length == 1,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: pokemon.abilities.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isCompactWidth ? 8 : 10,
-                              ),
-                              child: _AbilityTile(
-                                ability: pokemon.abilities[index],
-                                formatLabel: formatLabel,
-                                width: cardWidth,
-                                height: cardHeight,
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+                ? _AbilitiesCarousel(
+                    abilities: pokemon.abilities,
+                    formatLabel: formatLabel,
                   )
                 : const Text('Sin información de habilidades disponible.'),
           ),
@@ -2348,6 +2310,101 @@ class _CharacteristicTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AbilitiesCarousel extends StatefulWidget {
+  const _AbilitiesCarousel({
+    required this.abilities,
+    required this.formatLabel,
+  });
+
+  final List<PokemonAbilityDetail> abilities;
+  final String Function(String) formatLabel;
+
+  @override
+  State<_AbilitiesCarousel> createState() => _AbilitiesCarouselState();
+}
+
+class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  @override
+  void didUpdateWidget(_AbilitiesCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.abilities != widget.abilities) {
+      _pageController.dispose();
+      _initializeController();
+    }
+  }
+
+  void _initializeController() {
+    // Initialize with responsive viewport fraction
+    _pageController = PageController(viewportFraction: 0.88);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = MediaQuery.sizeOf(context);
+        final isCompactWidth = constraints.maxWidth < 560;
+        final viewportFraction = isCompactWidth ? 0.88 : 0.52;
+        
+        // Update viewport fraction if needed
+        if (_pageController.viewportFraction != viewportFraction) {
+          _pageController.dispose();
+          _pageController = PageController(viewportFraction: viewportFraction);
+        }
+
+        final cardWidth = clampDouble(
+          constraints.maxWidth * viewportFraction,
+          220,
+          constraints.maxWidth,
+        );
+        final baseHeight = size.height * (isCompactWidth ? 0.28 : 0.32);
+        final cardHeight = clampDouble(
+          baseHeight,
+          isCompactWidth ? 160 : 200,
+          isCompactWidth ? 220 : 260,
+        );
+
+        return SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _pageController,
+            padEnds: widget.abilities.length == 1,
+            physics: const BouncingScrollPhysics(),
+            itemCount: widget.abilities.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompactWidth ? 8 : 10,
+                ),
+                child: _AbilityTile(
+                  ability: widget.abilities[index],
+                  formatLabel: widget.formatLabel,
+                  width: cardWidth,
+                  height: cardHeight,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
