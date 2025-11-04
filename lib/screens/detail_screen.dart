@@ -118,6 +118,10 @@ class DetailScreen extends StatelessWidget {
           },
         ),
         builder: (result, {fetchMore, refetch}) {
+          // Debug logging
+          debugPrint('Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+          debugPrint('Query result data keys: ${result.data?.keys.toList()}');
+          
           final data = result.data?['pokemon'] as Map<String, dynamic>?;
 
           if (result.isLoading && data == null) {
@@ -138,8 +142,22 @@ class DetailScreen extends StatelessWidget {
           }
 
           if (data == null) {
-            return const Center(
-              child: Text('No se encontró información para este Pokémon.'),
+            debugPrint('Pokemon data is null. Full result: ${result.data}');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No se encontró información para este Pokémon.'),
+                  const SizedBox(height: 16),
+                  if (refetch != null)
+                    ElevatedButton(
+                      onPressed: () async {
+                        await refetch();
+                      },
+                      child: const Text('Reintentar'),
+                    ),
+                ],
+              ),
             );
           }
 
