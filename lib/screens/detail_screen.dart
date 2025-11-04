@@ -1725,6 +1725,12 @@ class _EvolutionSection extends StatelessWidget {
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
 
+  /// Determines if the evolution chain represents a branching evolution pattern
+  /// (like Eevee that evolves into multiple different Pokemon).
+  /// 
+  /// Returns true if:
+  /// - There are multiple evolution paths
+  /// - All paths share the same root Pokemon (they branch from one common ancestor)
   bool _isBranchingEvolution(PokemonEvolutionChain chain) {
     // Check if there are multiple evolution paths (branching like Eevee)
     if (chain.paths.length > 1) {
@@ -1774,6 +1780,11 @@ class _EvolutionSection extends StatelessWidget {
   }
 }
 
+/// Displays evolution chains in a tree structure for branching evolutions.
+/// 
+/// This widget is used when a Pokemon has multiple possible evolution paths,
+/// like Eevee. It shows the base Pokemon at the top and all possible evolution
+/// branches below in a grid or column layout depending on screen width.
 class _BranchingEvolutionTree extends StatelessWidget {
   const _BranchingEvolutionTree({
     required this.chain,
@@ -1871,6 +1882,10 @@ class _BranchingEvolutionTree extends StatelessWidget {
   }
 }
 
+/// Displays a single evolution branch (path from one Pokemon to another).
+/// 
+/// Used within [_BranchingEvolutionTree] to show individual evolution paths.
+/// Each branch can contain multiple stages of evolution.
 class _EvolutionBranch extends StatelessWidget {
   const _EvolutionBranch({
     required this.nodes,
