@@ -65,7 +65,8 @@ const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
   _DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
   _DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
-  _DetailTabConfig(icon: Icons.upcoming_rounded, label: 'Futuras'),
+  _DetailTabConfig(icon: Icons.transform_rounded, label: 'Evoluciones'),
+  _DetailTabConfig(icon: Icons.sports_martial_arts_rounded, label: 'Movimientos'),
 ];
 
 // Constants for evolution display layout
@@ -249,7 +250,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -702,11 +703,22 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                     sectionBorder: sectionBorder,
                   ),
                 ),
-                // Futuras Tab
+                // Evoluciones Tab
                 SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: _PokemonFutureTab(
+                  child: _PokemonEvolutionTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+                // Movimientos Tab
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
+                  child: _PokemonMovesTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
                     sectionBackground: sectionBackground,
@@ -1112,6 +1124,71 @@ class _PokemonFutureTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PokemonEvolutionTab extends StatelessWidget {
+  const _PokemonEvolutionTab({
+    required this.pokemon,
+    required this.formatLabel,
+    required this.sectionBackground,
+    required this.sectionBorder,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+  final Color sectionBackground;
+  final Color sectionBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
+    return Padding(
+      padding: padding,
+      child: _InfoSectionCard(
+        title: 'Cadena evolutiva',
+        backgroundColor: sectionBackground,
+        borderColor: sectionBorder,
+        child: _EvolutionSection(
+          evolutionChain: pokemon.evolutionChain,
+          currentSpeciesId: pokemon.speciesId,
+          formatLabel: formatLabel,
+        ),
+      ),
+    );
+  }
+}
+
+class _PokemonMovesTab extends StatelessWidget {
+  const _PokemonMovesTab({
+    required this.pokemon,
+    required this.formatLabel,
+    required this.sectionBackground,
+    required this.sectionBorder,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+  final Color sectionBackground;
+  final Color sectionBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
+    return Padding(
+      padding: padding,
+      child: _InfoSectionCard(
+        title: 'Movimientos',
+        backgroundColor: sectionBackground,
+        borderColor: sectionBorder,
+        child: _MovesSection(
+          moves: pokemon.moves,
+          formatLabel: formatLabel,
+        ),
       ),
     );
   }
