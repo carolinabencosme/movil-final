@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 /// Service for fetching Pokemon data from the REST API
 class PokemonRestApi {
   static const String _baseUrl = 'https://pokeapi.co/api/v2';
+  static const int _maxMovesLimit = 50; // Limit moves to avoid UI overload
 
   /// Fetch Pokemon detail by ID from REST API
   static Future<Map<String, dynamic>?> fetchPokemonDetail(int id) async {
@@ -79,14 +80,17 @@ class PokemonRestApi {
     }
   }
 
-  /// Fetch detailed ability information
+  /// Fetch detailed ability information concurrently
   static Future<Map<String, Map<String, dynamic>>> _fetchAbilityDetails(
     Map<String, dynamic> pokemonData,
   ) async {
     final abilityDetails = <String, Map<String, dynamic>>{};
     final abilities = pokemonData['abilities'] as List<dynamic>?;
     
-    if (abilities == null) return abilityDetails;
+    if (abilities == null || abilities.isEmpty) return abilityDetails;
+    
+    // Create list of futures for concurrent fetching
+    final futures = <Future<void>>[];
     
     for (final abilityEntry in abilities) {
       final ability = abilityEntry as Map<String, dynamic>?;
@@ -95,19 +99,24 @@ class PokemonRestApi {
       final abilityName = abilityInfo?['name'] as String?;
       
       if (abilityUrl != null && abilityName != null) {
-        try {
-          final response = await http.get(Uri.parse(abilityUrl));
-          if (response.statusCode == 200) {
-            final detailData = json.decode(response.body) as Map<String, dynamic>;
-            abilityDetails[abilityName] = detailData;
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('[REST API] Error fetching ability $abilityName: $e');
-          }
-        }
+        // Add concurrent fetch future
+        futures.add(
+          http.get(Uri.parse(abilityUrl)).then((response) {
+            if (response.statusCode == 200) {
+              final detailData = json.decode(response.body) as Map<String, dynamic>;
+              abilityDetails[abilityName] = detailData;
+            }
+          }).catchError((e) {
+            if (kDebugMode) {
+              debugPrint('[REST API] Error fetching ability $abilityName: $e');
+            }
+          }),
+        );
       }
     }
+    
+    // Wait for all ability requests to complete
+    await Future.wait(futures);
     
     return abilityDetails;
   }
@@ -240,9 +249,9 @@ class PokemonRestApi {
             .toList() ??
         [];
 
-    // Extract moves
+    // Extract moves (limited to avoid overwhelming UI)
     final moves = (pokemon['moves'] as List<dynamic>?)
-            ?.take(50) // Limit to first 50 moves to avoid overwhelming the UI
+            ?.take(_maxMovesLimit)
             .map((m) {
               final move = m as Map<String, dynamic>?;
               final moveInfo = move?['move'] as Map<String, dynamic>?;

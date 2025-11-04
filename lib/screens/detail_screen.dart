@@ -102,6 +102,10 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
+  // Error message constants
+  static const String _loadErrorMessage = 'No se pudo cargar la información del Pokémon';
+  static const String _errorPrefix = 'Error al cargar: ';
+  
   bool _useRestApiFallback = false;
   bool _isLoadingRest = false;
   Map<String, dynamic>? _restData;
@@ -112,6 +116,13 @@ class _DetailScreenState extends State<DetailScreen> {
       return value;
     }
     return value[0].toUpperCase() + value.substring(1);
+  }
+
+  /// Trigger REST API fallback when GraphQL fails
+  void _triggerRestApiFallback() {
+    if (!_useRestApiFallback && !_isLoadingRest) {
+      Future.microtask(() => _loadFromRestApi());
+    }
   }
 
   Future<void> _loadFromRestApi() async {
@@ -140,13 +151,13 @@ class _DetailScreenState extends State<DetailScreen> {
         }
       } else {
         setState(() {
-          _restError = 'No se pudo cargar la información del Pokémon';
+          _restError = _loadErrorMessage;
           _isLoadingRest = false;
         });
       }
     } catch (e) {
       setState(() {
-        _restError = 'Error al cargar: $e';
+        _restError = '$_errorPrefix$e';
         _isLoadingRest = false;
       });
       if (kDebugMode) {
@@ -193,12 +204,11 @@ class _DetailScreenState extends State<DetailScreen> {
                     : null;
 
                 // If GraphQL fails or returns no data, try REST API fallback
-                if (!result.isLoading && data == null && !_useRestApiFallback && !_isLoadingRest) {
+                if (!result.isLoading && data == null) {
                   if (kDebugMode) {
                     debugPrint('[Pokemon Detail] GraphQL returned no data, switching to REST API fallback');
                   }
-                  // Trigger REST API fallback
-                  Future.microtask(() => _loadFromRestApi());
+                  _triggerRestApiFallback();
                 }
 
                 if (result.isLoading && data == null) {
@@ -216,9 +226,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     );
                   }
                   // Show error but trigger REST fallback
-                  if (!_useRestApiFallback && !_isLoadingRest) {
-                    Future.microtask(() => _loadFromRestApi());
-                  }
+                  _triggerRestApiFallback();
                   return _LoadingDetailView(
                     heroTag: resolvedHeroTag,
                     imageUrl: previewImage,
