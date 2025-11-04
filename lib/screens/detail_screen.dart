@@ -201,20 +201,12 @@ class DetailScreen extends StatelessWidget {
             child: SafeArea(
               child: Builder(
                 builder: (context) {
-                  final mediaQuery = MediaQuery.of(context);
-                  final bottomPadding =
-                      48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
-
                   return Stack(
                     children: [
-                      SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.only(bottom: bottomPadding),
-                        child: _PokemonDetailBody(
-                          pokemon: pokemon,
-                          resolvedHeroTag: resolvedHeroTag,
-                          capitalize: _capitalize,
-                        ),
+                      _PokemonDetailBody(
+                        pokemon: pokemon,
+                        resolvedHeroTag: resolvedHeroTag,
+                        capitalize: _capitalize,
                       ),
                       if (result.isLoading)
                         const Positioned(
@@ -250,7 +242,22 @@ class _PokemonDetailBody extends StatefulWidget {
   State<_PokemonDetailBody> createState() => _PokemonDetailBodyState();
 }
 
-class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
+class _PokemonDetailBodyState extends State<_PokemonDetailBody>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   String _formatHeight(int height) {
     if (height <= 0) return '—';
     final meters = height / 10.0;
@@ -460,59 +467,48 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
     );
   }
 
-  Widget _buildSectionSummary(
+  Widget _buildTabBar(
     ThemeData theme,
     Color typeColor,
     Color onTypeColor,
   ) {
-    final colorScheme = theme.colorScheme;
-    final backgroundColor =
-        Color.alphaBlend(typeColor.withOpacity(0.07), colorScheme.surface);
-    final borderColor = typeColor.withOpacity(0.16);
-    final chipBackground =
-        Color.alphaBlend(onTypeColor.withOpacity(0.06), backgroundColor);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: borderColor, width: 1),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(typeColor.withOpacity(0.08), theme.colorScheme.surface),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: typeColor.withOpacity(0.18), width: 1),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.center,
+        indicator: BoxDecoration(
+          color: typeColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          children: _detailTabConfigs
-              .map(
-                (config) => Chip(
-                  avatar: Icon(
-                    config.icon,
-                    color: onTypeColor,
-                    size: 18,
-                  ),
-                  label: Text(
-                    config.label,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                          color: onTypeColor.withOpacity(0.9),
-                          fontWeight: FontWeight.w600,
-                        ) ??
-                        TextStyle(
-                          color: onTypeColor.withOpacity(0.9),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  backgroundColor: chipBackground,
-                  side: BorderSide(color: onTypeColor.withOpacity(0.24)),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: const StadiumBorder(),
-                ),
-              )
-              .toList(),
+        labelColor: theme.colorScheme.onSurface,
+        unselectedLabelColor: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+        labelStyle: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
+        unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        padding: const EdgeInsets.all(6),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+        tabs: _detailTabConfigs
+            .map(
+              (config) => Tab(
+                icon: Icon(config.icon, size: 20),
+                text: config.label,
+                height: 68,
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -660,40 +656,62 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody> {
             typeColor: typeColor,
             onTypeColor: onTypeColor,
           ),
-          _buildSectionSummary(theme, typeColor, onTypeColor),
-          const SizedBox(height: 24),
-          _PokemonInfoTab(
-            pokemon: pokemon,
-            formatLabel: _formatLabel,
-            formatHeight: _formatHeight,
-            formatWeight: _formatWeight,
-            mainAbility: mainAbility,
-            abilitySubtitle: abilitySubtitle,
-            sectionBackground: sectionBackground,
-            sectionBorder: sectionBorder,
+          _buildTabBar(theme, typeColor, onTypeColor),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Información Tab
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  child: _PokemonInfoTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    formatHeight: _formatHeight,
+                    formatWeight: _formatWeight,
+                    mainAbility: mainAbility,
+                    abilitySubtitle: abilitySubtitle,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+                // Estadísticas Tab
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  child: _PokemonStatsTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+                // Matchups Tab
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  child: _PokemonMatchupsTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+                // Futuras Tab
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 24, bottom: 32),
+                  child: _PokemonFutureTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          _PokemonStatsTab(
-            pokemon: pokemon,
-            formatLabel: _formatLabel,
-            sectionBackground: sectionBackground,
-            sectionBorder: sectionBorder,
-          ),
-          const SizedBox(height: 24),
-          _PokemonMatchupsTab(
-            pokemon: pokemon,
-            formatLabel: _formatLabel,
-            sectionBackground: sectionBackground,
-            sectionBorder: sectionBorder,
-          ),
-          const SizedBox(height: 24),
-          _PokemonFutureTab(
-            pokemon: pokemon,
-            formatLabel: _formatLabel,
-            sectionBackground: sectionBackground,
-            sectionBorder: sectionBorder,
-          ),
-          const SizedBox(height: 32),
         ],
       ),
     );
