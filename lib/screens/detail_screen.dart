@@ -1707,6 +1707,21 @@ class _EvolutionSection extends StatelessWidget {
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
 
+  bool _isBranchingEvolution(PokemonEvolutionChain chain) {
+    // Check if there are multiple evolution paths (branching like Eevee)
+    if (chain.paths.length > 1) {
+      // Check if paths share a common root (branching from one Pokemon)
+      if (chain.paths.isNotEmpty && chain.paths.first.isNotEmpty) {
+        final firstRoot = chain.paths.first.first.speciesId;
+        final allShareRoot = chain.paths.every(
+          (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
+        );
+        return allShareRoot;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final chain = evolutionChain;
@@ -1714,6 +1729,16 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
+    // Check if this is a branching evolution (like Eevee)
+    if (_isBranchingEvolution(chain)) {
+      return _BranchingEvolutionTree(
+        chain: chain,
+        currentSpeciesId: currentSpeciesId,
+        formatLabel: formatLabel,
+      );
+    }
+
+    // For linear evolutions, show them as vertical paths
     return Wrap(
       spacing: 16,
       runSpacing: 24,
@@ -1727,6 +1752,148 @@ class _EvolutionSection extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _BranchingEvolutionTree extends StatelessWidget {
+  const _BranchingEvolutionTree({
+    required this.chain,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final PokemonEvolutionChain chain;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (chain.paths.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Get the base Pokemon (root of all paths)
+    final basePokemon = chain.paths.first.first;
+    
+    // Get all evolution branches (skip the base Pokemon)
+    final branches = chain.paths
+        .map((path) => path.skip(1).toList())
+        .where((branch) => branch.isNotEmpty)
+        .toList();
+
+    return Column(
+      children: [
+        // Base Pokemon at the top/center
+        _EvolutionStageCard(
+          node: basePokemon,
+          isCurrent: currentSpeciesId != null &&
+              currentSpeciesId == basePokemon.speciesId,
+          formatLabel: formatLabel,
+        ),
+        
+        if (branches.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          
+          // Branching indicator
+          Icon(
+            Icons.arrow_downward_rounded,
+            color: colorScheme.onSurfaceVariant.withOpacity(0.65),
+            size: 32,
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Show branches in a grid/wrap layout
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth = constraints.maxWidth;
+              final isWide = maxWidth > 600;
+              
+              if (isWide) {
+                // For wide screens, show branches in a grid
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.center,
+                  children: branches.map((branch) {
+                    return SizedBox(
+                      width: math.min(220, maxWidth / 3 - 20),
+                      child: _EvolutionBranch(
+                        nodes: branch,
+                        currentSpeciesId: currentSpeciesId,
+                        formatLabel: formatLabel,
+                      ),
+                    );
+                  }).toList(),
+                );
+              } else {
+                // For narrow screens, show branches in a column
+                return Column(
+                  children: branches.map((branch) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _EvolutionBranch(
+                        nodes: branch,
+                        currentSpeciesId: currentSpeciesId,
+                        formatLabel: formatLabel,
+                      ),
+                    );
+                  }).toList(),
+                );
+              }
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _EvolutionBranch extends StatelessWidget {
+  const _EvolutionBranch({
+    required this.nodes,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final List<PokemonEvolutionNode> nodes;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (nodes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    final arrowColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < nodes.length; index++) ...[
+          _EvolutionStageCard(
+            node: nodes[index],
+            isCurrent: currentSpeciesId != null &&
+                currentSpeciesId == nodes[index].speciesId,
+            formatLabel: formatLabel,
+          ),
+          if (index < nodes.length - 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Icon(
+                Icons.arrow_downward_rounded,
+                color: arrowColor,
+                size: 24,
+              ),
+            ),
+        ],
+      ],
     );
   }
 }
