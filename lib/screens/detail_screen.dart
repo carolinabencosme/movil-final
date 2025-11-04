@@ -668,7 +668,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
               children: [
                 // Información Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonInfoTab(
                     pokemon: pokemon,
@@ -683,7 +683,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Estadísticas Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonStatsTab(
                     pokemon: pokemon,
@@ -694,7 +694,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Matchups Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonMatchupsTab(
                     pokemon: pokemon,
@@ -705,7 +705,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Evoluciones Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonEvolutionTab(
                     pokemon: pokemon,
@@ -716,7 +716,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Movimientos Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonMovesTab(
                     pokemon: pokemon,
