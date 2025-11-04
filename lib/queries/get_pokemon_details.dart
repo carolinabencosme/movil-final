@@ -85,6 +85,33 @@ const String getPokemonDetailsQuery = r'''
                   }
                 }
               }
+              party_species: pokemon_v2_pokemonspecy {
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              party_type: pokemon_v2_type {
+                name
+                pokemon_v2_typenames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
+              trade_species: pokemon_v2_pokemonspecy {
+                name
+                pokemon_v2_pokemonspeciesnames(
+                  where: {language_id: {_eq: $languageId}}
+                  limit: 1
+                ) {
+                  name
+                }
+              }
             }
             pokemon_v2_pokemons(limit: 1) {
               id
