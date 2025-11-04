@@ -785,18 +785,18 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     );
     if (knownMoveName.isNotEmpty) {
       details.add('Debe conocer $knownMoveName');
-    }
-    
-    // Get the type from the move if available
-    final knownMoveType = knownMove['pokemon_v2_type'] as Map<String, dynamic>?;
-    if (knownMoveType != null) {
-      final knownMoveTypeName = _resolveLocalizedEntityName(
-        knownMoveType,
-        'pokemon_v2_typenames',
-      );
-      if (knownMoveTypeName.isNotEmpty && knownMoveName.isEmpty) {
-        // Only show type-based requirement if we don't have a specific move
-        details.add('Debe conocer un movimiento de tipo $knownMoveTypeName');
+    } else {
+      // Fallback: if move data exists but no specific name is available,
+      // try to show the type requirement (edge case, unlikely in practice)
+      final knownMoveType = knownMove['pokemon_v2_type'] as Map<String, dynamic>?;
+      if (knownMoveType != null) {
+        final knownMoveTypeName = _resolveLocalizedEntityName(
+          knownMoveType,
+          'pokemon_v2_typenames',
+        );
+        if (knownMoveTypeName.isNotEmpty) {
+          details.add('Debe conocer un movimiento de tipo $knownMoveTypeName');
+        }
       }
     }
   }
