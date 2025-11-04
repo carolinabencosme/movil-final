@@ -2330,6 +2330,8 @@ class _AbilitiesCarousel extends StatefulWidget {
 class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
   late PageController _pageController;
   double _currentViewportFraction = 0.88;
+  double? _lastConstraintWidth;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -2342,8 +2344,7 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.abilities.length != widget.abilities.length) {
       // Only recreate if the number of abilities changed
-      _pageController.dispose();
-      _pageController = PageController(viewportFraction: _currentViewportFraction);
+      _recreateController(_currentViewportFraction);
     }
   }
 
@@ -2353,13 +2354,34 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
     super.dispose();
   }
 
-  void _updateViewportFractionIfNeeded(double newFraction) {
-    if ((_currentViewportFraction - newFraction).abs() > 0.01) {
-      // Only update if difference is significant
-      setState(() {
-        _currentViewportFraction = newFraction;
-        _pageController.dispose();
-        _pageController = PageController(viewportFraction: newFraction);
+  void _recreateController(double newFraction) {
+    if (_isUpdating) return;
+    
+    _isUpdating = true;
+    _currentViewportFraction = newFraction;
+    
+    if (_pageController.hasClients) {
+      _pageController.dispose();
+    }
+    _pageController = PageController(viewportFraction: newFraction);
+    _isUpdating = false;
+  }
+
+  void _updateViewportFractionIfNeeded(double newFraction, double constraintWidth) {
+    // Only update if constraint width changed significantly AND viewport fraction is different
+    if (_lastConstraintWidth != null && 
+        (constraintWidth - _lastConstraintWidth!).abs() < 10) {
+      return;
+    }
+    
+    if ((_currentViewportFraction - newFraction).abs() > 0.01 && !_isUpdating) {
+      _lastConstraintWidth = constraintWidth;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _recreateController(newFraction);
+          });
+        }
       });
     }
   }
@@ -2372,15 +2394,11 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
         final isCompactWidth = constraints.maxWidth < 560;
         final viewportFraction = isCompactWidth ? 0.88 : 0.52;
         
-        // Schedule viewport fraction update after build if needed
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _updateViewportFractionIfNeeded(viewportFraction);
-          }
-        });
+        // Check if update is needed based on constraint width
+        _updateViewportFractionIfNeeded(viewportFraction, constraints.maxWidth);
 
         final cardWidth = clampDouble(
-          constraints.maxWidth * viewportFraction,
+          constraints.maxWidth * _currentViewportFraction,
           220,
           constraints.maxWidth,
         );
