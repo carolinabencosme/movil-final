@@ -126,10 +126,10 @@ class DetailScreen extends StatelessWidget {
           },
         ),
         builder: (result, {fetchMore, refetch}) {
-          // Debug logging
+          // Debug logging for Pokemon detail data fetching
           if (kDebugMode) {
-            debugPrint('Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-            debugPrint('Query result data keys: ${result.data?.keys.toList()}');
+            debugPrint('[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
           }
           
           final data = result.data?['pokemon'] as Map<String, dynamic>?;
@@ -153,7 +153,7 @@ class DetailScreen extends StatelessWidget {
 
           if (data == null) {
             if (kDebugMode) {
-              debugPrint('Pokemon data is null. Full result: ${result.data}');
+              debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
             }
             return Center(
               child: Column(
@@ -1745,37 +1745,40 @@ class _EvolutionSection extends StatelessWidget {
   /// - All paths share the same root Pokemon (they branch from one common ancestor)
   static bool _isBranchingEvolution(PokemonEvolutionChain chain) {
     // Check if there are multiple evolution paths (branching like Eevee)
-    if (chain.paths.length > 1) {
-      // Check if paths share a common root (branching from one Pokemon)
-      if (chain.paths.first.isNotEmpty) {
-        try {
-          final firstRoot = chain.paths.first.first.speciesId;
-          final allShareRoot = chain.paths.every(
-            (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
-          );
-          return allShareRoot;
-        } on StateError catch (e) {
-          // Catch StateError if list is empty when accessing .first
-          if (kDebugMode) {
-            debugPrint('Error detecting branching evolution (StateError): $e');
-          }
-          return false;
-        } on RangeError catch (e) {
-          // Catch RangeError if accessing an invalid index
-          if (kDebugMode) {
-            debugPrint('Error detecting branching evolution (RangeError): $e');
-          }
-          return false;
-        } catch (e) {
-          // Catch any other unexpected errors
-          if (kDebugMode) {
-            debugPrint('Unexpected error detecting branching evolution: $e');
-          }
-          return false;
-        }
-      }
+    if (chain.paths.length <= 1 || chain.paths.isEmpty) {
+      return false;
     }
-    return false;
+    
+    // Check if paths share a common root (branching from one Pokemon)
+    if (chain.paths.first.isEmpty) {
+      return false;
+    }
+    
+    try {
+      final firstRoot = chain.paths.first.first.speciesId;
+      final allShareRoot = chain.paths.every(
+        (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
+      );
+      return allShareRoot;
+    } on StateError catch (e) {
+      // Catch StateError if list is empty when accessing .first
+      if (kDebugMode) {
+        debugPrint('[Evolution] Error detecting branching evolution (StateError): $e');
+      }
+      return false;
+    } on RangeError catch (e) {
+      // Catch RangeError if accessing an invalid index
+      if (kDebugMode) {
+        debugPrint('[Evolution] Error detecting branching evolution (RangeError): $e');
+      }
+      return false;
+    } catch (e) {
+      // Catch any other unexpected errors
+      if (kDebugMode) {
+        debugPrint('[Evolution] Unexpected error detecting branching evolution: $e');
+      }
+      return false;
+    }
   }
 
   @override
@@ -1890,12 +1893,12 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   runSpacing: _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
-                    // Ensure width is never negative
-                    final rawWidth = (maxWidth / _evolutionBranchGridColumns) - _evolutionBranchSpacing;
-                    final calculatedWidth = math.max(0.0, rawWidth);
+                    // Calculate width per column and ensure it's never negative
+                    final widthPerColumn = maxWidth / _evolutionBranchGridColumns;
+                    final nonNegativeWidth = math.max(0.0, widthPerColumn - _evolutionBranchSpacing);
                     final branchWidth = math.min(
                       _evolutionBranchMaxWidth,
-                      math.max(_evolutionBranchMinWidth, calculatedWidth),
+                      math.max(_evolutionBranchMinWidth, nonNegativeWidth),
                     );
                     return SizedBox(
                       width: branchWidth,
