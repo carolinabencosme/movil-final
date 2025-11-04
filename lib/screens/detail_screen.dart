@@ -132,7 +132,11 @@ class DetailScreen extends StatelessWidget {
             debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
           }
           
-          final data = result.data?['pokemon'] as Map<String, dynamic>?;
+          // Extract the first pokemon from the list query result
+          final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
+          final data = (pokemonList?.isNotEmpty ?? false)
+              ? pokemonList!.first as Map<String, dynamic>?
+              : null;
 
           if (result.isLoading && data == null) {
             return _LoadingDetailView(
