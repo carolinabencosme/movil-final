@@ -67,6 +67,12 @@ const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.upcoming_rounded, label: 'Futuras'),
 ];
 
+// Constants for evolution display layout
+const double _evolutionBranchMaxWidth = 220.0;
+const int _evolutionBranchGridColumns = 3;
+const double _evolutionBranchSpacing = 20.0;
+const double _wideScreenBreakpoint = 600.0;
+
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -1735,7 +1741,7 @@ class _EvolutionSection extends StatelessWidget {
     // Check if there are multiple evolution paths (branching like Eevee)
     if (chain.paths.length > 1) {
       // Check if paths share a common root (branching from one Pokemon)
-      if (chain.paths.isNotEmpty && chain.paths.first.isNotEmpty) {
+      if (chain.paths.first.isNotEmpty) {
         try {
           final firstRoot = chain.paths.first.first.speciesId;
           final allShareRoot = chain.paths.every(
@@ -1854,17 +1860,20 @@ class _BranchingEvolutionTree extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final maxWidth = constraints.maxWidth;
-              final isWide = maxWidth > 600;
+              final isWide = maxWidth > _wideScreenBreakpoint;
               
               if (isWide) {
                 // For wide screens, show branches in a grid
                 return Wrap(
                   spacing: 16,
-                  runSpacing: 20,
+                  runSpacing: _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
                     return SizedBox(
-                      width: math.min(220, maxWidth / 3 - 20),
+                      width: math.min(
+                        _evolutionBranchMaxWidth,
+                        maxWidth / _evolutionBranchGridColumns - _evolutionBranchSpacing,
+                      ),
                       child: _EvolutionBranch(
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
