@@ -70,6 +70,7 @@ const List<_DetailTabConfig> _detailTabConfigs = [
 
 // Constants for evolution display layout
 const double _evolutionBranchMaxWidth = 220.0;
+const double _evolutionBranchMinWidth = 150.0;
 const int _evolutionBranchGridColumns = 3;
 const double _evolutionBranchSpacing = 20.0;
 const double _wideScreenBreakpoint = 600.0;
@@ -1742,7 +1743,7 @@ class _EvolutionSection extends StatelessWidget {
   /// Returns true if:
   /// - There are multiple evolution paths
   /// - All paths share the same root Pokemon (they branch from one common ancestor)
-  bool _isBranchingEvolution(PokemonEvolutionChain chain) {
+  static bool _isBranchingEvolution(PokemonEvolutionChain chain) {
     // Check if there are multiple evolution paths (branching like Eevee)
     if (chain.paths.length > 1) {
       // Check if paths share a common root (branching from one Pokemon)
@@ -1772,7 +1773,7 @@ class _EvolutionSection extends StatelessWidget {
     }
 
     // Check if this is a branching evolution (like Eevee)
-    if (_isBranchingEvolution(chain)) {
+    if (_EvolutionSection._isBranchingEvolution(chain)) {
       return _BranchingEvolutionTree(
         chain: chain,
         currentSpeciesId: currentSpeciesId,
@@ -1879,7 +1880,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
                     final calculatedWidth = (maxWidth / _evolutionBranchGridColumns) - _evolutionBranchSpacing;
                     final branchWidth = math.min(
                       _evolutionBranchMaxWidth,
-                      math.max(150.0, calculatedWidth), // Minimum width of 150px
+                      math.max(_evolutionBranchMinWidth, calculatedWidth),
                     );
                     return SizedBox(
                       width: branchWidth,
