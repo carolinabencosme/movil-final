@@ -65,7 +65,8 @@ const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
   _DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
   _DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
-  _DetailTabConfig(icon: Icons.upcoming_rounded, label: 'Futuras'),
+  _DetailTabConfig(icon: Icons.transform_rounded, label: 'Evoluciones'),
+  _DetailTabConfig(icon: Icons.sports_martial_arts_rounded, label: 'Movimientos'),
 ];
 
 // Constants for evolution display layout
@@ -249,7 +250,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -667,7 +668,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
               children: [
                 // Información Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonInfoTab(
                     pokemon: pokemon,
@@ -682,7 +683,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Estadísticas Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonStatsTab(
                     pokemon: pokemon,
@@ -693,7 +694,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 ),
                 // Matchups Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
                   child: _PokemonMatchupsTab(
                     pokemon: pokemon,
@@ -702,11 +703,22 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                     sectionBorder: sectionBorder,
                   ),
                 ),
-                // Futuras Tab
+                // Evoluciones Tab
                 SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: _PokemonFutureTab(
+                  child: _PokemonEvolutionTab(
+                    pokemon: pokemon,
+                    formatLabel: _formatLabel,
+                    sectionBackground: sectionBackground,
+                    sectionBorder: sectionBorder,
+                  ),
+                ),
+                // Movimientos Tab
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
+                  child: _PokemonMovesTab(
                     pokemon: pokemon,
                     formatLabel: _formatLabel,
                     sectionBackground: sectionBackground,
@@ -932,47 +944,9 @@ class _PokemonInfoTab extends StatelessWidget {
             variant: InfoSectionCardVariant.angled,
             padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
             child: pokemon.abilities.isNotEmpty
-                ? LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size = MediaQuery.sizeOf(context);
-                      final isCompactWidth = constraints.maxWidth < 560;
-                      final viewportFraction = isCompactWidth ? 0.88 : 0.52;
-                      final cardWidth = clampDouble(
-                        constraints.maxWidth * viewportFraction,
-                        220,
-                        constraints.maxWidth,
-                      );
-                      final baseHeight = size.height * (isCompactWidth ? 0.28 : 0.32);
-                      final cardHeight = clampDouble(
-                        baseHeight,
-                        isCompactWidth ? 160 : 200,
-                        isCompactWidth ? 220 : 260,
-                      );
-                      final controller = PageController(viewportFraction: viewportFraction);
-
-                      return SizedBox(
-                        height: cardHeight,
-                        child: PageView.builder(
-                          controller: controller,
-                          padEnds: pokemon.abilities.length == 1,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: pokemon.abilities.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isCompactWidth ? 8 : 10,
-                              ),
-                              child: _AbilityTile(
-                                ability: pokemon.abilities[index],
-                                formatLabel: formatLabel,
-                                width: cardWidth,
-                                height: cardHeight,
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+                ? _AbilitiesCarousel(
+                    abilities: pokemon.abilities,
+                    formatLabel: formatLabel,
                   )
                 : const Text('Sin información de habilidades disponible.'),
           ),
@@ -1112,6 +1086,71 @@ class _PokemonFutureTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PokemonEvolutionTab extends StatelessWidget {
+  const _PokemonEvolutionTab({
+    required this.pokemon,
+    required this.formatLabel,
+    required this.sectionBackground,
+    required this.sectionBorder,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+  final Color sectionBackground;
+  final Color sectionBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
+    return Padding(
+      padding: padding,
+      child: _InfoSectionCard(
+        title: 'Cadena evolutiva',
+        backgroundColor: sectionBackground,
+        borderColor: sectionBorder,
+        child: _EvolutionSection(
+          evolutionChain: pokemon.evolutionChain,
+          currentSpeciesId: pokemon.speciesId,
+          formatLabel: formatLabel,
+        ),
+      ),
+    );
+  }
+}
+
+class _PokemonMovesTab extends StatelessWidget {
+  const _PokemonMovesTab({
+    required this.pokemon,
+    required this.formatLabel,
+    required this.sectionBackground,
+    required this.sectionBorder,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+  final Color sectionBackground;
+  final Color sectionBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = _responsiveDetailTabPadding(context);
+
+    return Padding(
+      padding: padding,
+      child: _InfoSectionCard(
+        title: 'Movimientos',
+        backgroundColor: sectionBackground,
+        borderColor: sectionBorder,
+        child: _MovesSection(
+          moves: pokemon.moves,
+          formatLabel: formatLabel,
+        ),
       ),
     );
   }
@@ -2271,6 +2310,128 @@ class _CharacteristicTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AbilitiesCarousel extends StatefulWidget {
+  const _AbilitiesCarousel({
+    required this.abilities,
+    required this.formatLabel,
+  });
+
+  final List<PokemonAbilityDetail> abilities;
+  final String Function(String) formatLabel;
+
+  @override
+  State<_AbilitiesCarousel> createState() => _AbilitiesCarouselState();
+}
+
+class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
+  late PageController _pageController;
+  double _currentViewportFraction = 0.88;
+  double? _lastConstraintWidth;
+  bool _isUpdating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: _currentViewportFraction);
+  }
+
+  @override
+  void didUpdateWidget(_AbilitiesCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.abilities.length != widget.abilities.length) {
+      // Only recreate if the number of abilities changed
+      _recreateController(_currentViewportFraction);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _recreateController(double newFraction) {
+    if (_isUpdating) return;
+    
+    _isUpdating = true;
+    _currentViewportFraction = newFraction;
+    
+    if (_pageController.hasClients) {
+      _pageController.dispose();
+    }
+    _pageController = PageController(viewportFraction: newFraction);
+    _isUpdating = false;
+  }
+
+  void _updateViewportFractionIfNeeded(double newFraction, double constraintWidth) {
+    // Only update if constraint width changed significantly AND viewport fraction is different
+    if (_lastConstraintWidth != null && 
+        (constraintWidth - _lastConstraintWidth!).abs() < 10) {
+      return;
+    }
+    
+    if ((_currentViewportFraction - newFraction).abs() > 0.01 && !_isUpdating) {
+      _lastConstraintWidth = constraintWidth;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _recreateController(newFraction);
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = MediaQuery.sizeOf(context);
+        final isCompactWidth = constraints.maxWidth < 560;
+        final viewportFraction = isCompactWidth ? 0.88 : 0.52;
+        
+        // Check if update is needed based on constraint width
+        _updateViewportFractionIfNeeded(viewportFraction, constraints.maxWidth);
+
+        final cardWidth = clampDouble(
+          constraints.maxWidth * _currentViewportFraction,
+          220,
+          constraints.maxWidth,
+        );
+        final baseHeight = size.height * (isCompactWidth ? 0.28 : 0.32);
+        final cardHeight = clampDouble(
+          baseHeight,
+          isCompactWidth ? 160 : 200,
+          isCompactWidth ? 220 : 260,
+        );
+
+        return SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _pageController,
+            padEnds: widget.abilities.length == 1,
+            physics: const BouncingScrollPhysics(),
+            itemCount: widget.abilities.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompactWidth ? 8 : 10,
+                ),
+                child: _AbilityTile(
+                  ability: widget.abilities[index],
+                  formatLabel: widget.formatLabel,
+                  width: cardWidth,
+                  height: cardHeight,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
