@@ -75,14 +75,14 @@ const String getPokemonDetailsQuery = r'''
                 ) {
                   name
                 }
-              }
-              known_move_type: pokemon_v2_typeByKnownMoveTypeId {
-                name
-                pokemon_v2_typenames(
-                  where: {language_id: {_eq: $languageId}}
-                  limit: 1
-                ) {
+                pokemon_v2_type {
                   name
+                  pokemon_v2_typenames(
+                    where: {language_id: {_eq: $languageId}}
+                    limit: 1
+                  ) {
+                    name
+                  }
                 }
               }
               party_species: pokemon_v2_pokemonspecyByPartySpeciesId {
