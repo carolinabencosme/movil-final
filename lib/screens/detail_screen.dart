@@ -1754,9 +1754,22 @@ class _EvolutionSection extends StatelessWidget {
             (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
           );
           return allShareRoot;
-        } catch (e) {
+        } on StateError catch (e) {
+          // Catch StateError if list is empty when accessing .first
           if (kDebugMode) {
-            debugPrint('Error detecting branching evolution: $e');
+            debugPrint('Error detecting branching evolution (StateError): $e');
+          }
+          return false;
+        } on RangeError catch (e) {
+          // Catch RangeError if accessing an invalid index
+          if (kDebugMode) {
+            debugPrint('Error detecting branching evolution (RangeError): $e');
+          }
+          return false;
+        } catch (e) {
+          // Catch any other unexpected errors
+          if (kDebugMode) {
+            debugPrint('Unexpected error detecting branching evolution: $e');
           }
           return false;
         }
@@ -1773,7 +1786,7 @@ class _EvolutionSection extends StatelessWidget {
     }
 
     // Check if this is a branching evolution (like Eevee)
-    if (_EvolutionSection._isBranchingEvolution(chain)) {
+    if (_isBranchingEvolution(chain)) {
       return _BranchingEvolutionTree(
         chain: chain,
         currentSpeciesId: currentSpeciesId,
@@ -1877,7 +1890,9 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   runSpacing: _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
-                    final calculatedWidth = (maxWidth / _evolutionBranchGridColumns) - _evolutionBranchSpacing;
+                    // Ensure width is never negative
+                    final rawWidth = (maxWidth / _evolutionBranchGridColumns) - _evolutionBranchSpacing;
+                    final calculatedWidth = math.max(0.0, rawWidth);
                     final branchWidth = math.min(
                       _evolutionBranchMaxWidth,
                       math.max(_evolutionBranchMinWidth, calculatedWidth),
