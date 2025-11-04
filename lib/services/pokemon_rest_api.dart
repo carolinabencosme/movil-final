@@ -19,14 +19,32 @@ class PokemonRestApi {
         
         // Fetch species data for additional information
         final speciesUrl = pokemonData['species']?['url'] as String?;
-        Map<String, dynamic>? speciesData;
         
+        // Create futures for concurrent fetching
+        final futures = <Future<dynamic>>[];
+        
+        // Add species fetch future
         if (speciesUrl != null) {
-          final speciesResponse = await http.get(Uri.parse(speciesUrl));
-          if (speciesResponse.statusCode == 200) {
-            speciesData = json.decode(speciesResponse.body) as Map<String, dynamic>;
-          }
+          futures.add(http.get(Uri.parse(speciesUrl)));
+        } else {
+          futures.add(Future.value(null));
         }
+        
+        // Add ability details fetch future
+        futures.add(_fetchAbilityDetails(pokemonData));
+        
+        // Wait for all concurrent requests
+        final results = await Future.wait(futures);
+        
+        // Process species data
+        Map<String, dynamic>? speciesData;
+        final speciesResponse = results[0];
+        if (speciesResponse is http.Response && speciesResponse.statusCode == 200) {
+          speciesData = json.decode(speciesResponse.body) as Map<String, dynamic>;
+        }
+        
+        // Get ability details
+        final abilityDetails = results[1] as Map<String, Map<String, dynamic>>;
         
         // Fetch evolution chain if available
         Map<String, dynamic>? evolutionData;
@@ -40,15 +58,12 @@ class PokemonRestApi {
           }
         }
         
-        // Fetch ability details
-        final abilities = await _fetchAbilityDetails(pokemonData);
-        
         // Combine all data
         return {
           'pokemon': pokemonData,
           'species': speciesData,
           'evolution': evolutionData,
-          'abilities': abilities,
+          'abilities': abilityDetails,
         };
       } else {
         if (kDebugMode) {
@@ -233,7 +248,9 @@ class PokemonRestApi {
               final moveInfo = move?['move'] as Map<String, dynamic>?;
               final moveName = moveInfo?['name'] as String?;
               
-              final versionDetails = (move?['version_group_details'] as List<dynamic>?)?.firstOrNull as Map<String, dynamic>?;
+              final versionDetails = (move?['version_group_details'] as List<dynamic>?)?.isNotEmpty == true
+                  ? (move?['version_group_details'] as List<dynamic>?)!.first as Map<String, dynamic>?
+                  : null;
               final level = versionDetails?['level_learned_at'] as int?;
               final methodInfo = versionDetails?['move_learn_method'] as Map<String, dynamic>?;
               final method = methodInfo?['name'] as String? ?? 'unknown';
@@ -325,8 +342,12 @@ class PokemonRestApi {
     }
     
     // Fallback to first genus
-    final firstGenus = genera.firstOrNull as Map<String, dynamic>?;
-    return firstGenus?['genus'] as String? ?? '';
+    if (genera.isNotEmpty) {
+      final firstGenus = genera.first as Map<String, dynamic>?;
+      return firstGenus?['genus'] as String? ?? '';
+    }
+    
+    return '';
   }
 
   static Map<String, dynamic>? _buildEvolutionChain(

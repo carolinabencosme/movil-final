@@ -312,11 +312,34 @@ class _DetailScreenState extends State<DetailScreen> {
     }
 
     if (_restError != null) {
-      return _PokemonDetailErrorView(
-        onRetry: () async {
-          await _loadFromRestApi();
-          return null;
-        },
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.cloud_off,
+                size: 48,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _loadFromRestApi,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
