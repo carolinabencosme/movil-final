@@ -80,12 +80,19 @@ const double _wideScreenBreakpoint = 600.0;
 // Constants for evolution stage card sizing
 const double _evolutionCardImageSizeNormal = 110.0;
 const double _evolutionCardImageSizeCompact = 90.0;
+const double _evolutionCardImageBorderRadiusNormal = 24.0;
+const double _evolutionCardImageBorderRadiusCompact = 20.0;
+const double _evolutionCardImagePaddingNormal = 12.0;
+const double _evolutionCardImagePaddingCompact = 8.0;
 const double _evolutionCardHorizontalPaddingNormal = 18.0;
 const double _evolutionCardHorizontalPaddingCompact = 14.0;
 const double _evolutionCardVerticalPaddingNormal = 16.0;
 const double _evolutionCardVerticalPaddingCompact = 12.0;
 const double _evolutionCardBorderRadiusNormal = 26.0;
 const double _evolutionCardBorderRadiusCompact = 20.0;
+const double _evolutionCardNameFontSizeCompact = 14.0;
+const double _evolutionCardConditionFontSizeCompact = 12.0;
+const double _evolutionCardConditionDetailFontSizeCompact = 11.0;
 
 // Constants for compact evolution display (6+ branches)
 const int _compactLayoutThreshold = 6;
@@ -2507,8 +2514,12 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
               PokemonArtwork(
                 imageUrl: widget.node.imageUrl,
                 size: imageSize,
-                borderRadius: widget.isCompact ? 20 : 24,
-                padding: EdgeInsets.all(widget.isCompact ? 8 : 12),
+                borderRadius: widget.isCompact 
+                    ? _evolutionCardImageBorderRadiusCompact 
+                    : _evolutionCardImageBorderRadiusNormal,
+                padding: EdgeInsets.all(widget.isCompact 
+                    ? _evolutionCardImagePaddingCompact 
+                    : _evolutionCardImagePaddingNormal),
                 showShadow: false,
               ),
               SizedBox(height: widget.isCompact ? 8 : 12),
@@ -2518,7 +2529,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: textColor,
-                  fontSize: widget.isCompact ? 14 : null,
+                  fontSize: widget.isCompact ? _evolutionCardNameFontSizeCompact : null,
                 ),
               ),
               SizedBox(height: widget.isCompact ? 6 : 8),
@@ -2528,7 +2539,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: subtitleColor,
-                    fontSize: widget.isCompact ? 12 : null,
+                    fontSize: widget.isCompact ? _evolutionCardConditionFontSizeCompact : null,
                   ),
                 )
               else
@@ -2545,7 +2556,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                 '• ',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: subtitleColor,
-                                  fontSize: widget.isCompact ? 11 : null,
+                                  fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
                                 ),
                               ),
                               Expanded(
@@ -2554,7 +2565,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                   style:
                                       theme.textTheme.bodyMedium?.copyWith(
                                     color: subtitleColor,
-                                    fontSize: widget.isCompact ? 11 : null,
+                                    fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
                                   ),
                                 ),
                               ),
