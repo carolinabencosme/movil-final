@@ -78,7 +78,9 @@ const double _evolutionBranchSpacing = 20.0;
 const double _wideScreenBreakpoint = 600.0;
 
 // Constants for compact evolution display (6+ branches)
+const int _compactLayoutThreshold = 6;
 const int _maxCompactColumns = 4;
+const int _compactColumnDivisor = 2;
 const double _compactBranchMaxWidth = 180.0;
 const double _compactBranchMinWidth = 140.0;
 const double _compactBranchSpacing = 12.0;
@@ -1986,7 +1988,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
               
               // For many branches (like Eevee with 8 evolutions), use a compact layout
               final branchCount = branches.length;
-              final useCompactLayout = branchCount > 6;
+              final useCompactLayout = branchCount > _compactLayoutThreshold;
               
               if (isWide) {
                 // For wide screens, show branches in a radial-like grid
@@ -1997,7 +1999,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   children: branches.map((branch) {
                     // Calculate width per column dynamically based on branch count
                     final effectiveColumns = useCompactLayout 
-                        ? math.min(_maxCompactColumns, (branchCount / 2).ceil())
+                        ? math.min(_maxCompactColumns, (branchCount / _compactColumnDivisor).ceil())
                         : _evolutionBranchGridColumns;
                     final widthPerColumn = maxWidth / effectiveColumns;
                     final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? _compactBranchSpacing : _evolutionBranchSpacing));
