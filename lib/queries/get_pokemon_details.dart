@@ -1,3 +1,6 @@
+// Language ID constant for Spanish
+const int _defaultLanguageId = 7;
+
 const String getPokemonDetailsQuery = r'''
   query PokemonDetails($where: pokemon_v2_pokemon_bool_exp!) {
     pokemon_v2_pokemon(where: $where, limit: 1) {

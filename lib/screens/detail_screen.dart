@@ -1906,9 +1906,12 @@ List<List<_Species>> _forwardChains(int currentId, Map<int, _Species> map) {
   return result;
 }
 
+// Constants for sprite URLs
+const String _officialArtworkBaseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
+
 // Helper to get sprite URL
 String _spriteUrl(int id) {
-  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png';
+  return '$_officialArtworkBaseUrl/$id.png';
 }
 
 class _EvolutionSection extends StatelessWidget {
@@ -1921,11 +1924,6 @@ class _EvolutionSection extends StatelessWidget {
   final PokemonEvolutionChain? evolutionChain;
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
-
-  String _capitalize(String value) {
-    if (value.isEmpty) return value;
-    return value[0].toUpperCase() + value.substring(1);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1959,6 +1957,11 @@ class _EvolutionSection extends StatelessWidget {
         chain.currentSpeciesId ?? 
         allNodes.first.speciesId;
 
+    // Verify current species exists in map
+    if (!speciesMap.containsKey(effectiveCurrentId)) {
+      return const Text('Error: No se pudo encontrar el Pokémon actual en la cadena evolutiva.');
+    }
+
     // Build pre-evolution and forward evolution chains
     final preEvolutionChain = _preChain(effectiveCurrentId, speciesMap);
     final forwardEvolutionChains = _forwardChains(effectiveCurrentId, speciesMap);
@@ -1980,7 +1983,7 @@ class _EvolutionSection extends StatelessWidget {
           _LinearEvolutionChain(
             chain: preEvolutionChain,
             currentId: effectiveCurrentId,
-            formatLabel: _capitalize,
+            formatLabel: formatLabel,
           ),
           const SizedBox(height: 24),
         ],
@@ -1999,14 +2002,14 @@ class _EvolutionSection extends StatelessWidget {
             _LinearEvolutionChain(
               chain: [speciesMap[effectiveCurrentId]!, ...forwardEvolutionChains.first],
               currentId: effectiveCurrentId,
-              formatLabel: _capitalize,
+              formatLabel: formatLabel,
             )
           else
             // Branched evolution: show in ramified/circular layout
             _BranchedEvolutionDisplay(
               chains: forwardEvolutionChains,
               currentSpecies: speciesMap[effectiveCurrentId]!,
-              formatLabel: _capitalize,
+              formatLabel: formatLabel,
             ),
         ] else ...[
           Text(
