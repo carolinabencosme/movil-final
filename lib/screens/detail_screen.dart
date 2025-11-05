@@ -1886,17 +1886,17 @@ class _EvolutionSection extends StatelessWidget {
       );
     }
 
-    // For linear evolutions, show them as vertical paths
-    return Wrap(
-      spacing: 16,
-      runSpacing: 24,
-      alignment: WrapAlignment.center,
+    // For linear evolutions, show them as horizontal paths
+    return Column(
       children: chain.paths
           .map(
-            (path) => _EvolutionPathColumn(
-              nodes: path,
-              currentSpeciesId: currentSpeciesId,
-              formatLabel: formatLabel,
+            (path) => Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: _EvolutionPathRow(
+                nodes: path,
+                currentSpeciesId: currentSpeciesId,
+                formatLabel: formatLabel,
+              ),
             ),
           )
           .toList(),
@@ -1968,25 +1968,32 @@ class _BranchingEvolutionTree extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          // Show branches in a grid/wrap layout
+          // Show branches in a radial/grid layout with better visual flow
           LayoutBuilder(
             builder: (context, constraints) {
               final maxWidth = constraints.maxWidth;
               final isWide = maxWidth > _wideScreenBreakpoint;
               
+              // For many branches (like Eevee with 8 evolutions), use a compact layout
+              final branchCount = branches.length;
+              final useCompactLayout = branchCount > 6;
+              
               if (isWide) {
-                // For wide screens, show branches in a grid
+                // For wide screens, show branches in a radial-like grid
                 return Wrap(
-                  spacing: 16,
-                  runSpacing: _evolutionBranchSpacing,
+                  spacing: useCompactLayout ? 12 : 16,
+                  runSpacing: useCompactLayout ? 16 : _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
-                    // Calculate width per column and ensure it's never negative
-                    final widthPerColumn = maxWidth / _evolutionBranchGridColumns;
-                    final nonNegativeWidth = math.max(0.0, widthPerColumn - _evolutionBranchSpacing);
+                    // Calculate width per column dynamically based on branch count
+                    final effectiveColumns = useCompactLayout 
+                        ? math.min(4, (branchCount / 2).ceil())
+                        : _evolutionBranchGridColumns;
+                    final widthPerColumn = maxWidth / effectiveColumns;
+                    final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? 12 : _evolutionBranchSpacing));
                     final branchWidth = math.min(
-                      _evolutionBranchMaxWidth,
-                      math.max(_evolutionBranchMinWidth, nonNegativeWidth),
+                      useCompactLayout ? 180.0 : _evolutionBranchMaxWidth,
+                      math.max(useCompactLayout ? 140.0 : _evolutionBranchMinWidth, nonNegativeWidth),
                     );
                     return SizedBox(
                       width: branchWidth,
@@ -1994,12 +2001,13 @@ class _BranchingEvolutionTree extends StatelessWidget {
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
                         formatLabel: formatLabel,
+                        isCompact: useCompactLayout,
                       ),
                     );
                   }).toList(),
                 );
               } else {
-                // For narrow screens, show branches in a column
+                // For narrow screens, show branches in a scrollable column
                 return Column(
                   children: branches.map((branch) {
                     return Padding(
@@ -2008,6 +2016,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
                         formatLabel: formatLabel,
+                        isCompact: useCompactLayout,
                       ),
                     );
                   }).toList(),
@@ -2030,11 +2039,13 @@ class _EvolutionBranch extends StatelessWidget {
     required this.nodes,
     required this.currentSpeciesId,
     required this.formatLabel,
+    this.isCompact = false,
   });
 
   final List<PokemonEvolutionNode> nodes;
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -2054,11 +2065,15 @@ class _EvolutionBranch extends StatelessWidget {
             isCurrent: currentSpeciesId != null &&
                 currentSpeciesId == nodes[index].speciesId,
             formatLabel: formatLabel,
+            isCompact: isCompact,
           ),
           if (index < nodes.length - 1)
-            _AnimatedEvolutionArrow(
-              color: arrowColor,
-              delay: Duration(milliseconds: 300 + (index * 200)),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
+              child: _AnimatedEvolutionArrow(
+                color: arrowColor,
+                delay: Duration(milliseconds: 300 + (index * 200)),
+              ),
             ),
         ],
       ],
@@ -2190,16 +2205,162 @@ class _EvolutionPathColumn extends StatelessWidget {
   }
 }
 
+/// Displays a single evolution path horizontally (for linear evolutions).
+/// 
+/// This widget is used for Pokemon that evolve in a straight line,
+/// showing the evolution stages from left to right with arrows between them.
+/// 
+/// Example for Charmander:
+/// ```
+/// Charmander → Charmeleon → Charizard
+/// ```
+class _EvolutionPathRow extends StatelessWidget {
+  const _EvolutionPathRow({
+    required this.nodes,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final List<PokemonEvolutionNode> nodes;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (nodes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    final arrowColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
+    final mediaWidth = MediaQuery.of(context).size.width;
+
+    // Use SingleChildScrollView to allow horizontal scrolling for long chains
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (var index = 0; index < nodes.length; index++) ...[
+              // Each evolution stage card
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: 160,
+                  maxWidth: math.min(220, (mediaWidth - 100) / 3),
+                ),
+                child: _EvolutionStageCard(
+                  node: nodes[index],
+                  isCurrent: currentSpeciesId != null &&
+                      currentSpeciesId == nodes[index].speciesId,
+                  formatLabel: formatLabel,
+                ),
+              ),
+              // Arrow between stages
+              if (index < nodes.length - 1) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _AnimatedEvolutionArrowHorizontal(
+                    color: arrowColor,
+                    delay: Duration(milliseconds: 300 + (index * 200)),
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated horizontal arrow widget to show evolution flow direction (left to right)
+class _AnimatedEvolutionArrowHorizontal extends StatefulWidget {
+  const _AnimatedEvolutionArrowHorizontal({
+    required this.color,
+    this.delay = Duration.zero,
+  });
+
+  final Color color;
+  final Duration delay;
+
+  @override
+  State<_AnimatedEvolutionArrowHorizontal> createState() =>
+      _AnimatedEvolutionArrowHorizontalState();
+}
+
+class _AnimatedEvolutionArrowHorizontalState
+    extends State<_AnimatedEvolutionArrowHorizontal>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _delayTimer = Timer(widget.delay, () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_animation.value * 4, 0),
+          child: Opacity(
+            opacity: 0.4 + (_animation.value * 0.6),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: widget.color,
+              size: 28,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _EvolutionStageCard extends StatefulWidget {
   const _EvolutionStageCard({
     required this.node,
     required this.isCurrent,
     required this.formatLabel,
+    this.isCompact = false,
   });
 
   final PokemonEvolutionNode node;
   final bool isCurrent;
   final String Function(String) formatLabel;
+  final bool isCompact;
 
   @override
   State<_EvolutionStageCard> createState() => _EvolutionStageCardState();
@@ -2278,15 +2439,21 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
         ? colorScheme.onPrimaryContainer.withOpacity(0.88)
         : colorScheme.onSurfaceVariant;
 
+    // Adjust sizes based on compact mode
+    final imageSize = widget.isCompact ? 90.0 : 110.0;
+    final horizontalPadding = widget.isCompact ? 14.0 : 18.0;
+    final verticalPadding = widget.isCompact ? 12.0 : 16.0;
+    final borderRadius = widget.isCompact ? 20.0 : 26.0;
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: borderColor,
               width: widget.isCurrent ? 2 : 1,
@@ -2307,27 +2474,29 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
             children: [
               PokemonArtwork(
                 imageUrl: widget.node.imageUrl,
-                size: 110,
-                borderRadius: 24,
-                padding: const EdgeInsets.all(12),
+                size: imageSize,
+                borderRadius: widget.isCompact ? 20 : 24,
+                padding: EdgeInsets.all(widget.isCompact ? 8 : 12),
                 showShadow: false,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: widget.isCompact ? 8 : 12),
               Text(
                 _resolveName(widget.node.name),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: textColor,
+                  fontSize: widget.isCompact ? 14 : null,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: widget.isCompact ? 6 : 8),
               if (widget.node.conditions.isEmpty)
                 Text(
                   'Sin requisitos adicionales.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: subtitleColor,
+                    fontSize: widget.isCompact ? 12 : null,
                   ),
                 )
               else
@@ -2336,7 +2505,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                   children: widget.node.conditions
                       .map(
                         (condition) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          padding: EdgeInsets.symmetric(vertical: widget.isCompact ? 1 : 2),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -2344,6 +2513,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                 '• ',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: subtitleColor,
+                                  fontSize: widget.isCompact ? 11 : null,
                                 ),
                               ),
                               Expanded(
@@ -2352,6 +2522,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                   style:
                                       theme.textTheme.bodyMedium?.copyWith(
                                     color: subtitleColor,
+                                    fontSize: widget.isCompact ? 11 : null,
                                   ),
                                 ),
                               ),
