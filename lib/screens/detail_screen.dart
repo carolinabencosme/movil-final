@@ -1876,10 +1876,16 @@ class _EvolutionSection extends StatelessWidget {
     final currentNode = nodesById[effectiveCurrentId] ?? fallbackNode;
     final highlightId = currentNode.speciesId;
 
-    final preEvolutionChain =
-        _buildPreEvolutionChain(highlightId, nodesById);
-    final forwardEvolutionChains =
-        _buildForwardEvolutionChains(highlightId, nodesById);
+    final preEvolutionChain = _buildPreEvolutionChain(
+      highlightId,
+      nodesById,
+      chain.paths,
+    );
+    final forwardEvolutionChains = _buildForwardEvolutionChains(
+      highlightId,
+      nodesById,
+      chain.paths,
+    );
 
     final theme = Theme.of(context);
     final subtitleStyle = theme.textTheme.bodyMedium?.copyWith(
@@ -1970,6 +1976,7 @@ class _EvolutionSection extends StatelessWidget {
   static List<PokemonEvolutionNode> _buildPreEvolutionChain(
     int currentId,
     Map<int, PokemonEvolutionNode> nodes,
+    List<List<PokemonEvolutionNode>> paths,
   ) {
     final List<PokemonEvolutionNode> chain = <PokemonEvolutionNode>[];
     final Set<int> visited = <int>{};
@@ -1991,12 +1998,27 @@ class _EvolutionSection extends StatelessWidget {
       }
     }
 
+    if (chain.length <= 1 && paths.isNotEmpty) {
+      for (final path in paths) {
+        final index = path.indexWhere((node) => node.speciesId == currentId);
+        if (index == -1) {
+          continue;
+        }
+
+        chain
+          ..clear()
+          ..addAll(path.sublist(0, index + 1));
+        break;
+      }
+    }
+
     return chain;
   }
 
   static List<List<PokemonEvolutionNode>> _buildForwardEvolutionChains(
     int currentId,
     Map<int, PokemonEvolutionNode> nodes,
+    List<List<PokemonEvolutionNode>> paths,
   ) {
     final Map<int, List<PokemonEvolutionNode>> children =
         <int, List<PokemonEvolutionNode>>{};
@@ -2021,6 +2043,23 @@ class _EvolutionSection extends StatelessWidget {
       children[currentId] ?? const <PokemonEvolutionNode>[],
     );
     if (currentChildren.isEmpty) {
+      final List<List<PokemonEvolutionNode>> fallbackChains =
+          <List<PokemonEvolutionNode>>[];
+      for (final path in paths) {
+        final index = path.indexWhere((node) => node.speciesId == currentId);
+        if (index == -1 || index >= path.length - 1) {
+          continue;
+        }
+
+        fallbackChains.add(
+          List<PokemonEvolutionNode>.from(path.sublist(index, path.length)),
+        );
+      }
+
+      if (fallbackChains.isNotEmpty) {
+        return fallbackChains;
+      }
+
       return const <List<PokemonEvolutionNode>>[];
     }
 
