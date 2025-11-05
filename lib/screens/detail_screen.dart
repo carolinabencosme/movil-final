@@ -246,16 +246,30 @@ class _PokemonDetailBody extends StatefulWidget {
 class _PokemonDetailBodyState extends State<_PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _pageController = PageController();
+    
+    // Sync TabController with PageController
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        _pageController.animateToPage(
+          _tabController.index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -663,8 +677,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
           ),
           _buildTabBar(theme, typeColor, onTypeColor),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
+            child: PageView(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                if (_tabController.index != index) {
+                  _tabController.animateTo(index);
+                }
+              },
               children: [
                 // Información Tab
                 SingleChildScrollView(
@@ -1939,11 +1959,10 @@ class _BranchingEvolutionTree extends StatelessWidget {
         if (branches.isNotEmpty) ...[
           const SizedBox(height: 16),
           
-          // Branching indicator
-          Icon(
-            Icons.arrow_downward_rounded,
+          // Branching indicator with animation
+          _AnimatedEvolutionArrow(
             color: colorScheme.onSurfaceVariant.withOpacity(0.65),
-            size: 32,
+            delay: const Duration(milliseconds: 200),
           ),
           
           const SizedBox(height: 16),
@@ -2036,16 +2055,83 @@ class _EvolutionBranch extends StatelessWidget {
             formatLabel: formatLabel,
           ),
           if (index < nodes.length - 1)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Icon(
-                Icons.arrow_downward_rounded,
-                color: arrowColor,
-                size: 24,
-              ),
+            _AnimatedEvolutionArrow(
+              color: arrowColor,
+              delay: Duration(milliseconds: 300 + (index * 200)),
             ),
         ],
       ],
+    );
+  }
+}
+
+/// Animated arrow widget to show evolution flow direction
+class _AnimatedEvolutionArrow extends StatefulWidget {
+  const _AnimatedEvolutionArrow({
+    required this.color,
+    this.delay = Duration.zero,
+  });
+
+  final Color color;
+  final Duration delay;
+
+  @override
+  State<_AnimatedEvolutionArrow> createState() => _AnimatedEvolutionArrowState();
+}
+
+class _AnimatedEvolutionArrowState extends State<_AnimatedEvolutionArrow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    Future.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _animation.value * 4),
+            child: Opacity(
+              opacity: 0.4 + (_animation.value * 0.6),
+              child: Icon(
+                Icons.arrow_downward_rounded,
+                color: widget.color,
+                size: 24,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -2090,12 +2176,9 @@ class _EvolutionPathColumn extends StatelessWidget {
               formatLabel: formatLabel,
             ),
             if (index < nodes.length - 1)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Icon(
-                  Icons.arrow_downward_rounded,
-                  color: arrowColor,
-                ),
+              _AnimatedEvolutionArrow(
+                color: arrowColor,
+                delay: Duration(milliseconds: 300 + (index * 200)),
               ),
           ],
         ],
@@ -2104,7 +2187,7 @@ class _EvolutionPathColumn extends StatelessWidget {
   }
 }
 
-class _EvolutionStageCard extends StatelessWidget {
+class _EvolutionStageCard extends StatefulWidget {
   const _EvolutionStageCard({
     required this.node,
     required this.isCurrent,
@@ -2115,13 +2198,59 @@ class _EvolutionStageCard extends StatelessWidget {
   final bool isCurrent;
   final String Function(String) formatLabel;
 
+  @override
+  State<_EvolutionStageCard> createState() => _EvolutionStageCardState();
+}
+
+class _EvolutionStageCardState extends State<_EvolutionStageCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOut),
+      ),
+    );
+
+    // Start animation after a short delay for staggered effect
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   String _resolveName(String value) {
     if (value.isEmpty) {
       return 'Desconocido';
     }
     final lowercase = value.toLowerCase();
     if (value == lowercase) {
-      return formatLabel(value);
+      return widget.formatLabel(value);
     }
     return value;
   }
@@ -2131,89 +2260,105 @@ class _EvolutionStageCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final borderColor = isCurrent
+    final borderColor = widget.isCurrent
         ? colorScheme.primary
         : colorScheme.outline.withOpacity(0.35);
-    final backgroundColor = isCurrent
+    final backgroundColor = widget.isCurrent
         ? colorScheme.primaryContainer.withOpacity(0.7)
         : colorScheme.surface.withOpacity(0.96);
-    final textColor = isCurrent
+    final textColor = widget.isCurrent
         ? colorScheme.onPrimaryContainer
         : colorScheme.onSurface;
-    final subtitleColor = isCurrent
+    final subtitleColor = widget.isCurrent
         ? colorScheme.onPrimaryContainer.withOpacity(0.88)
         : colorScheme.onSurfaceVariant;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: borderColor,
-          width: isCurrent ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PokemonArtwork(
-            imageUrl: node.imageUrl,
-            size: 110,
-            borderRadius: 24,
-            padding: const EdgeInsets.all(12),
-            showShadow: false,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _resolveName(node.name),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: textColor,
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: borderColor,
+              width: widget.isCurrent ? 2 : 1,
             ),
-          ),
-          const SizedBox(height: 8),
-          if (node.conditions.isEmpty)
-            Text(
-              'Sin requisitos adicionales.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: subtitleColor,
-              ),
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: node.conditions
-                  .map(
-                    (condition) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '• ',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: subtitleColor,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              condition,
-                              style:
-                                  theme.textTheme.bodyMedium?.copyWith(
-                                color: subtitleColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+            boxShadow: widget.isCurrent
+                ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
                     ),
-                  )
-                  .toList(),
-            ),
-        ],
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PokemonArtwork(
+                imageUrl: widget.node.imageUrl,
+                size: 110,
+                borderRadius: 24,
+                padding: const EdgeInsets.all(12),
+                showShadow: false,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _resolveName(widget.node.name),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (widget.node.conditions.isEmpty)
+                Text(
+                  'Sin requisitos adicionales.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: subtitleColor,
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.node.conditions
+                      .map(
+                        (condition) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '• ',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: subtitleColor,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  condition,
+                                  style:
+                                      theme.textTheme.bodyMedium?.copyWith(
+                                    color: subtitleColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
