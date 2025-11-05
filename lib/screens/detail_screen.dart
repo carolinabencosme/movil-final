@@ -119,14 +119,19 @@ EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
 class DetailScreen extends StatelessWidget {
   const DetailScreen({
     super.key,
-    required this.pokemonId,
+    this.pokemonId,
+    this.pokemonName,
     this.initialPokemon,
     this.heroTag,
-  });
+  }) : assert(
+          pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
+          'Either pokemonId or pokemonName must be provided.',
+        );
 
   static const int _defaultLanguageId = 7;
 
-  final int pokemonId;
+  final int? pokemonId;
+  final String? pokemonName;
   final PokemonListItem? initialPokemon;
   final String? heroTag;
 
@@ -139,10 +144,15 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedHeroTag = heroTag ?? 'pokemon-image-$pokemonId';
-    final previewName =
-        initialPokemon != null ? _capitalize(initialPokemon!.name) : null;
+    final resolvedHeroTag =
+        heroTag ?? 'pokemon-image-${pokemonId ?? pokemonName ?? 'unknown'}';
+    final previewName = initialPokemon != null
+        ? _capitalize(initialPokemon!.name)
+        : (pokemonName != null ? _capitalize(pokemonName!) : null);
     final previewImage = initialPokemon?.imageUrl ?? '';
+    final where = pokemonId != null
+        ? <String, dynamic>{'id': {'_eq': pokemonId}}
+        : <String, dynamic>{'name': {'_eq': pokemonName!}};
 
     return Scaffold(
       appBar: AppBar(
@@ -154,7 +164,7 @@ class DetailScreen extends StatelessWidget {
           fetchPolicy: FetchPolicy.cacheAndNetwork,
           errorPolicy: ErrorPolicy.all,
           variables: {
-            'id': pokemonId,
+            'where': where,
             'languageId': _defaultLanguageId,
           },
         ),

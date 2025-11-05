@@ -1,6 +1,6 @@
 const String getPokemonDetailsQuery = r'''
-  query GetPokemonDetail($id: Int!, $languageId: Int!) {
-    pokemon_v2_pokemon(where: {id: {_eq: $id}}, limit: 1) {
+  query GetPokemonDetail($where: pokemon_v2_pokemon_bool_exp!, $languageId: Int!) {
+    pokemon_v2_pokemon(where: $where, limit: 1) {
       id
       name
       height
