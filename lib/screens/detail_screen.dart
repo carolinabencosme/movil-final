@@ -154,7 +154,6 @@ class DetailScreen extends StatelessWidget {
           errorPolicy: ErrorPolicy.all,
           variables: {
             'where': where,
-            'languageId': _defaultLanguageId,
           },
         ),
         builder: (result, {fetchMore, refetch}) {
@@ -1843,6 +1842,75 @@ class _MovesSectionState extends State<_MovesSection> {
   }
 }
 
+// Helper class to represent evolution species data
+class _Species {
+  final int id;
+  final String name;
+  final int? parentId;
+  final String imageUrl;
+
+  const _Species({
+    required this.id,
+    required this.name,
+    this.parentId,
+    this.imageUrl = '',
+  });
+}
+
+// Build species map from raw evolution data
+Map<int, _Species> _speciesMapFromRaw(List<PokemonEvolutionNode> raw) {
+  final map = <int, _Species>{};
+  for (final node in raw) {
+    map[node.speciesId] = _Species(
+      id: node.speciesId,
+      name: node.name,
+      parentId: node.fromSpeciesId,
+      imageUrl: node.imageUrl,
+    );
+  }
+  return map;
+}
+
+// Get the full pre-evolution chain including current pokemon
+List<_Species> _preChain(int currentId, Map<int, _Species> map) {
+  final chain = <_Species>[];
+  int? cursor = currentId;
+  while (cursor != null) {
+    final node = map[cursor];
+    if (node == null) break;
+    chain.insert(0, node);
+    cursor = node.parentId;
+  }
+  return chain;
+}
+
+// Get all forward evolution chains from current pokemon
+List<List<_Species>> _forwardChains(int currentId, Map<int, _Species> map) {
+  final result = <List<_Species>>[];
+  final firstLevel = map.values.where((n) => n.parentId == currentId).toList();
+  
+  for (final child in firstLevel) {
+    final chain = <_Species>[child];
+    var cursor = child;
+    while (true) {
+      final kids = map.values.where((n) => n.parentId == cursor.id).toList();
+      if (kids.length == 1) {
+        cursor = kids.first;
+        chain.add(cursor);
+      } else {
+        break;
+      }
+    }
+    result.add(chain);
+  }
+  return result;
+}
+
+// Helper to get sprite URL
+String _spriteUrl(int id) {
+  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png';
+}
+
 class _EvolutionSection extends StatelessWidget {
   const _EvolutionSection({
     required this.evolutionChain,
@@ -1854,6 +1922,11 @@ class _EvolutionSection extends StatelessWidget {
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
 
+  String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final chain = evolutionChain;
@@ -1861,246 +1934,313 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    final nodesById = _collectEvolutionNodes(chain);
-    if (nodesById.isEmpty) {
+    // Collect all nodes into a flat list
+    final allNodes = <PokemonEvolutionNode>[];
+    for (final group in chain.groups) {
+      allNodes.addAll(group);
+    }
+    for (final path in chain.paths) {
+      for (final node in path) {
+        if (!allNodes.any((n) => n.speciesId == node.speciesId)) {
+          allNodes.add(node);
+        }
+      }
+    }
+
+    if (allNodes.isEmpty) {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    final fallbackNode = _findFallbackNode(chain, nodesById.values);
-    if (fallbackNode == null) {
-      return const Text('Sin información de evoluciones disponible.');
-    }
+    // Build species map
+    final speciesMap = _speciesMapFromRaw(allNodes);
+    
+    // Determine current pokemon ID
+    final effectiveCurrentId = currentSpeciesId ?? 
+        chain.currentSpeciesId ?? 
+        allNodes.first.speciesId;
 
-    final effectiveCurrentId =
-        currentSpeciesId ?? chain.currentSpeciesId ?? fallbackNode.speciesId;
-    final currentNode = nodesById[effectiveCurrentId] ?? fallbackNode;
-    final highlightId = currentNode.speciesId;
-
-    final preEvolutionChain = _buildPreEvolutionChain(
-      highlightId,
-      nodesById,
-      chain.paths,
-    );
-    final forwardEvolutionChains = _buildForwardEvolutionChains(
-      highlightId,
-      nodesById,
-      chain.paths,
-    );
+    // Build pre-evolution and forward evolution chains
+    final preEvolutionChain = _preChain(effectiveCurrentId, speciesMap);
+    final forwardEvolutionChains = _forwardChains(effectiveCurrentId, speciesMap);
 
     final theme = Theme.of(context);
-    final subtitleStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: theme.colorScheme.onSurface.withOpacity(0.72),
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (preEvolutionChain.length > 1) ...[
+        // Show complete chain including current pokemon
+        if (preEvolutionChain.isNotEmpty) ...[
           Text(
-            'Pre-evoluciones',
+            'Cadena evolutiva completa',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 12),
-          _EvolutionPathRow(
-            nodes: preEvolutionChain,
-            currentSpeciesId: highlightId,
-            formatLabel: formatLabel,
+          _LinearEvolutionChain(
+            chain: preEvolutionChain,
+            currentId: effectiveCurrentId,
+            formatLabel: _capitalize,
           ),
           const SizedBox(height: 24),
         ],
-        Text(
-          'Evoluciones posibles',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+        
+        // Show forward evolutions
+        if (forwardEvolutionChains.isNotEmpty) ...[
+          Text(
+            'Evoluciones posibles',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        if (forwardEvolutionChains.isEmpty)
+          const SizedBox(height: 12),
+          if (forwardEvolutionChains.length == 1)
+            // Linear evolution: show horizontally with arrows
+            _LinearEvolutionChain(
+              chain: [speciesMap[effectiveCurrentId]!, ...forwardEvolutionChains.first],
+              currentId: effectiveCurrentId,
+              formatLabel: _capitalize,
+            )
+          else
+            // Branched evolution: show in ramified/circular layout
+            _BranchedEvolutionDisplay(
+              chains: forwardEvolutionChains,
+              currentSpecies: speciesMap[effectiveCurrentId]!,
+              formatLabel: _capitalize,
+            ),
+        ] else ...[
           Text(
             'Este Pokémon no tiene evoluciones posteriores.',
-            style: subtitleStyle,
-          )
-        else
-          Column(
-            children: [
-              for (var index = 0;
-                  index < forwardEvolutionChains.length;
-                  index++) ...[
-                _EvolutionPathRow(
-                  nodes: forwardEvolutionChains[index],
-                  currentSpeciesId: highlightId,
-                  formatLabel: formatLabel,
-                ),
-                if (index < forwardEvolutionChains.length - 1)
-                  const SizedBox(height: 16),
-              ],
-            ],
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.72),
+            ),
           ),
+        ],
       ],
     );
   }
+}
 
-  static Map<int, PokemonEvolutionNode> _collectEvolutionNodes(
-    PokemonEvolutionChain chain,
-  ) {
-    final Map<int, PokemonEvolutionNode> nodes = <int, PokemonEvolutionNode>{};
+// Linear evolution chain display (horizontal with arrows)
+class _LinearEvolutionChain extends StatelessWidget {
+  const _LinearEvolutionChain({
+    required this.chain,
+    required this.currentId,
+    required this.formatLabel,
+  });
 
-    void collect(List<PokemonEvolutionNode> list) {
-      for (final node in list) {
-        nodes[node.speciesId] = node;
-      }
-    }
+  final List<_Species> chain;
+  final int currentId;
+  final String Function(String) formatLabel;
 
-    for (final group in chain.groups) {
-      collect(group);
-    }
-    for (final path in chain.paths) {
-      collect(path);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return nodes;
-  }
-
-  static PokemonEvolutionNode? _findFallbackNode(
-    PokemonEvolutionChain chain,
-    Iterable<PokemonEvolutionNode> nodes,
-  ) {
-    if (chain.paths.isNotEmpty && chain.paths.first.isNotEmpty) {
-      return chain.paths.first.first;
-    }
-    return nodes.isNotEmpty ? nodes.first : null;
-  }
-
-  static List<PokemonEvolutionNode> _buildPreEvolutionChain(
-    int currentId,
-    Map<int, PokemonEvolutionNode> nodes,
-    List<List<PokemonEvolutionNode>> paths,
-  ) {
-    final List<PokemonEvolutionNode> chain = <PokemonEvolutionNode>[];
-    final Set<int> visited = <int>{};
-
-    int? cursor = currentId;
-    while (cursor != null && visited.add(cursor)) {
-      final node = nodes[cursor];
-      if (node == null) {
-        break;
-      }
-      chain.insert(0, node);
-      cursor = node.fromSpeciesId;
-    }
-
-    if (chain.isEmpty) {
-      final currentNode = nodes[currentId];
-      if (currentNode != null) {
-        chain.add(currentNode);
-      }
-    }
-
-    if (chain.length <= 1 && paths.isNotEmpty) {
-      for (final path in paths) {
-        final index = path.indexWhere((node) => node.speciesId == currentId);
-        if (index == -1) {
-          continue;
-        }
-
-        chain
-          ..clear()
-          ..addAll(path.sublist(0, index + 1));
-        break;
-      }
-    }
-
-    return chain;
-  }
-
-  static List<List<PokemonEvolutionNode>> _buildForwardEvolutionChains(
-    int currentId,
-    Map<int, PokemonEvolutionNode> nodes,
-    List<List<PokemonEvolutionNode>> paths,
-  ) {
-    final Map<int, List<PokemonEvolutionNode>> children =
-        <int, List<PokemonEvolutionNode>>{};
-
-    for (final node in nodes.values) {
-      final parentId = node.fromSpeciesId;
-      if (parentId == null) {
-        continue;
-      }
-      final siblings = children.putIfAbsent(
-        parentId,
-        () => <PokemonEvolutionNode>[],
-      );
-      siblings.add(node);
-    }
-
-    for (final siblingList in children.values) {
-      siblingList.sort((a, b) => a.order.compareTo(b.order));
-    }
-
-    final List<PokemonEvolutionNode> currentChildren = List<PokemonEvolutionNode>.from(
-      children[currentId] ?? const <PokemonEvolutionNode>[],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < chain.length; i++) ...[
+            _EvolutionCard(
+              species: chain[i],
+              isCurrent: chain[i].id == currentId,
+              formatLabel: formatLabel,
+            ),
+            if (i < chain.length - 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: colorScheme.onSurface.withOpacity(0.6),
+                  size: 32,
+                ),
+              ),
+          ],
+        ],
+      ),
     );
-    if (currentChildren.isEmpty) {
-      final List<List<PokemonEvolutionNode>> fallbackChains =
-          <List<PokemonEvolutionNode>>[];
-      for (final path in paths) {
-        final index = path.indexWhere((node) => node.speciesId == currentId);
-        if (index == -1 || index >= path.length - 1) {
-          continue;
-        }
+  }
+}
 
-        fallbackChains.add(
-          List<PokemonEvolutionNode>.from(path.sublist(index, path.length)),
-        );
-      }
+// Branched evolution display (circular/ramified layout)
+class _BranchedEvolutionDisplay extends StatelessWidget {
+  const _BranchedEvolutionDisplay({
+    required this.chains,
+    required this.currentSpecies,
+    required this.formatLabel,
+  });
 
-      if (fallbackChains.isNotEmpty) {
-        return fallbackChains;
-      }
+  final List<List<_Species>> chains;
+  final _Species currentSpecies;
+  final String Function(String) formatLabel;
 
-      return const <List<PokemonEvolutionNode>>[];
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Show current pokemon at top center
+        Center(
+          child: _EvolutionCard(
+            species: currentSpecies,
+            isCurrent: true,
+            formatLabel: formatLabel,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Show arrow pointing down
+        Center(
+          child: Icon(
+            Icons.arrow_downward,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            size: 32,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Show all evolution branches in a wrap
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 24,
+          runSpacing: 24,
+          children: [
+            for (final chain in chains)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < chain.length; i++) ...[
+                    _EvolutionCard(
+                      species: chain[i],
+                      isCurrent: false,
+                      formatLabel: formatLabel,
+                    ),
+                    if (i < chain.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Icon(
+                          Icons.arrow_downward,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          size: 24,
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// Individual evolution card
+class _EvolutionCard extends StatelessWidget {
+  const _EvolutionCard({
+    required this.species,
+    required this.isCurrent,
+    required this.formatLabel,
+  });
+
+  final _Species species;
+  final bool isCurrent;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    final borderColor = isCurrent
+        ? colorScheme.primary
+        : colorScheme.outline.withOpacity(0.35);
+    final backgroundColor = isCurrent
+        ? colorScheme.primaryContainer.withOpacity(0.7)
+        : colorScheme.surface.withOpacity(0.96);
+    final textColor = isCurrent
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
+
+    final imageUrl = species.imageUrl.isNotEmpty 
+        ? species.imageUrl 
+        : _spriteUrl(species.id);
+
+    Widget card = Container(
+      width: 120,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: borderColor,
+          width: isCurrent ? 2 : 1,
+        ),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Hero(
+            tag: 'pokemon-artwork-${species.id}',
+            child: Image.network(
+              imageUrl,
+              height: 80,
+              width: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 80,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.image_not_supported,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            formatLabel(species.name),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+
+    // Make non-current cards tappable for navigation
+    if (!isCurrent && species.name.isNotEmpty) {
+      card = InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          _pendingEvolutionNavigation[species.name] = species.id;
+          context.push('/pokedex/${species.name}');
+        },
+        child: card,
+      );
     }
 
-    final List<List<PokemonEvolutionNode>> result =
-        <List<PokemonEvolutionNode>>[];
-    final currentNode = nodes[currentId];
-    if (currentNode == null) {
-      return result;
-    }
-
-    for (final child in currentChildren) {
-      final List<PokemonEvolutionNode> chain = <PokemonEvolutionNode>[
-        currentNode,
-        child,
-      ];
-      var cursor = child;
-      final Set<int> visited = <int>{currentId, child.speciesId};
-
-      while (true) {
-        final List<PokemonEvolutionNode> nextChildren =
-            List<PokemonEvolutionNode>.from(
-          children[cursor.speciesId] ?? const <PokemonEvolutionNode>[],
-        );
-
-        if (nextChildren.length == 1) {
-          final next = nextChildren.first;
-          if (!visited.add(next.speciesId)) {
-            break;
-          }
-          chain.add(next);
-          cursor = next;
-          continue;
-        }
-
-        break;
-      }
-
-      result.add(chain);
-    }
-
-    return result;
+    return card;
   }
 }
 
