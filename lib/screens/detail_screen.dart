@@ -1865,6 +1865,11 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
+    // Safety check for empty paths
+    if (chain.paths.isEmpty) {
+      return const Text('Sin información de evoluciones disponible.');
+    }
+
     // Use tree display for any evolution chain with multiple paths to avoid duplicates
     if (chain.paths.length > 1) {
       return _BranchingEvolutionTree(
