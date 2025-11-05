@@ -109,6 +109,8 @@ const double _horizontalEvolutionPadding = 100.0;
 const double _horizontalArrowTranslationDistance = 4.0;
 const int _horizontalEvolutionMaxStages = 3;
 
+final Map<String, int> _pendingEvolutionNavigation = <String, int>{};
+
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -145,7 +147,7 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedHeroTag =
-        heroTag ?? 'pokemon-image-${pokemonId ?? pokemonName ?? 'unknown'}';
+        heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
     final previewName = initialPokemon != null
         ? _capitalize(initialPokemon!.name)
         : (pokemonName != null ? _capitalize(pokemonName!) : null);
@@ -503,16 +505,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
                 alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 18),
-                  child: Hero(
-                    tag: widget.resolvedHeroTag,
-                    child: PokemonArtwork(
-                      imageUrl: pokemon.imageUrl,
-                      size: imageSize,
-                      borderRadius: 36,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
+                  child: PokemonArtwork(
+                    heroTag: widget.resolvedHeroTag,
+                    imageUrl: pokemon.imageUrl,
+                    size: imageSize,
+                    borderRadius: 36,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
                     ),
                   ),
                 ),
@@ -2451,104 +2451,137 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
     final verticalPadding = widget.isCompact 
         ? _evolutionCardVerticalPaddingCompact 
         : _evolutionCardVerticalPaddingNormal;
-    final borderRadius = widget.isCompact 
-        ? _evolutionCardBorderRadiusCompact 
+    final borderRadiusValue = widget.isCompact
+        ? _evolutionCardBorderRadiusCompact
         : _evolutionCardBorderRadiusNormal;
+    final isNavigable = !widget.isCurrent && widget.node.slug.isNotEmpty;
+
+    Widget buildCard() {
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
+        ),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(borderRadiusValue),
+          border: Border.all(
+            color: borderColor,
+            width: widget.isCurrent ? 2 : 1,
+          ),
+          boxShadow: widget.isCurrent
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PokemonArtwork(
+              heroTag: 'pokemon-artwork-${widget.node.speciesId}',
+              imageUrl: widget.node.imageUrl,
+              size: imageSize,
+              borderRadius: widget.isCompact
+                  ? _evolutionCardImageBorderRadiusCompact
+                  : _evolutionCardImageBorderRadiusNormal,
+              padding: EdgeInsets.all(widget.isCompact
+                  ? _evolutionCardImagePaddingCompact
+                  : _evolutionCardImagePaddingNormal),
+              showShadow: false,
+            ),
+            SizedBox(height: widget.isCompact ? 8 : 12),
+            Text(
+              _resolveName(widget.node.name),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: textColor,
+                fontSize:
+                    widget.isCompact ? _evolutionCardNameFontSizeCompact : null,
+              ),
+            ),
+            SizedBox(height: widget.isCompact ? 6 : 8),
+            if (widget.node.conditions.isEmpty)
+              Text(
+                'Sin requisitos adicionales.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: subtitleColor,
+                  fontSize: widget.isCompact
+                      ? _evolutionCardConditionFontSizeCompact
+                      : null,
+                ),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.node.conditions
+                    .map(
+                      (condition) => Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: widget.isCompact ? 1 : 2,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '• ',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: subtitleColor,
+                                fontSize: widget.isCompact
+                                    ? _evolutionCardConditionDetailFontSizeCompact
+                                    : null,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                condition,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: subtitleColor,
+                                  fontSize: widget.isCompact
+                                      ? _evolutionCardConditionDetailFontSizeCompact
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+          ],
+        ),
+      );
+    }
+
+    Widget card = buildCard();
+    if (isNavigable) {
+      card = Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(borderRadiusValue),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(borderRadiusValue),
+          onTap: () {
+            _pendingEvolutionNavigation[widget.node.slug] = widget.node.speciesId;
+            context.push('/pokedex/${widget.node.slug}');
+          },
+          child: card,
+        ),
+      );
+    }
 
     return FadeTransition(
       opacity: _fadeAnimation,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: borderColor,
-              width: widget.isCurrent ? 2 : 1,
-            ),
-            boxShadow: widget.isCurrent
-                ? [
-                    BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PokemonArtwork(
-                imageUrl: widget.node.imageUrl,
-                size: imageSize,
-                borderRadius: widget.isCompact 
-                    ? _evolutionCardImageBorderRadiusCompact 
-                    : _evolutionCardImageBorderRadiusNormal,
-                padding: EdgeInsets.all(widget.isCompact 
-                    ? _evolutionCardImagePaddingCompact 
-                    : _evolutionCardImagePaddingNormal),
-                showShadow: false,
-              ),
-              SizedBox(height: widget.isCompact ? 8 : 12),
-              Text(
-                _resolveName(widget.node.name),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                  fontSize: widget.isCompact ? _evolutionCardNameFontSizeCompact : null,
-                ),
-              ),
-              SizedBox(height: widget.isCompact ? 6 : 8),
-              if (widget.node.conditions.isEmpty)
-                Text(
-                  'Sin requisitos adicionales.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: subtitleColor,
-                    fontSize: widget.isCompact ? _evolutionCardConditionFontSizeCompact : null,
-                  ),
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: widget.node.conditions
-                      .map(
-                        (condition) => Padding(
-                          padding: EdgeInsets.symmetric(vertical: widget.isCompact ? 1 : 2),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '• ',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: subtitleColor,
-                                  fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  condition,
-                                  style:
-                                      theme.textTheme.bodyMedium?.copyWith(
-                                    color: subtitleColor,
-                                    fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-            ],
-          ),
-        ),
+        child: card,
       ),
     );
   }
@@ -3484,6 +3517,27 @@ class _PokemonDetailErrorView extends StatelessWidget {
   }
 }
 
+extension _DetailScreenNavigationX on BuildContext {
+  Future<T?> push<T>(String location) {
+    if (location.startsWith('/pokedex/')) {
+      final slug = location.substring('/pokedex/'.length);
+      final speciesId = _pendingEvolutionNavigation.remove(slug);
+      return Navigator.of(this).push<T>(
+        MaterialPageRoute<T>(
+          builder: (_) => DetailScreen(
+            pokemonId: speciesId,
+            pokemonName: slug,
+            heroTag: speciesId != null
+                ? 'pokemon-artwork-$speciesId'
+                : 'pokemon-artwork-$slug',
+          ),
+        ),
+      );
+    }
+    return Navigator.of(this).pushNamed<T>(location);
+  }
+}
+
 class _LoadingDetailView extends StatelessWidget {
   const _LoadingDetailView({
     required this.heroTag,
@@ -3504,14 +3558,12 @@ class _LoadingDetailView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Hero(
-              tag: heroTag,
-              child: PokemonArtwork(
-                imageUrl: imageUrl,
-                size: 180,
-                borderRadius: 32,
-                padding: const EdgeInsets.all(20),
-              ),
+            PokemonArtwork(
+              heroTag: heroTag,
+              imageUrl: imageUrl,
+              size: 180,
+              borderRadius: 32,
+              padding: const EdgeInsets.all(20),
             ),
             if (name != null) ...[
               const SizedBox(height: 16),

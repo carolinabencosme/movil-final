@@ -333,6 +333,7 @@ class PokemonEvolutionChain {
     }
 
     final Map<int, String> nameById = <int, String>{};
+    final Map<int, String> slugById = <int, String>{};
 
     for (final dynamic entry in speciesEntries) {
       final speciesMap = entry as Map<String, dynamic>?;
@@ -345,11 +346,12 @@ class PokemonEvolutionChain {
         continue;
       }
 
-      final fallbackName = speciesMap['name'] as String? ?? '';
+      final fallbackName = (speciesMap['name'] as String? ?? '').trim();
       final localizedNames =
           speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
       final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
       nameById[speciesId] = resolvedName;
+      slugById[speciesId] = fallbackName.isNotEmpty ? fallbackName : resolvedName;
     }
 
     if (nameById.isEmpty) {
@@ -395,6 +397,7 @@ class PokemonEvolutionChain {
       speciesData[speciesId] = _EvolutionSpeciesData(
         id: speciesId,
         name: nameById[speciesId] ?? '',
+        slug: slugById[speciesId] ?? '',
         order: order,
         fromSpeciesId: fromSpeciesId,
         imageUrl: imageUrl,
@@ -447,6 +450,7 @@ class PokemonEvolutionChain {
         PokemonEvolutionNode(
           speciesId: data.id,
           name: data.name,
+          slug: data.slug,
           imageUrl: data.imageUrl,
           order: data.order,
           fromSpeciesId: parentId,
@@ -551,6 +555,7 @@ class PokemonEvolutionNode {
   const PokemonEvolutionNode({
     required this.speciesId,
     required this.name,
+    required this.slug,
     required this.imageUrl,
     required this.order,
     this.fromSpeciesId,
@@ -559,6 +564,7 @@ class PokemonEvolutionNode {
 
   final int speciesId;
   final String name;
+  final String slug;
   final String imageUrl;
   final int order;
   final int? fromSpeciesId;
@@ -569,6 +575,7 @@ class _EvolutionSpeciesData {
   const _EvolutionSpeciesData({
     required this.id,
     required this.name,
+    required this.slug,
     required this.order,
     this.fromSpeciesId,
     this.imageUrl = '',
@@ -576,6 +583,7 @@ class _EvolutionSpeciesData {
 
   final int id;
   final String name;
+  final String slug;
   final int order;
   final int? fromSpeciesId;
   final String imageUrl;

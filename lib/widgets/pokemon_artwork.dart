@@ -8,6 +8,7 @@ class PokemonArtwork extends StatelessWidget {
     this.borderRadius = 24,
     this.padding = const EdgeInsets.all(12),
     this.showShadow = true,
+    this.heroTag,
   });
 
   final String imageUrl;
@@ -15,6 +16,7 @@ class PokemonArtwork extends StatelessWidget {
   final double borderRadius;
   final EdgeInsets padding;
   final bool showShadow;
+  final String? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +82,7 @@ class PokemonArtwork extends StatelessWidget {
       );
     }
 
-    return SizedBox(
+    Widget artwork = SizedBox(
       width: dimension,
       height: dimension,
       child: DecoratedBox(
@@ -105,5 +107,12 @@ class PokemonArtwork extends StatelessWidget {
         ),
       ),
     );
+
+    final hero = heroTag;
+    if (hero != null && hero.isNotEmpty) {
+      artwork = Hero(tag: hero, child: artwork);
+    }
+
+    return artwork;
   }
 }
