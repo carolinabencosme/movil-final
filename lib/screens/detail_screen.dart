@@ -2005,7 +2005,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
               final maxWidth = constraints.maxWidth;
               final isWide = maxWidth > _wideScreenBreakpoint;
               
-              // For many branches (like Eevee with 8 evolutions), use a compact layout
+              // For many branches (>6, like Eevee with 8), use a compact layout
               final branchCount = branches.length;
               final useCompactLayout = branchCount > _compactLayoutThreshold;
               
@@ -2017,6 +2017,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
                     // Calculate width per column dynamically based on branch count
+                    // Note: _compactColumnDivisor is guaranteed to be non-zero (const = 2)
                     final effectiveColumns = useCompactLayout 
                         ? math.min(_maxCompactColumns, (branchCount / _compactColumnDivisor).ceil())
                         : _evolutionBranchGridColumns;
@@ -2281,7 +2282,11 @@ class _EvolutionPathRow extends StatelessWidget {
               ConstrainedBox(
                 constraints: BoxConstraints(
                   minWidth: _horizontalEvolutionCardMinWidth,
-                  maxWidth: math.min(_horizontalEvolutionCardMaxWidth, (mediaWidth - _horizontalEvolutionPadding) / 3),
+                  // Ensure positive divisor: max(1, ...) prevents division issues
+                  maxWidth: math.min(
+                    _horizontalEvolutionCardMaxWidth, 
+                    math.max(_horizontalEvolutionCardMinWidth, (mediaWidth - _horizontalEvolutionPadding) / 3),
+                  ),
                 ),
                 child: _EvolutionStageCard(
                   node: nodes[index],
