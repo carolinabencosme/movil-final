@@ -1952,13 +1952,18 @@ class _EvolutionSection extends StatelessWidget {
     // Build species map
     final speciesMap = _speciesMapFromRaw(allNodes);
     
-    // Determine current pokemon ID
+    // Determine current pokemon ID - use first node as fallback AFTER checking allNodes is not empty
     final effectiveCurrentId = currentSpeciesId ?? 
         chain.currentSpeciesId ?? 
         allNodes.first.speciesId;
 
     // Verify current species exists in map
     if (!speciesMap.containsKey(effectiveCurrentId)) {
+      return const Text('Error: No se pudo encontrar el Pokémon actual en la cadena evolutiva.');
+    }
+
+    final currentSpecies = speciesMap[effectiveCurrentId];
+    if (currentSpecies == null) {
       return const Text('Error: No se pudo encontrar el Pokémon actual en la cadena evolutiva.');
     }
 
@@ -2000,7 +2005,7 @@ class _EvolutionSection extends StatelessWidget {
           if (forwardEvolutionChains.length == 1)
             // Linear evolution: show horizontally with arrows
             _LinearEvolutionChain(
-              chain: [speciesMap[effectiveCurrentId]!, ...forwardEvolutionChains.first],
+              chain: [currentSpecies, ...forwardEvolutionChains.first],
               currentId: effectiveCurrentId,
               formatLabel: formatLabel,
             )
@@ -2008,7 +2013,7 @@ class _EvolutionSection extends StatelessWidget {
             // Branched evolution: show in ramified/circular layout
             _BranchedEvolutionDisplay(
               chains: forwardEvolutionChains,
-              currentSpecies: speciesMap[effectiveCurrentId]!,
+              currentSpecies: currentSpecies,
               formatLabel: formatLabel,
             ),
         ] else ...[
