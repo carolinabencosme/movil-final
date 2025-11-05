@@ -224,7 +224,7 @@ class PokemonDetail {
       json['pokemon_v2_pokemonmoves'] as List<dynamic>? ?? const [],
     );
 
-    final species = json['species'] as Map<String, dynamic>?;
+    final species = json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
     final speciesNames =
         species?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
     String category = '';
@@ -322,12 +322,12 @@ class PokemonEvolutionChain {
       return null;
     }
 
-    final chain = species['evolution_chain'] as Map<String, dynamic>?;
+    final chain = species['pokemon_v2_evolutionchain'] as Map<String, dynamic>?;
     if (chain == null) {
       return null;
     }
 
-    final speciesEntries = chain['species_list'] as List<dynamic>? ?? [];
+    final speciesEntries = chain['pokemon_v2_pokemonspecies'] as List<dynamic>? ?? [];
     if (speciesEntries.isEmpty) {
       return null;
     }
@@ -347,11 +347,8 @@ class PokemonEvolutionChain {
       }
 
       final fallbackName = (speciesMap['name'] as String? ?? '').trim();
-      final localizedNames =
-          speciesMap['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
-      final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
-      nameById[speciesId] = resolvedName;
-      slugById[speciesId] = fallbackName.isNotEmpty ? fallbackName : resolvedName;
+      nameById[speciesId] = fallbackName;
+      slugById[speciesId] = fallbackName;
     }
 
     if (nameById.isEmpty) {
@@ -360,10 +357,6 @@ class PokemonEvolutionChain {
 
     final Map<int, _EvolutionSpeciesData> speciesData =
         <int, _EvolutionSpeciesData>{};
-    final Map<int, List<String>> conditionsByTarget =
-        <int, List<String>>{};
-    final Map<int, int> parentByTarget = <int, int>{};
-    final Map<int, int> evolutionEntryCountByTarget = <int, int>{};
 
     for (final dynamic entry in speciesEntries) {
       final speciesMap = entry as Map<String, dynamic>?;
@@ -376,7 +369,6 @@ class PokemonEvolutionChain {
         continue;
       }
 
-      final order = speciesMap['order'] as int? ?? 0;
       final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
 
       String imageUrl = '';
@@ -398,39 +390,10 @@ class PokemonEvolutionChain {
         id: speciesId,
         name: nameById[speciesId] ?? '',
         slug: slugById[speciesId] ?? '',
-        order: order,
+        order: speciesId,
         fromSpeciesId: fromSpeciesId,
         imageUrl: imageUrl,
       );
-
-      final evolutions =
-          speciesMap['pokemon_v2_pokemonevolutions'] as List<dynamic>? ?? [];
-      for (final dynamic evoEntry in evolutions) {
-        final evoMap = evoEntry as Map<String, dynamic>?;
-        if (evoMap == null) {
-          continue;
-        }
-
-        final evolvedId = evoMap['evolved_species_id'] as int?;
-        if (evolvedId == null) {
-          continue;
-        }
-
-        evolutionEntryCountByTarget.update(
-          evolvedId,
-          (value) => value + 1,
-          ifAbsent: () => 1,
-        );
-        parentByTarget[evolvedId] = speciesId;
-
-        final description = _describeEvolutionCondition(evoMap);
-        if (description == null || description.isEmpty) {
-          continue;
-        }
-        final conditions =
-            conditionsByTarget.putIfAbsent(evolvedId, () => <String>[]);
-        conditions.add(description);
-      }
     }
 
     if (speciesData.isEmpty) {
@@ -439,13 +402,6 @@ class PokemonEvolutionChain {
 
     final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
     speciesData.forEach((int id, _EvolutionSpeciesData data) {
-      final parentId = parentByTarget[id] ?? data.fromSpeciesId;
-      final conditions =
-          List<String>.from(conditionsByTarget[id] ?? const <String>[]);
-      final entryCount = evolutionEntryCountByTarget[id] ?? 0;
-      if (conditions.isEmpty && parentId != null && entryCount > 0) {
-        conditions.add('Requisitos no especificados');
-      }
       nodes.add(
         PokemonEvolutionNode(
           speciesId: data.id,
@@ -453,8 +409,8 @@ class PokemonEvolutionChain {
           slug: data.slug,
           imageUrl: data.imageUrl,
           order: data.order,
-          fromSpeciesId: parentId,
-          conditions: conditions,
+          fromSpeciesId: data.fromSpeciesId,
+          conditions: const <String>[],
         ),
       );
     });
