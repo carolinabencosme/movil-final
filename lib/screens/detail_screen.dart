@@ -1865,7 +1865,8 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    // Safety check for empty paths
+    // Additional safety check: chain.isEmpty checks both groups and paths,
+    // but we need paths specifically for the display logic below
     if (chain.paths.isEmpty) {
       return const Text('Sin información de evoluciones disponible.');
     }
@@ -1880,6 +1881,7 @@ class _EvolutionSection extends StatelessWidget {
     }
 
     // For single linear evolutions, show them as horizontal path
+    // At this point, we know paths has exactly one element due to checks above
     final path = chain.paths.first;
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
