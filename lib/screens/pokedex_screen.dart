@@ -1344,7 +1344,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
-    final heroTag = 'pokemon-image-${pokemon.id}';
+    final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
     final baseColor =
@@ -1413,15 +1413,13 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Hero(
-                        tag: heroTag,
-                        child: PokemonArtwork(
-                          imageUrl: pokemon.imageUrl,
-                          size: 90,
-                          borderRadius: 24,
-                          padding: const EdgeInsets.all(10),
-                          showShadow: false,
-                        ),
+                      PokemonArtwork(
+                        heroTag: heroTag,
+                        imageUrl: pokemon.imageUrl,
+                        size: 90,
+                        borderRadius: 24,
+                        padding: const EdgeInsets.all(10),
+                        showShadow: false,
                       ),
                       const SizedBox(width: 16),
                       Expanded(
