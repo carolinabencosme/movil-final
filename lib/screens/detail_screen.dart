@@ -70,12 +70,6 @@ const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.sports_martial_arts_rounded, label: 'Movimientos'),
 ];
 
-// Constants for evolution display layout
-const double _evolutionBranchMaxWidth = 220.0;
-const double _evolutionBranchMinWidth = 150.0;
-const int _evolutionBranchGridColumns = 3;
-const double _evolutionBranchSpacing = 20.0;
-const double _wideScreenBreakpoint = 600.0;
 
 // Constants for evolution stage card sizing
 const double _evolutionCardImageSizeNormal = 110.0;
@@ -94,13 +88,6 @@ const double _evolutionCardNameFontSizeCompact = 14.0;
 const double _evolutionCardConditionFontSizeCompact = 12.0;
 const double _evolutionCardConditionDetailFontSizeCompact = 11.0;
 
-// Constants for compact evolution display (6+ branches)
-const int _compactLayoutThreshold = 6;
-const int _maxCompactColumns = 4;
-const int _compactColumnDivisor = 2;
-const double _compactBranchMaxWidth = 180.0;
-const double _compactBranchMinWidth = 140.0;
-const double _compactBranchSpacing = 12.0;
 
 // Constants for horizontal evolution layout
 const double _horizontalEvolutionCardMinWidth = 160.0;
@@ -1874,345 +1861,210 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    // Additional safety check: chain.isEmpty checks both groups and paths,
-    // but we need paths specifically for the display logic below
-    if (chain.paths.isEmpty) {
+    final nodesById = _collectEvolutionNodes(chain);
+    if (nodesById.isEmpty) {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    // Use tree display for any evolution chain with multiple paths to avoid duplicates
-    if (chain.paths.length > 1) {
-      return _BranchingEvolutionTree(
-        chain: chain,
-        currentSpeciesId: currentSpeciesId,
-        formatLabel: formatLabel,
-      );
+    final fallbackNode = _findFallbackNode(chain, nodesById.values);
+    if (fallbackNode == null) {
+      return const Text('Sin información de evoluciones disponible.');
     }
 
-    // For single linear evolutions, show them as horizontal path
-    // At this point, we know paths has exactly one element due to checks above
-    final path = chain.paths.first;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: _EvolutionPathRow(
-        nodes: path,
-        currentSpeciesId: currentSpeciesId,
-        formatLabel: formatLabel,
-      ),
-    );
-  }
-}
+    final effectiveCurrentId =
+        currentSpeciesId ?? chain.currentSpeciesId ?? fallbackNode.speciesId;
+    final currentNode = nodesById[effectiveCurrentId] ?? fallbackNode;
+    final highlightId = currentNode.speciesId;
 
-/// Displays evolution chains in a tree structure for branching evolutions.
-/// 
-/// This widget is used when a Pokemon has multiple possible evolution paths,
-/// like Eevee. It shows the base Pokemon at the top and all possible evolution
-/// branches below in a grid or column layout depending on screen width.
-/// 
-/// Example for Eevee:
-/// ```
-///        Eevee
-///          ↓
-///    ┌─────┼─────┐
-///    ↓     ↓     ↓
-/// Vaporeon Jolteon Flareon ...
-/// ```
-class _BranchingEvolutionTree extends StatelessWidget {
-  const _BranchingEvolutionTree({
-    required this.chain,
-    required this.currentSpeciesId,
-    required this.formatLabel,
-  });
-
-  final PokemonEvolutionChain chain;
-  final int? currentSpeciesId;
-  final String Function(String) formatLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    if (chain.paths.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final preEvolutionChain =
+        _buildPreEvolutionChain(highlightId, nodesById);
+    final forwardEvolutionChains =
+        _buildForwardEvolutionChains(highlightId, nodesById);
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    // Get the base Pokemon (root of all paths)
-    final basePokemon = chain.paths.first.first;
-    
-    // Get all evolution branches (skip the base Pokemon)
-    final branches = chain.paths
-        .map((path) => path.skip(1).toList())
-        .where((branch) => branch.isNotEmpty)
-        .toList();
-
-    return Column(
-      children: [
-        // Base Pokemon at the top/center
-        _EvolutionStageCard(
-          node: basePokemon,
-          isCurrent: currentSpeciesId != null &&
-              currentSpeciesId == basePokemon.speciesId,
-          formatLabel: formatLabel,
-        ),
-        
-        if (branches.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          
-          // Branching indicator with animation
-          _AnimatedEvolutionArrow(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.65),
-            delay: const Duration(milliseconds: 200),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Show branches in a radial/grid layout with better visual flow
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final maxWidth = constraints.maxWidth;
-              final isWide = maxWidth > _wideScreenBreakpoint;
-              
-              // For many branches (>6, like Eevee with 8), use a compact layout
-              final branchCount = branches.length;
-              final useCompactLayout = branchCount > _compactLayoutThreshold;
-              
-              if (isWide) {
-                // For wide screens, show branches in a radial-like grid
-                return Wrap(
-                  spacing: useCompactLayout ? _compactBranchSpacing : 16,
-                  runSpacing: useCompactLayout ? 16 : _evolutionBranchSpacing,
-                  alignment: WrapAlignment.center,
-                  children: branches.map((branch) {
-                    // Calculate width per column dynamically based on branch count
-                    final effectiveColumns = useCompactLayout 
-                        ? math.min(_maxCompactColumns, (branchCount / _compactColumnDivisor).ceil())
-                        : _evolutionBranchGridColumns;
-                    final widthPerColumn = maxWidth / effectiveColumns;
-                    final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? _compactBranchSpacing : _evolutionBranchSpacing));
-                    final branchWidth = math.min(
-                      useCompactLayout ? _compactBranchMaxWidth : _evolutionBranchMaxWidth,
-                      math.max(useCompactLayout ? _compactBranchMinWidth : _evolutionBranchMinWidth, nonNegativeWidth),
-                    );
-                    return SizedBox(
-                      width: branchWidth,
-                      child: _EvolutionBranch(
-                        nodes: branch,
-                        currentSpeciesId: currentSpeciesId,
-                        formatLabel: formatLabel,
-                        isCompact: useCompactLayout,
-                      ),
-                    );
-                  }).toList(),
-                );
-              } else {
-                // For narrow screens, show branches in a scrollable column
-                return Column(
-                  children: branches.map((branch) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _EvolutionBranch(
-                        nodes: branch,
-                        currentSpeciesId: currentSpeciesId,
-                        formatLabel: formatLabel,
-                        isCompact: useCompactLayout,
-                      ),
-                    );
-                  }).toList(),
-                );
-              }
-            },
-          ),
-        ],
-      ],
+    final subtitleStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurface.withOpacity(0.72),
     );
-  }
-}
-
-/// Displays a single evolution branch (path from one Pokemon to another).
-/// 
-/// Used within [_BranchingEvolutionTree] to show individual evolution paths.
-/// Each branch can contain multiple stages of evolution.
-class _EvolutionBranch extends StatelessWidget {
-  const _EvolutionBranch({
-    required this.nodes,
-    required this.currentSpeciesId,
-    required this.formatLabel,
-    this.isCompact = false,
-  });
-
-  final List<PokemonEvolutionNode> nodes;
-  final int? currentSpeciesId;
-  final String Function(String) formatLabel;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    if (nodes.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final theme = Theme.of(context);
-    final arrowColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var index = 0; index < nodes.length; index++) ...[
-          _EvolutionStageCard(
-            node: nodes[index],
-            isCurrent: currentSpeciesId != null &&
-                currentSpeciesId == nodes[index].speciesId,
+        if (preEvolutionChain.length > 1) ...[
+          Text(
+            'Pre-evoluciones',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _EvolutionPathRow(
+            nodes: preEvolutionChain,
+            currentSpeciesId: highlightId,
             formatLabel: formatLabel,
-            isCompact: isCompact,
           ),
-          if (index < nodes.length - 1)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
-              child: _AnimatedEvolutionArrow(
-                color: arrowColor,
-                delay: Duration(milliseconds: 300 + (index * 200)),
-              ),
-            ),
+          const SizedBox(height: 24),
         ],
+        Text(
+          'Evoluciones posibles',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (forwardEvolutionChains.isEmpty)
+          Text(
+            'Este Pokémon no tiene evoluciones posteriores.',
+            style: subtitleStyle,
+          )
+        else
+          Column(
+            children: [
+              for (var index = 0;
+                  index < forwardEvolutionChains.length;
+                  index++) ...[
+                _EvolutionPathRow(
+                  nodes: forwardEvolutionChains[index],
+                  currentSpeciesId: highlightId,
+                  formatLabel: formatLabel,
+                ),
+                if (index < forwardEvolutionChains.length - 1)
+                  const SizedBox(height: 16),
+              ],
+            ],
+          ),
       ],
     );
   }
-}
 
-/// Animated arrow widget to show evolution flow direction
-class _AnimatedEvolutionArrow extends StatefulWidget {
-  const _AnimatedEvolutionArrow({
-    required this.color,
-    this.delay = Duration.zero,
-  });
+  static Map<int, PokemonEvolutionNode> _collectEvolutionNodes(
+    PokemonEvolutionChain chain,
+  ) {
+    final Map<int, PokemonEvolutionNode> nodes = <int, PokemonEvolutionNode>{};
 
-  final Color color;
-  final Duration delay;
-
-  @override
-  State<_AnimatedEvolutionArrow> createState() => _AnimatedEvolutionArrowState();
-}
-
-class _AnimatedEvolutionArrowState extends State<_AnimatedEvolutionArrow>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  Timer? _delayTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _delayTimer = Timer(widget.delay, () {
-      if (mounted) {
-        _controller.repeat(reverse: true);
+    void collect(List<PokemonEvolutionNode> list) {
+      for (final node in list) {
+        nodes[node.speciesId] = node;
       }
-    });
-  }
-
-  @override
-  void dispose() {
-    _delayTimer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, _animation.value * 4),
-            child: Opacity(
-              opacity: 0.4 + (_animation.value * 0.6),
-              child: Icon(
-                Icons.arrow_downward_rounded,
-                color: widget.color,
-                size: 24,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _EvolutionPathColumn extends StatelessWidget {
-  const _EvolutionPathColumn({
-    required this.nodes,
-    required this.currentSpeciesId,
-    required this.formatLabel,
-  });
-
-  final List<PokemonEvolutionNode> nodes;
-  final int? currentSpeciesId;
-  final String Function(String) formatLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    if (nodes.isEmpty) {
-      return const SizedBox.shrink();
     }
 
-    final mediaWidth = MediaQuery.of(context).size.width;
-    final double rawMaxWidth = mediaWidth < 480 ? mediaWidth - 64 : 260;
-    final double maxWidth = rawMaxWidth.clamp(180.0, 320.0).toDouble();
-    final theme = Theme.of(context);
-    final arrowColor =
-        theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
+    for (final group in chain.groups) {
+      collect(group);
+    }
+    for (final path in chain.paths) {
+      collect(path);
+    }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: 180,
-        maxWidth: maxWidth,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var index = 0; index < nodes.length; index++) ...[
-            _EvolutionStageCard(
-              node: nodes[index],
-              isCurrent: currentSpeciesId != null &&
-                  currentSpeciesId == nodes[index].speciesId,
-              formatLabel: formatLabel,
-            ),
-            if (index < nodes.length - 1)
-              _AnimatedEvolutionArrow(
-                color: arrowColor,
-                delay: Duration(milliseconds: 300 + (index * 200)),
-              ),
-          ],
-        ],
-      ),
+    return nodes;
+  }
+
+  static PokemonEvolutionNode? _findFallbackNode(
+    PokemonEvolutionChain chain,
+    Iterable<PokemonEvolutionNode> nodes,
+  ) {
+    if (chain.paths.isNotEmpty && chain.paths.first.isNotEmpty) {
+      return chain.paths.first.first;
+    }
+    return nodes.isNotEmpty ? nodes.first : null;
+  }
+
+  static List<PokemonEvolutionNode> _buildPreEvolutionChain(
+    int currentId,
+    Map<int, PokemonEvolutionNode> nodes,
+  ) {
+    final List<PokemonEvolutionNode> chain = <PokemonEvolutionNode>[];
+    final Set<int> visited = <int>{};
+
+    int? cursor = currentId;
+    while (cursor != null && visited.add(cursor)) {
+      final node = nodes[cursor];
+      if (node == null) {
+        break;
+      }
+      chain.insert(0, node);
+      cursor = node.fromSpeciesId;
+    }
+
+    if (chain.isEmpty) {
+      final currentNode = nodes[currentId];
+      if (currentNode != null) {
+        chain.add(currentNode);
+      }
+    }
+
+    return chain;
+  }
+
+  static List<List<PokemonEvolutionNode>> _buildForwardEvolutionChains(
+    int currentId,
+    Map<int, PokemonEvolutionNode> nodes,
+  ) {
+    final Map<int, List<PokemonEvolutionNode>> children =
+        <int, List<PokemonEvolutionNode>>{};
+
+    for (final node in nodes.values) {
+      final parentId = node.fromSpeciesId;
+      if (parentId == null) {
+        continue;
+      }
+      final siblings = children.putIfAbsent(
+        parentId,
+        () => <PokemonEvolutionNode>[],
+      );
+      siblings.add(node);
+    }
+
+    for (final siblingList in children.values) {
+      siblingList.sort((a, b) => a.order.compareTo(b.order));
+    }
+
+    final List<PokemonEvolutionNode> currentChildren = List<PokemonEvolutionNode>.from(
+      children[currentId] ?? const <PokemonEvolutionNode>[],
     );
+    if (currentChildren.isEmpty) {
+      return const <List<PokemonEvolutionNode>>[];
+    }
+
+    final List<List<PokemonEvolutionNode>> result =
+        <List<PokemonEvolutionNode>>[];
+    final currentNode = nodes[currentId];
+    if (currentNode == null) {
+      return result;
+    }
+
+    for (final child in currentChildren) {
+      final List<PokemonEvolutionNode> chain = <PokemonEvolutionNode>[
+        currentNode,
+        child,
+      ];
+      var cursor = child;
+      final Set<int> visited = <int>{currentId, child.speciesId};
+
+      while (true) {
+        final List<PokemonEvolutionNode> nextChildren =
+            List<PokemonEvolutionNode>.from(
+          children[cursor.speciesId] ?? const <PokemonEvolutionNode>[],
+        );
+
+        if (nextChildren.length == 1) {
+          final next = nextChildren.first;
+          if (!visited.add(next.speciesId)) {
+            break;
+          }
+          chain.add(next);
+          cursor = next;
+          continue;
+        }
+
+        break;
+      }
+
+      result.add(chain);
+    }
+
+    return result;
   }
 }
 
-/// Displays a single evolution path horizontally (for linear evolutions).
-/// 
-/// This widget is used for Pokemon that evolve in a straight line,
-/// showing the evolution stages from left to right with arrows between them.
-/// 
-/// Example for Charmander:
-/// ```
-/// Charmander → Charmeleon → Charizard
-/// ```
 class _EvolutionPathRow extends StatelessWidget {
   const _EvolutionPathRow({
     required this.nodes,
