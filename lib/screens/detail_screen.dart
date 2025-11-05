@@ -1865,7 +1865,6 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    // Check if this is a branching evolution (like Eevee) or has multiple paths
     // Use tree display for any evolution chain with multiple paths to avoid duplicates
     if (chain.paths.length > 1) {
       return _BranchingEvolutionTree(
@@ -1876,21 +1875,15 @@ class _EvolutionSection extends StatelessWidget {
     }
 
     // For single linear evolutions, show them as horizontal path
-    // This only applies when there's exactly one evolution path
-    if (chain.paths.length == 1) {
-      final path = chain.paths.first;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 24),
-        child: _EvolutionPathRow(
-          nodes: path,
-          currentSpeciesId: currentSpeciesId,
-          formatLabel: formatLabel,
-        ),
-      );
-    }
-
-    // Fallback for empty paths
-    return const Text('Sin información de evoluciones disponible.');
+    final path = chain.paths.first;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: _EvolutionPathRow(
+        nodes: path,
+        currentSpeciesId: currentSpeciesId,
+        formatLabel: formatLabel,
+      ),
+    );
   }
 }
 
