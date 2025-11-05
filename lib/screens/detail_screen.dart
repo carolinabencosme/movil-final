@@ -77,6 +77,16 @@ const int _evolutionBranchGridColumns = 3;
 const double _evolutionBranchSpacing = 20.0;
 const double _wideScreenBreakpoint = 600.0;
 
+// Constants for compact evolution display (6+ branches)
+const int _maxCompactColumns = 4;
+const double _compactBranchMaxWidth = 180.0;
+const double _compactBranchMinWidth = 140.0;
+const double _compactBranchSpacing = 12.0;
+
+// Constants for horizontal evolution layout
+const double _horizontalEvolutionPadding = 100.0;
+const double _horizontalArrowTranslationDistance = 4.0;
+
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -1981,19 +1991,19 @@ class _BranchingEvolutionTree extends StatelessWidget {
               if (isWide) {
                 // For wide screens, show branches in a radial-like grid
                 return Wrap(
-                  spacing: useCompactLayout ? 12 : 16,
+                  spacing: useCompactLayout ? _compactBranchSpacing : 16,
                   runSpacing: useCompactLayout ? 16 : _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
                     // Calculate width per column dynamically based on branch count
                     final effectiveColumns = useCompactLayout 
-                        ? math.min(4, (branchCount / 2).ceil())
+                        ? math.min(_maxCompactColumns, (branchCount / 2).ceil())
                         : _evolutionBranchGridColumns;
                     final widthPerColumn = maxWidth / effectiveColumns;
-                    final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? 12 : _evolutionBranchSpacing));
+                    final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? _compactBranchSpacing : _evolutionBranchSpacing));
                     final branchWidth = math.min(
-                      useCompactLayout ? 180.0 : _evolutionBranchMaxWidth,
-                      math.max(useCompactLayout ? 140.0 : _evolutionBranchMinWidth, nonNegativeWidth),
+                      useCompactLayout ? _compactBranchMaxWidth : _evolutionBranchMaxWidth,
+                      math.max(useCompactLayout ? _compactBranchMinWidth : _evolutionBranchMinWidth, nonNegativeWidth),
                     );
                     return SizedBox(
                       width: branchWidth,
@@ -2250,7 +2260,7 @@ class _EvolutionPathRow extends StatelessWidget {
               ConstrainedBox(
                 constraints: BoxConstraints(
                   minWidth: 160,
-                  maxWidth: math.min(220, (mediaWidth - 100) / 3),
+                  maxWidth: math.min(220, (mediaWidth - _horizontalEvolutionPadding) / 3),
                 ),
                 child: _EvolutionStageCard(
                   node: nodes[index],
@@ -2334,7 +2344,7 @@ class _AnimatedEvolutionArrowHorizontalState
       animation: _animation,
       builder: (context, child) {
         return Transform.translate(
-          offset: Offset(_animation.value * 4, 0),
+          offset: Offset(_animation.value * _horizontalArrowTranslationDistance, 0),
           child: Opacity(
             opacity: 0.4 + (_animation.value * 0.6),
             child: Icon(
