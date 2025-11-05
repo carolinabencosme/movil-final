@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'dart:ui' show clampDouble;
@@ -2083,6 +2084,7 @@ class _AnimatedEvolutionArrowState extends State<_AnimatedEvolutionArrow>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -2099,7 +2101,7 @@ class _AnimatedEvolutionArrowState extends State<_AnimatedEvolutionArrow>
       ),
     );
 
-    Future.delayed(widget.delay, () {
+    _delayTimer = Timer(widget.delay, () {
       if (mounted) {
         _controller.repeat(reverse: true);
       }
@@ -2108,6 +2110,7 @@ class _AnimatedEvolutionArrowState extends State<_AnimatedEvolutionArrow>
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -2207,6 +2210,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -2231,7 +2235,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
     );
 
     // Start animation after a short delay for staggered effect
-    Future.delayed(const Duration(milliseconds: 100), () {
+    _delayTimer = Timer(const Duration(milliseconds: 100), () {
       if (mounted) {
         _animationController.forward();
       }
@@ -2240,6 +2244,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
