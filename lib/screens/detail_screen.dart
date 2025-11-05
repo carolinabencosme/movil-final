@@ -2360,11 +2360,11 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
     _isUpdating = true;
     _currentViewportFraction = newFraction;
     
-    if (_pageController.hasClients) {
-      _pageController.dispose();
-    }
+    final oldController = _pageController;
     _pageController = PageController(viewportFraction: newFraction);
-    _isUpdating = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      oldController.dispose();
+    });
   }
 
   void _updateViewportFractionIfNeeded(double newFraction, double constraintWidth) {
@@ -2380,6 +2380,7 @@ class _AbilitiesCarouselState extends State<_AbilitiesCarousel> {
         if (mounted) {
           setState(() {
             _recreateController(newFraction);
+            _isUpdating = false;
           });
         }
       });
