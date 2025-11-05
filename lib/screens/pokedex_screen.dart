@@ -1326,6 +1326,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
       MaterialPageRoute(
         builder: (_) => DetailScreen(
           pokemonId: widget.pokemon.id,
+          pokemonName: widget.pokemon.name,
           initialPokemon: widget.pokemon,
           heroTag: heroTag,
         ),
