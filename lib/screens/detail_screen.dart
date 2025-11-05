@@ -77,6 +77,16 @@ const int _evolutionBranchGridColumns = 3;
 const double _evolutionBranchSpacing = 20.0;
 const double _wideScreenBreakpoint = 600.0;
 
+// Constants for evolution stage card sizing
+const double _evolutionCardImageSizeNormal = 110.0;
+const double _evolutionCardImageSizeCompact = 90.0;
+const double _evolutionCardHorizontalPaddingNormal = 18.0;
+const double _evolutionCardHorizontalPaddingCompact = 14.0;
+const double _evolutionCardVerticalPaddingNormal = 16.0;
+const double _evolutionCardVerticalPaddingCompact = 12.0;
+const double _evolutionCardBorderRadiusNormal = 26.0;
+const double _evolutionCardBorderRadiusCompact = 20.0;
+
 // Constants for compact evolution display (6+ branches)
 const int _compactLayoutThreshold = 6;
 const int _maxCompactColumns = 4;
@@ -86,6 +96,8 @@ const double _compactBranchMinWidth = 140.0;
 const double _compactBranchSpacing = 12.0;
 
 // Constants for horizontal evolution layout
+const double _horizontalEvolutionCardMinWidth = 160.0;
+const double _horizontalEvolutionCardMaxWidth = 220.0;
 const double _horizontalEvolutionPadding = 100.0;
 const double _horizontalArrowTranslationDistance = 4.0;
 
@@ -2261,8 +2273,8 @@ class _EvolutionPathRow extends StatelessWidget {
               // Each evolution stage card
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  minWidth: 160,
-                  maxWidth: math.min(220, (mediaWidth - _horizontalEvolutionPadding) / 3),
+                  minWidth: _horizontalEvolutionCardMinWidth,
+                  maxWidth: math.min(_horizontalEvolutionCardMaxWidth, (mediaWidth - _horizontalEvolutionPadding) / 3),
                 ),
                 child: _EvolutionStageCard(
                   node: nodes[index],
@@ -2452,10 +2464,18 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
         : colorScheme.onSurfaceVariant;
 
     // Adjust sizes based on compact mode
-    final imageSize = widget.isCompact ? 90.0 : 110.0;
-    final horizontalPadding = widget.isCompact ? 14.0 : 18.0;
-    final verticalPadding = widget.isCompact ? 12.0 : 16.0;
-    final borderRadius = widget.isCompact ? 20.0 : 26.0;
+    final imageSize = widget.isCompact 
+        ? _evolutionCardImageSizeCompact 
+        : _evolutionCardImageSizeNormal;
+    final horizontalPadding = widget.isCompact 
+        ? _evolutionCardHorizontalPaddingCompact 
+        : _evolutionCardHorizontalPaddingNormal;
+    final verticalPadding = widget.isCompact 
+        ? _evolutionCardVerticalPaddingCompact 
+        : _evolutionCardVerticalPaddingNormal;
+    final borderRadius = widget.isCompact 
+        ? _evolutionCardBorderRadiusCompact 
+        : _evolutionCardBorderRadiusNormal;
 
     return FadeTransition(
       opacity: _fadeAnimation,
