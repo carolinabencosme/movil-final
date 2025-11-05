@@ -1858,50 +1858,6 @@ class _EvolutionSection extends StatelessWidget {
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
 
-  /// Determines if the evolution chain represents a branching evolution pattern
-  /// (like Eevee that evolves into multiple different Pokemon).
-  /// 
-  /// Returns true if:
-  /// - There are multiple evolution paths
-  /// - All paths share the same root Pokemon (they branch from one common ancestor)
-  static bool _isBranchingEvolution(PokemonEvolutionChain chain) {
-    // Check if there are multiple evolution paths (branching like Eevee)
-    if (chain.paths.length <= 1 || chain.paths.isEmpty) {
-      return false;
-    }
-    
-    // Check if paths share a common root (branching from one Pokemon)
-    if (chain.paths.first.isEmpty) {
-      return false;
-    }
-    
-    try {
-      final firstRoot = chain.paths.first.first.speciesId;
-      final allShareRoot = chain.paths.every(
-        (path) => path.isNotEmpty && path.first.speciesId == firstRoot,
-      );
-      return allShareRoot;
-    } on StateError catch (e) {
-      // Catch StateError if list is empty when accessing .first
-      if (kDebugMode) {
-        debugPrint('[Evolution] Error detecting branching evolution (StateError): $e');
-      }
-      return false;
-    } on RangeError catch (e) {
-      // Catch RangeError if accessing an invalid index
-      if (kDebugMode) {
-        debugPrint('[Evolution] Error detecting branching evolution (RangeError): $e');
-      }
-      return false;
-    } catch (e) {
-      // Catch any other unexpected errors
-      if (kDebugMode) {
-        debugPrint('[Evolution] Unexpected error detecting branching evolution: $e');
-      }
-      return false;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final chain = evolutionChain;
@@ -1909,8 +1865,14 @@ class _EvolutionSection extends StatelessWidget {
       return const Text('Sin información de evoluciones disponible.');
     }
 
-    // Check if this is a branching evolution (like Eevee)
-    if (_isBranchingEvolution(chain)) {
+    // Additional safety check: chain.isEmpty checks both groups and paths,
+    // but we need paths specifically for the display logic below
+    if (chain.paths.isEmpty) {
+      return const Text('Sin información de evoluciones disponible.');
+    }
+
+    // Use tree display for any evolution chain with multiple paths to avoid duplicates
+    if (chain.paths.length > 1) {
       return _BranchingEvolutionTree(
         chain: chain,
         currentSpeciesId: currentSpeciesId,
@@ -1918,20 +1880,16 @@ class _EvolutionSection extends StatelessWidget {
       );
     }
 
-    // For linear evolutions, show them as horizontal paths
-    return Column(
-      children: chain.paths
-          .map(
-            (path) => Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: _EvolutionPathRow(
-                nodes: path,
-                currentSpeciesId: currentSpeciesId,
-                formatLabel: formatLabel,
-              ),
-            ),
-          )
-          .toList(),
+    // For single linear evolutions, show them as horizontal path
+    // At this point, we know paths has exactly one element due to checks above
+    final path = chain.paths.first;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: _EvolutionPathRow(
+        nodes: path,
+        currentSpeciesId: currentSpeciesId,
+        formatLabel: formatLabel,
+      ),
     );
   }
 }
