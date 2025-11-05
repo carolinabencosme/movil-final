@@ -77,6 +77,37 @@ const int _evolutionBranchGridColumns = 3;
 const double _evolutionBranchSpacing = 20.0;
 const double _wideScreenBreakpoint = 600.0;
 
+// Constants for evolution stage card sizing
+const double _evolutionCardImageSizeNormal = 110.0;
+const double _evolutionCardImageSizeCompact = 90.0;
+const double _evolutionCardImageBorderRadiusNormal = 24.0;
+const double _evolutionCardImageBorderRadiusCompact = 20.0;
+const double _evolutionCardImagePaddingNormal = 12.0;
+const double _evolutionCardImagePaddingCompact = 8.0;
+const double _evolutionCardHorizontalPaddingNormal = 18.0;
+const double _evolutionCardHorizontalPaddingCompact = 14.0;
+const double _evolutionCardVerticalPaddingNormal = 16.0;
+const double _evolutionCardVerticalPaddingCompact = 12.0;
+const double _evolutionCardBorderRadiusNormal = 26.0;
+const double _evolutionCardBorderRadiusCompact = 20.0;
+const double _evolutionCardNameFontSizeCompact = 14.0;
+const double _evolutionCardConditionFontSizeCompact = 12.0;
+const double _evolutionCardConditionDetailFontSizeCompact = 11.0;
+
+// Constants for compact evolution display (6+ branches)
+const int _compactLayoutThreshold = 6;
+const int _maxCompactColumns = 4;
+const int _compactColumnDivisor = 2;
+const double _compactBranchMaxWidth = 180.0;
+const double _compactBranchMinWidth = 140.0;
+const double _compactBranchSpacing = 12.0;
+
+// Constants for horizontal evolution layout
+const double _horizontalEvolutionCardMinWidth = 160.0;
+const double _horizontalEvolutionCardMaxWidth = 220.0;
+const double _horizontalEvolutionPadding = 100.0;
+const double _horizontalArrowTranslationDistance = 4.0;
+
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -1886,17 +1917,17 @@ class _EvolutionSection extends StatelessWidget {
       );
     }
 
-    // For linear evolutions, show them as vertical paths
-    return Wrap(
-      spacing: 16,
-      runSpacing: 24,
-      alignment: WrapAlignment.center,
+    // For linear evolutions, show them as horizontal paths
+    return Column(
       children: chain.paths
           .map(
-            (path) => _EvolutionPathColumn(
-              nodes: path,
-              currentSpeciesId: currentSpeciesId,
-              formatLabel: formatLabel,
+            (path) => Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: _EvolutionPathRow(
+                nodes: path,
+                currentSpeciesId: currentSpeciesId,
+                formatLabel: formatLabel,
+              ),
             ),
           )
           .toList(),
@@ -1968,25 +1999,33 @@ class _BranchingEvolutionTree extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          // Show branches in a grid/wrap layout
+          // Show branches in a radial/grid layout with better visual flow
           LayoutBuilder(
             builder: (context, constraints) {
               final maxWidth = constraints.maxWidth;
               final isWide = maxWidth > _wideScreenBreakpoint;
               
+              // For many branches (>6, like Eevee with 8), use a compact layout
+              final branchCount = branches.length;
+              final useCompactLayout = branchCount > _compactLayoutThreshold;
+              
               if (isWide) {
-                // For wide screens, show branches in a grid
+                // For wide screens, show branches in a radial-like grid
                 return Wrap(
-                  spacing: 16,
-                  runSpacing: _evolutionBranchSpacing,
+                  spacing: useCompactLayout ? _compactBranchSpacing : 16,
+                  runSpacing: useCompactLayout ? 16 : _evolutionBranchSpacing,
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
-                    // Calculate width per column and ensure it's never negative
-                    final widthPerColumn = maxWidth / _evolutionBranchGridColumns;
-                    final nonNegativeWidth = math.max(0.0, widthPerColumn - _evolutionBranchSpacing);
+                    // Calculate width per column dynamically based on branch count
+                    // Note: _compactColumnDivisor is guaranteed to be non-zero (const = 2)
+                    final effectiveColumns = useCompactLayout 
+                        ? math.min(_maxCompactColumns, (branchCount / _compactColumnDivisor).ceil())
+                        : _evolutionBranchGridColumns;
+                    final widthPerColumn = maxWidth / effectiveColumns;
+                    final nonNegativeWidth = math.max(0.0, widthPerColumn - (useCompactLayout ? _compactBranchSpacing : _evolutionBranchSpacing));
                     final branchWidth = math.min(
-                      _evolutionBranchMaxWidth,
-                      math.max(_evolutionBranchMinWidth, nonNegativeWidth),
+                      useCompactLayout ? _compactBranchMaxWidth : _evolutionBranchMaxWidth,
+                      math.max(useCompactLayout ? _compactBranchMinWidth : _evolutionBranchMinWidth, nonNegativeWidth),
                     );
                     return SizedBox(
                       width: branchWidth,
@@ -1994,12 +2033,13 @@ class _BranchingEvolutionTree extends StatelessWidget {
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
                         formatLabel: formatLabel,
+                        isCompact: useCompactLayout,
                       ),
                     );
                   }).toList(),
                 );
               } else {
-                // For narrow screens, show branches in a column
+                // For narrow screens, show branches in a scrollable column
                 return Column(
                   children: branches.map((branch) {
                     return Padding(
@@ -2008,6 +2048,7 @@ class _BranchingEvolutionTree extends StatelessWidget {
                         nodes: branch,
                         currentSpeciesId: currentSpeciesId,
                         formatLabel: formatLabel,
+                        isCompact: useCompactLayout,
                       ),
                     );
                   }).toList(),
@@ -2030,11 +2071,13 @@ class _EvolutionBranch extends StatelessWidget {
     required this.nodes,
     required this.currentSpeciesId,
     required this.formatLabel,
+    this.isCompact = false,
   });
 
   final List<PokemonEvolutionNode> nodes;
   final int? currentSpeciesId;
   final String Function(String) formatLabel;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -2054,11 +2097,15 @@ class _EvolutionBranch extends StatelessWidget {
             isCurrent: currentSpeciesId != null &&
                 currentSpeciesId == nodes[index].speciesId,
             formatLabel: formatLabel,
+            isCompact: isCompact,
           ),
           if (index < nodes.length - 1)
-            _AnimatedEvolutionArrow(
-              color: arrowColor,
-              delay: Duration(milliseconds: 300 + (index * 200)),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
+              child: _AnimatedEvolutionArrow(
+                color: arrowColor,
+                delay: Duration(milliseconds: 300 + (index * 200)),
+              ),
             ),
         ],
       ],
@@ -2190,16 +2237,166 @@ class _EvolutionPathColumn extends StatelessWidget {
   }
 }
 
+/// Displays a single evolution path horizontally (for linear evolutions).
+/// 
+/// This widget is used for Pokemon that evolve in a straight line,
+/// showing the evolution stages from left to right with arrows between them.
+/// 
+/// Example for Charmander:
+/// ```
+/// Charmander → Charmeleon → Charizard
+/// ```
+class _EvolutionPathRow extends StatelessWidget {
+  const _EvolutionPathRow({
+    required this.nodes,
+    required this.currentSpeciesId,
+    required this.formatLabel,
+  });
+
+  final List<PokemonEvolutionNode> nodes;
+  final int? currentSpeciesId;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (nodes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final theme = Theme.of(context);
+    final arrowColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.65);
+    final mediaWidth = MediaQuery.of(context).size.width;
+
+    // Use SingleChildScrollView to allow horizontal scrolling for long chains
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (var index = 0; index < nodes.length; index++) ...[
+              // Each evolution stage card
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: _horizontalEvolutionCardMinWidth,
+                  // Ensure positive divisor: max(1, ...) prevents division issues
+                  maxWidth: math.min(
+                    _horizontalEvolutionCardMaxWidth, 
+                    math.max(_horizontalEvolutionCardMinWidth, (mediaWidth - _horizontalEvolutionPadding) / 3),
+                  ),
+                ),
+                child: _EvolutionStageCard(
+                  node: nodes[index],
+                  isCurrent: currentSpeciesId != null &&
+                      currentSpeciesId == nodes[index].speciesId,
+                  formatLabel: formatLabel,
+                ),
+              ),
+              // Arrow between stages
+              if (index < nodes.length - 1) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _AnimatedEvolutionArrowHorizontal(
+                    color: arrowColor,
+                    delay: Duration(milliseconds: 300 + (index * 200)),
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated horizontal arrow widget to show evolution flow direction (left to right)
+class _AnimatedEvolutionArrowHorizontal extends StatefulWidget {
+  const _AnimatedEvolutionArrowHorizontal({
+    required this.color,
+    this.delay = Duration.zero,
+  });
+
+  final Color color;
+  final Duration delay;
+
+  @override
+  State<_AnimatedEvolutionArrowHorizontal> createState() =>
+      _AnimatedEvolutionArrowHorizontalState();
+}
+
+class _AnimatedEvolutionArrowHorizontalState
+    extends State<_AnimatedEvolutionArrowHorizontal>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _delayTimer = Timer(widget.delay, () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_animation.value * _horizontalArrowTranslationDistance, 0),
+          child: Opacity(
+            opacity: 0.4 + (_animation.value * 0.6),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: widget.color,
+              size: 28,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _EvolutionStageCard extends StatefulWidget {
   const _EvolutionStageCard({
     required this.node,
     required this.isCurrent,
     required this.formatLabel,
+    this.isCompact = false,
   });
 
   final PokemonEvolutionNode node;
   final bool isCurrent;
   final String Function(String) formatLabel;
+  final bool isCompact;
 
   @override
   State<_EvolutionStageCard> createState() => _EvolutionStageCardState();
@@ -2278,15 +2475,29 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
         ? colorScheme.onPrimaryContainer.withOpacity(0.88)
         : colorScheme.onSurfaceVariant;
 
+    // Adjust sizes based on compact mode
+    final imageSize = widget.isCompact 
+        ? _evolutionCardImageSizeCompact 
+        : _evolutionCardImageSizeNormal;
+    final horizontalPadding = widget.isCompact 
+        ? _evolutionCardHorizontalPaddingCompact 
+        : _evolutionCardHorizontalPaddingNormal;
+    final verticalPadding = widget.isCompact 
+        ? _evolutionCardVerticalPaddingCompact 
+        : _evolutionCardVerticalPaddingNormal;
+    final borderRadius = widget.isCompact 
+        ? _evolutionCardBorderRadiusCompact 
+        : _evolutionCardBorderRadiusNormal;
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: borderColor,
               width: widget.isCurrent ? 2 : 1,
@@ -2307,27 +2518,33 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
             children: [
               PokemonArtwork(
                 imageUrl: widget.node.imageUrl,
-                size: 110,
-                borderRadius: 24,
-                padding: const EdgeInsets.all(12),
+                size: imageSize,
+                borderRadius: widget.isCompact 
+                    ? _evolutionCardImageBorderRadiusCompact 
+                    : _evolutionCardImageBorderRadiusNormal,
+                padding: EdgeInsets.all(widget.isCompact 
+                    ? _evolutionCardImagePaddingCompact 
+                    : _evolutionCardImagePaddingNormal),
                 showShadow: false,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: widget.isCompact ? 8 : 12),
               Text(
                 _resolveName(widget.node.name),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: textColor,
+                  fontSize: widget.isCompact ? _evolutionCardNameFontSizeCompact : null,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: widget.isCompact ? 6 : 8),
               if (widget.node.conditions.isEmpty)
                 Text(
                   'Sin requisitos adicionales.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: subtitleColor,
+                    fontSize: widget.isCompact ? _evolutionCardConditionFontSizeCompact : null,
                   ),
                 )
               else
@@ -2336,7 +2553,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                   children: widget.node.conditions
                       .map(
                         (condition) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          padding: EdgeInsets.symmetric(vertical: widget.isCompact ? 1 : 2),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -2344,6 +2561,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                 '• ',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: subtitleColor,
+                                  fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
                                 ),
                               ),
                               Expanded(
@@ -2352,6 +2570,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
                                   style:
                                       theme.textTheme.bodyMedium?.copyWith(
                                     color: subtitleColor,
+                                    fontSize: widget.isCompact ? _evolutionCardConditionDetailFontSizeCompact : null,
                                   ),
                                 ),
                               ),
