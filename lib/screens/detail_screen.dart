@@ -107,6 +107,7 @@ const double _horizontalEvolutionCardMinWidth = 160.0;
 const double _horizontalEvolutionCardMaxWidth = 220.0;
 const double _horizontalEvolutionPadding = 100.0;
 const double _horizontalArrowTranslationDistance = 4.0;
+const int _horizontalEvolutionMaxStages = 3;
 
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
@@ -2017,7 +2018,6 @@ class _BranchingEvolutionTree extends StatelessWidget {
                   alignment: WrapAlignment.center,
                   children: branches.map((branch) {
                     // Calculate width per column dynamically based on branch count
-                    // Note: _compactColumnDivisor is guaranteed to be non-zero (const = 2)
                     final effectiveColumns = useCompactLayout 
                         ? math.min(_maxCompactColumns, (branchCount / _compactColumnDivisor).ceil())
                         : _evolutionBranchGridColumns;
@@ -2282,10 +2282,9 @@ class _EvolutionPathRow extends StatelessWidget {
               ConstrainedBox(
                 constraints: BoxConstraints(
                   minWidth: _horizontalEvolutionCardMinWidth,
-                  // Ensure positive divisor: max(1, ...) prevents division issues
                   maxWidth: math.min(
                     _horizontalEvolutionCardMaxWidth, 
-                    math.max(_horizontalEvolutionCardMinWidth, (mediaWidth - _horizontalEvolutionPadding) / 3),
+                    math.max(_horizontalEvolutionCardMinWidth, (mediaWidth - _horizontalEvolutionPadding) / _horizontalEvolutionMaxStages),
                   ),
                 ),
                 child: _EvolutionStageCard(
