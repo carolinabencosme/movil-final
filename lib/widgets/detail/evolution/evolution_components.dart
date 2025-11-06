@@ -445,7 +445,9 @@ class EvolutionCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // No se usa Hero aquí para evitar conflictos de tags duplicados
-          // en la cadena evolutiva donde múltiples especies se muestran simultáneamente
+          // en la cadena evolutiva donde múltiples especies se muestran simultáneamente.
+          // TRADE-OFF: Esto elimina la animación de transición suave al navegar entre
+          // tarjetas de evolución, pero previene el error crítico de Hero tags duplicados.
           Image.network(
             imageUrl,
             height: 80,
@@ -781,7 +783,8 @@ class _EvolutionStageCardState extends State<EvolutionStageCard>
           mainAxisSize: MainAxisSize.min,
           children: [
             // No se usa heroTag para evitar conflictos de tags duplicados
-            // en la cadena evolutiva donde múltiples especies pueden tener el mismo ID
+            // en la cadena evolutiva donde múltiples especies pueden tener el mismo ID.
+            // TRADE-OFF: Sin Hero animations al navegar, pero previene errores críticos.
             PokemonArtwork(
               imageUrl: widget.node.imageUrl,
               size: imageSize,

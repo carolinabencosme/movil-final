@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../models/pokemon_model.dart';
@@ -120,7 +122,7 @@ class _MovesSectionState extends State<MovesSection> {
     final displayedMoves = filteredMoves.take(_displayedMovesCount).toList();
     
     // Indica si hay más movimientos para cargar
-    final hasMore = filteredMoves.length > _displayedMovesCount;
+    final hasMore = _displayedMovesCount < filteredMoves.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,11 +171,14 @@ class _MovesSectionState extends State<MovesSection> {
         if (filteredMoves.isEmpty)
           const Text('No hay movimientos que coincidan con los filtros.')
         else ...[
-          Text(
-            'Mostrando ${displayedMoves.length} de ${filteredMoves.length} movimientos',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              'Mostrando ${displayedMoves.length} de ${filteredMoves.length} movimientos',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -276,7 +281,7 @@ class _MovesSectionState extends State<MovesSection> {
                 onPressed: _loadMoreMoves,
                 icon: const Icon(Icons.expand_more),
                 label: Text(
-                  'Cargar más movimientos (${filteredMoves.length - _displayedMovesCount} restantes)',
+                  'Cargar más movimientos (${math.max(0, filteredMoves.length - _displayedMovesCount)} restantes)',
                 ),
               ),
             ),
