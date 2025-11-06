@@ -15,6 +15,8 @@ import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 
+/// Mapa de emojis para representar visualmente cada tipo de Pokémon
+/// Utilizado en la interfaz para dar un toque visual a los tipos
 const Map<String, String> _typeEmojis = {
   'normal': '⭐️',
   'fire': '🔥',
@@ -36,9 +38,12 @@ const Map<String, String> _typeEmojis = {
   'fairy': '🧚',
 };
 
-// Preferred language IDs: ES (7) and EN (9)
+/// IDs de idiomas preferidos para las consultas GraphQL
+/// 7 = Español, 9 = Inglés (fallback si no hay traducción al español)
 const List<int> _preferredLanguageIds = [7, 9];
 
+/// Textura de fondo SVG para el encabezado del Pokémon
+/// Crea un efecto visual con círculos y líneas que se superponen
 const String _backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -58,6 +63,8 @@ const String _backgroundTextureSvg = '''
 </svg>
 ''';
 
+/// Configuración para cada pestaña de detalles del Pokémon
+/// Contiene el ícono y la etiqueta que se mostrarán en la barra de pestañas
 class _DetailTabConfig {
   const _DetailTabConfig({required this.icon, required this.label});
 
@@ -65,6 +72,8 @@ class _DetailTabConfig {
   final String label;
 }
 
+/// Lista de configuraciones para las 5 pestañas principales de detalles
+/// Información, Estadísticas, Matchups (ventajas/desventajas), Evoluciones y Movimientos
 const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
   _DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
@@ -74,7 +83,8 @@ const List<_DetailTabConfig> _detailTabConfigs = [
 ];
 
 
-// Constants for evolution stage card sizing
+/// Constantes para el tamaño de las tarjetas de evolución
+/// Se usan diferentes tamaños según el diseño compacto o normal
 const double _evolutionCardImageSizeNormal = 110.0;
 const double _evolutionCardImageSizeCompact = 90.0;
 const double _evolutionCardImageBorderRadiusNormal = 24.0;
@@ -92,15 +102,20 @@ const double _evolutionCardConditionFontSizeCompact = 12.0;
 const double _evolutionCardConditionDetailFontSizeCompact = 11.0;
 
 
-// Constants for horizontal evolution layout
+/// Constantes para el diseño horizontal de evoluciones
+/// Controlan el ancho y espaciado de las tarjetas cuando se muestran en fila
 const double _horizontalEvolutionCardMinWidth = 160.0;
 const double _horizontalEvolutionCardMaxWidth = 220.0;
 const double _horizontalEvolutionPadding = 100.0;
 const double _horizontalArrowTranslationDistance = 4.0;
 const int _horizontalEvolutionMaxStages = 3;
 
+/// Mapa temporal para almacenar IDs de especies durante la navegación entre evoluciones
+/// Permite pasar el ID correcto al navegar a una evolución
 final Map<String, int> _pendingEvolutionNavigation = <String, int>{};
 
+/// Calcula el padding responsivo para las pestañas de detalles
+/// Se ajusta según el ancho de la pantalla para una mejor experiencia en diferentes dispositivos
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -108,7 +123,18 @@ EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
       .copyWith(top: 24, bottom: 32);
 }
 
+/// Pantalla de detalles del Pokémon
+/// 
+/// Muestra información completa sobre un Pokémon específico incluyendo:
+/// - Imagen y datos básicos (altura, peso, tipos)
+/// - Estadísticas base
+/// - Ventajas y desventajas de tipo (matchups)
+/// - Cadena evolutiva
+/// - Lista de movimientos que puede aprender
+/// 
+/// La pantalla obtiene datos mediante GraphQL y los muestra en pestañas navegables.
 class DetailScreen extends StatelessWidget {
+  /// Constructor que requiere al menos el ID o nombre del Pokémon
   DetailScreen({
     super.key,
     this.pokemonId,
@@ -120,11 +146,19 @@ class DetailScreen extends StatelessWidget {
           'Either pokemonId or pokemonName must be provided.',
         );
 
+  /// ID numérico del Pokémon (ej: 1 para Bulbasaur)
   final int? pokemonId;
+  
+  /// Nombre del Pokémon (ej: "pikachu")
   final String? pokemonName;
+  
+  /// Datos iniciales del Pokémon para mostrar mientras se carga la información completa
   final PokemonListItem? initialPokemon;
+  
+  /// Tag único para la animación Hero entre pantallas
   final String? heroTag;
 
+  /// Capitaliza la primera letra de un texto
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -260,6 +294,10 @@ class DetailScreen extends StatelessWidget {
   }
 }
 
+/// Widget del cuerpo principal de la pantalla de detalles del Pokémon
+/// 
+/// Maneja la navegación por pestañas y la visualización del contenido.
+/// Incluye un PageView sincronizado con TabController para permitir deslizar entre secciones.
 class _PokemonDetailBody extends StatefulWidget {
   const _PokemonDetailBody({
     required this.pokemon,
@@ -267,14 +305,23 @@ class _PokemonDetailBody extends StatefulWidget {
     required this.capitalize,
   });
 
+  /// Datos completos del Pokémon a mostrar
   final PokemonDetail pokemon;
+  
+  /// Tag para la animación Hero (único por Pokémon)
   final String resolvedHeroTag;
+  
+  /// Función para capitalizar textos
   final String Function(String) capitalize;
 
   @override
   State<_PokemonDetailBody> createState() => _PokemonDetailBodyState();
 }
 
+/// Estado del cuerpo de detalles del Pokémon
+/// 
+/// Gestiona los controladores de pestañas y página, manteniendo ambos sincronizados
+/// para que el usuario pueda navegar tanto con las pestañas como deslizando.
 class _PokemonDetailBodyState extends State<_PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -283,10 +330,12 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
   @override
   void initState() {
     super.initState();
+    // Inicializa controladores para las 5 pestañas
     _tabController = TabController(length: 5, vsync: this);
     _pageController = PageController();
     
-    // Sync TabController with PageController
+    // Sincroniza el TabController con el PageController
+    // Cuando se selecciona una pestaña, la página se desliza a ella
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _pageController.animateToPage(
@@ -305,6 +354,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
     super.dispose();
   }
 
+  /// Formatea la altura del Pokémon de decímetros a metros
   String _formatHeight(int height) {
     if (height <= 0) return '—';
     final meters = height / 10.0;
@@ -1636,6 +1686,10 @@ class _MatchupHexGrid extends StatelessWidget {
   }
 }
 
+/// Sección de movimientos del Pokémon con carga perezosa
+/// 
+/// Muestra los movimientos del Pokémon con opciones de filtrado por método de aprendizaje
+/// y nivel. Implementa paginación para optimizar el rendimiento cuando hay muchos movimientos.
 class _MovesSection extends StatefulWidget {
   const _MovesSection({
     required this.moves,
@@ -1652,6 +1706,11 @@ class _MovesSection extends StatefulWidget {
 class _MovesSectionState extends State<_MovesSection> {
   String? _selectedMethod;
   bool _onlyWithLevel = false;
+  
+  // Paginación para carga perezosa de movimientos
+  static const int _initialMovesCount = 20;
+  static const int _movesIncrement = 20;
+  int _displayedMovesCount = _initialMovesCount;
 
   String _resolveDisplayName(String value) {
     if (value.isEmpty) {
@@ -1669,6 +1728,20 @@ class _MovesSectionState extends State<_MovesSection> {
       return 'Desconocido';
     }
     return widget.formatLabel(method);
+  }
+
+  /// Reinicia el contador de movimientos mostrados cuando cambian los filtros
+  void _resetPagination() {
+    setState(() {
+      _displayedMovesCount = _initialMovesCount;
+    });
+  }
+
+  /// Carga más movimientos cuando el usuario presiona el botón
+  void _loadMoreMoves() {
+    setState(() {
+      _displayedMovesCount += _movesIncrement;
+    });
   }
 
   @override
@@ -1720,7 +1793,10 @@ class _MovesSectionState extends State<_MovesSection> {
               selected: _selectedMethod == null,
               onSelected: (selected) {
                 if (selected) {
-                  setState(() => _selectedMethod = null);
+                  setState(() {
+                    _selectedMethod = null;
+                  });
+                  _resetPagination();
                 }
               },
             ),
@@ -1732,6 +1808,7 @@ class _MovesSectionState extends State<_MovesSection> {
                   setState(() {
                     _selectedMethod = selected ? method : null;
                   });
+                  _resetPagination();
                 },
               ),
             ),
@@ -1740,6 +1817,7 @@ class _MovesSectionState extends State<_MovesSection> {
               selected: _onlyWithLevel,
               onSelected: (selected) {
                 setState(() => _onlyWithLevel = selected);
+                _resetPagination();
               },
             ),
           ],
@@ -1747,11 +1825,14 @@ class _MovesSectionState extends State<_MovesSection> {
         const SizedBox(height: 12),
         if (filteredMoves.isEmpty)
           const Text('No hay movimientos que coincidan con los filtros.')
-        else
+        else ...[
+          // Mostramos solo los primeros N movimientos para optimizar rendimiento
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredMoves.length,
+            itemCount: filteredMoves.length > _displayedMovesCount 
+                ? _displayedMovesCount 
+                : filteredMoves.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final move = filteredMoves[index];
@@ -1839,6 +1920,20 @@ class _MovesSectionState extends State<_MovesSection> {
               );
             },
           ),
+          // Botón para cargar más movimientos si hay más disponibles
+          if (filteredMoves.length > _displayedMovesCount) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: _loadMoreMoves,
+                icon: const Icon(Icons.expand_more),
+                label: Text(
+                  'Cargar más movimientos (${filteredMoves.length - _displayedMovesCount} restantes)',
+                ),
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -2059,6 +2154,7 @@ class _LinearEvolutionChain extends StatelessWidget {
               species: chain[i],
               isCurrent: chain[i].id == currentId,
               formatLabel: formatLabel,
+              heroTagSuffix: '-linear-$i',
             ),
             if (i < chain.length - 1)
               Padding(
@@ -2099,6 +2195,7 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
             species: currentSpecies,
             isCurrent: true,
             formatLabel: formatLabel,
+            heroTagSuffix: '-branched-current',
           ),
         ),
         const SizedBox(height: 16),
@@ -2117,17 +2214,18 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
           spacing: 24,
           runSpacing: 24,
           children: [
-            for (final chain in chains)
+            for (var chainIndex = 0; chainIndex < chains.length; chainIndex++)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  for (var i = 0; i < chain.length; i++) ...[
+                  for (var i = 0; i < chains[chainIndex].length; i++) ...[
                     _EvolutionCard(
-                      species: chain[i],
+                      species: chains[chainIndex][i],
                       isCurrent: false,
                       formatLabel: formatLabel,
+                      heroTagSuffix: '-branch-$chainIndex-$i',
                     ),
-                    if (i < chain.length - 1)
+                    if (i < chains[chainIndex].length - 1)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Icon(
@@ -2146,17 +2244,22 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
   }
 }
 
-// Individual evolution card
+/// Tarjeta individual de evolución
+/// 
+/// Muestra un Pokémon en la cadena evolutiva con su imagen y nombre.
+/// Si no es el Pokémon actual, permite navegar a su pantalla de detalles.
 class _EvolutionCard extends StatelessWidget {
   const _EvolutionCard({
     required this.species,
     required this.isCurrent,
     required this.formatLabel,
+    this.heroTagSuffix,
   });
 
   final _Species species;
   final bool isCurrent;
   final String Function(String) formatLabel;
+  final String? heroTagSuffix;
 
   @override
   Widget build(BuildContext context) {
@@ -2202,7 +2305,7 @@ class _EvolutionCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Hero(
-            tag: 'pokemon-artwork-${species.id}',
+            tag: 'pokemon-artwork-${species.id}${heroTagSuffix ?? '-evolution'}',
             child: Image.network(
               imageUrl,
               height: 80,
@@ -2300,6 +2403,7 @@ class _EvolutionPathRow extends StatelessWidget {
                   isCurrent: currentSpeciesId != null &&
                       currentSpeciesId == nodes[index].speciesId,
                   formatLabel: formatLabel,
+                  heroTagSuffix: '-stage-$index',
                 ),
               ),
               // Arrow between stages
@@ -2392,18 +2496,24 @@ class _AnimatedEvolutionArrowHorizontalState
   }
 }
 
+/// Tarjeta de etapa de evolución con animaciones
+/// 
+/// Muestra un nodo de evolución con efectos de escala y fade al aparecer.
+/// Utilizada en la visualización horizontal de cadenas evolutivas.
 class _EvolutionStageCard extends StatefulWidget {
   const _EvolutionStageCard({
     required this.node,
     required this.isCurrent,
     required this.formatLabel,
     this.isCompact = false,
+    this.heroTagSuffix,
   });
 
   final PokemonEvolutionNode node;
   final bool isCurrent;
   final String Function(String) formatLabel;
   final bool isCompact;
+  final String? heroTagSuffix;
 
   @override
   State<_EvolutionStageCard> createState() => _EvolutionStageCardState();
@@ -2525,7 +2635,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
           mainAxisSize: MainAxisSize.min,
           children: [
             PokemonArtwork(
-              heroTag: 'pokemon-artwork-${widget.node.speciesId}',
+              heroTag: 'pokemon-artwork-${widget.node.speciesId}${widget.heroTagSuffix ?? '-evolution-stage'}',
               imageUrl: widget.node.imageUrl,
               size: imageSize,
               borderRadius: widget.isCompact
