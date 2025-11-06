@@ -1312,7 +1312,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
 }
 
 class _PokemonListTile extends StatefulWidget {
-  const _PokemonListTile({required this.pokemon});
+  const _PokemonListTile({super.key, required this.pokemon});
 
   final PokemonListItem pokemon;
 
