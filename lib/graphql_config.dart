@@ -10,10 +10,11 @@ ValueNotifier<GraphQLClient> initGraphQLClient() {
 
   final InMemoryStore store = InMemoryStore();
 
+  // Optimized caching policy - use cache first, then network
   final Policies defaultQueryPolicies = Policies(
-    fetch: FetchPolicy.networkOnly,
-    error: ErrorPolicy.all, // Changed from ignore to all to see errors
-    cacheReread: CacheRereadPolicy.ignoreAll,
+    fetch: FetchPolicy.cacheFirst, // Use cache first for better performance
+    error: ErrorPolicy.all,
+    cacheReread: CacheRereadPolicy.mergeOptimistic,
   );
 
   return ValueNotifier(
@@ -25,7 +26,7 @@ ValueNotifier<GraphQLClient> initGraphQLClient() {
         query: defaultQueryPolicies,
         mutate: Policies(
           fetch: FetchPolicy.networkOnly,
-          error: ErrorPolicy.all, // Changed from none to all
+          error: ErrorPolicy.all,
           cacheReread: CacheRereadPolicy.ignoreAll,
         ),
       ),

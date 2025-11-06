@@ -698,12 +698,14 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeroHeader(
-            context: context,
-            theme: theme,
-            pokemon: pokemon,
-            typeColor: typeColor,
-            onTypeColor: onTypeColor,
+          RepaintBoundary(
+            child: _buildHeroHeader(
+              context: context,
+              theme: theme,
+              pokemon: pokemon,
+              typeColor: typeColor,
+              onTypeColor: onTypeColor,
+            ),
           ),
           _buildTabBar(theme, typeColor, onTypeColor),
           Expanded(
@@ -791,8 +793,10 @@ class _ParticleField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _ParticlePainter(color),
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _ParticlePainter(color),
+      ),
     );
   }
 }
@@ -840,7 +844,7 @@ class _ParticlePainter extends CustomPainter {
   }
 }
 
-class _PokemonInfoTab extends StatelessWidget {
+class _PokemonInfoTab extends StatefulWidget {
   const _PokemonInfoTab({
     required this.pokemon,
     required this.formatLabel,
@@ -862,9 +866,19 @@ class _PokemonInfoTab extends StatelessWidget {
   final Color sectionBorder;
 
   @override
+  State<_PokemonInfoTab> createState() => _PokemonInfoTabState();
+}
+
+class _PokemonInfoTabState extends State<_PokemonInfoTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
-    final characteristics = pokemon.characteristics;
+    final characteristics = widget.pokemon.characteristics;
     final padding = _responsiveDetailTabPadding(context);
 
     return Padding(
@@ -874,21 +888,21 @@ class _PokemonInfoTab extends StatelessWidget {
         children: [
           _InfoSectionCard(
             title: 'Tipos',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            child: pokemon.types.isNotEmpty
+            child: widget.pokemon.types.isNotEmpty
                 ? _TypeLayout(
-                    types: pokemon.types,
-                    formatLabel: formatLabel,
+                    types: widget.pokemon.types,
+                    formatLabel: widget.formatLabel,
                   )
                 : const Text('Sin información de tipos disponible.'),
           ),
           const SizedBox(height: 16),
           _InfoSectionCard(
             title: 'Datos básicos',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -910,7 +924,7 @@ class _PokemonInfoTab extends StatelessWidget {
                           child: _InfoCard(
                             icon: Icons.height,
                             label: 'Altura',
-                            value: formatHeight(characteristics.height),
+                            value: widget.formatHeight(characteristics.height),
                           ),
                         ),
                         SizedBox(
@@ -918,7 +932,7 @@ class _PokemonInfoTab extends StatelessWidget {
                           child: _InfoCard(
                             icon: Icons.monitor_weight_outlined,
                             label: 'Peso',
-                            value: formatWeight(characteristics.weight),
+                            value: widget.formatWeight(characteristics.weight),
                           ),
                         ),
                       ],
@@ -927,10 +941,10 @@ class _PokemonInfoTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Card(
-                  color: sectionBackground,
+                  color: widget.sectionBackground,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: sectionBorder.withOpacity(0.8)),
+                    side: BorderSide(color: widget.sectionBorder.withOpacity(0.8)),
                   ),
                   margin: EdgeInsets.zero,
                   child: Padding(
@@ -948,15 +962,15 @@ class _PokemonInfoTab extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                mainAbility ?? 'Sin habilidad principal disponible.',
+                                widget.mainAbility ?? 'Sin habilidad principal disponible.',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if (abilitySubtitle != null) ...[
+                              if (widget.abilitySubtitle != null) ...[
                                 const SizedBox(height: 6),
                                 Text(
-                                  abilitySubtitle!,
+                                  widget.abilitySubtitle!,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant
                                         .withOpacity(0.75),
@@ -976,27 +990,27 @@ class _PokemonInfoTab extends StatelessWidget {
           const SizedBox(height: 16),
           _InfoSectionCard(
             title: 'Características',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             variant: InfoSectionCardVariant.angled,
             padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
             child: _CharacteristicsSection(
               characteristics: characteristics,
-              formatHeight: formatHeight,
-              formatWeight: formatWeight,
+              formatHeight: widget.formatHeight,
+              formatWeight: widget.formatWeight,
             ),
           ),
           const SizedBox(height: 16),
           _InfoSectionCard(
             title: 'Habilidades',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             variant: InfoSectionCardVariant.angled,
             padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 12),
-            child: pokemon.abilities.isNotEmpty
+            child: widget.pokemon.abilities.isNotEmpty
                 ? _AbilitiesCarousel(
-                    abilities: pokemon.abilities,
-                    formatLabel: formatLabel,
+                    abilities: widget.pokemon.abilities,
+                    formatLabel: widget.formatLabel,
                   )
                 : const Text('Sin información de habilidades disponible.'),
           ),
@@ -1006,7 +1020,7 @@ class _PokemonInfoTab extends StatelessWidget {
   }
 }
 
-class _PokemonStatsTab extends StatelessWidget {
+class _PokemonStatsTab extends StatefulWidget {
   const _PokemonStatsTab({
     required this.pokemon,
     required this.formatLabel,
@@ -1020,21 +1034,31 @@ class _PokemonStatsTab extends StatelessWidget {
   final Color sectionBorder;
 
   @override
+  State<_PokemonStatsTab> createState() => _PokemonStatsTabState();
+}
+
+class _PokemonStatsTabState extends State<_PokemonStatsTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final padding = _responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: _InfoSectionCard(
         title: 'Estadísticas',
-        backgroundColor: sectionBackground,
-        borderColor: sectionBorder,
-        child: pokemon.stats.isNotEmpty
+        backgroundColor: widget.sectionBackground,
+        borderColor: widget.sectionBorder,
+        child: widget.pokemon.stats.isNotEmpty
             ? Column(
-                children: pokemon.stats
+                children: widget.pokemon.stats
                     .map(
                       (stat) => _StatBar(
-                        label: formatLabel(stat.name.replaceAll('-', ' ')),
+                        label: widget.formatLabel(stat.name.replaceAll('-', ' ')),
                         value: stat.baseStat,
                       ),
                     )
@@ -1046,7 +1070,7 @@ class _PokemonStatsTab extends StatelessWidget {
   }
 }
 
-class _PokemonMatchupsTab extends StatelessWidget {
+class _PokemonMatchupsTab extends StatefulWidget {
   const _PokemonMatchupsTab({
     required this.pokemon,
     required this.formatLabel,
@@ -1060,7 +1084,17 @@ class _PokemonMatchupsTab extends StatelessWidget {
   final Color sectionBorder;
 
   @override
+  State<_PokemonMatchupsTab> createState() => _PokemonMatchupsTabState();
+}
+
+class _PokemonMatchupsTabState extends State<_PokemonMatchupsTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final padding = _responsiveDetailTabPadding(context);
 
     return Padding(
@@ -1070,21 +1104,21 @@ class _PokemonMatchupsTab extends StatelessWidget {
         children: [
           _InfoSectionCard(
             title: 'Debilidades',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             child: _WeaknessSection(
-              matchups: pokemon.typeMatchups,
-              formatLabel: formatLabel,
+              matchups: widget.pokemon.typeMatchups,
+              formatLabel: widget.formatLabel,
             ),
           ),
           const SizedBox(height: 16),
           _InfoSectionCard(
             title: 'Resistencias e inmunidades',
-            backgroundColor: sectionBackground,
-            borderColor: sectionBorder,
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
             child: _TypeMatchupSection(
-              matchups: pokemon.typeMatchups,
-              formatLabel: formatLabel,
+              matchups: widget.pokemon.typeMatchups,
+              formatLabel: widget.formatLabel,
             ),
           ),
         ],
@@ -1141,7 +1175,7 @@ class _PokemonFutureTab extends StatelessWidget {
   }
 }
 
-class _PokemonEvolutionTab extends StatelessWidget {
+class _PokemonEvolutionTab extends StatefulWidget {
   const _PokemonEvolutionTab({
     required this.pokemon,
     required this.formatLabel,
@@ -1155,26 +1189,36 @@ class _PokemonEvolutionTab extends StatelessWidget {
   final Color sectionBorder;
 
   @override
+  State<_PokemonEvolutionTab> createState() => _PokemonEvolutionTabState();
+}
+
+class _PokemonEvolutionTabState extends State<_PokemonEvolutionTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final padding = _responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: _InfoSectionCard(
         title: 'Cadena evolutiva',
-        backgroundColor: sectionBackground,
-        borderColor: sectionBorder,
+        backgroundColor: widget.sectionBackground,
+        borderColor: widget.sectionBorder,
         child: _EvolutionSection(
-          evolutionChain: pokemon.evolutionChain,
-          currentSpeciesId: pokemon.speciesId,
-          formatLabel: formatLabel,
+          evolutionChain: widget.pokemon.evolutionChain,
+          currentSpeciesId: widget.pokemon.speciesId,
+          formatLabel: widget.formatLabel,
         ),
       ),
     );
   }
 }
 
-class _PokemonMovesTab extends StatelessWidget {
+class _PokemonMovesTab extends StatefulWidget {
   const _PokemonMovesTab({
     required this.pokemon,
     required this.formatLabel,
@@ -1188,18 +1232,28 @@ class _PokemonMovesTab extends StatelessWidget {
   final Color sectionBorder;
 
   @override
+  State<_PokemonMovesTab> createState() => _PokemonMovesTabState();
+}
+
+class _PokemonMovesTabState extends State<_PokemonMovesTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final padding = _responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: _InfoSectionCard(
         title: 'Movimientos',
-        backgroundColor: sectionBackground,
-        borderColor: sectionBorder,
+        backgroundColor: widget.sectionBackground,
+        borderColor: widget.sectionBorder,
         child: _MovesSection(
-          moves: pokemon.moves,
-          formatLabel: formatLabel,
+          moves: widget.pokemon.moves,
+          formatLabel: widget.formatLabel,
         ),
       ),
     );

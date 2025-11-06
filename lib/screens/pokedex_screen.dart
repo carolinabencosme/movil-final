@@ -876,7 +876,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
             return const _LoadingTile();
           }
           final pokemon = _pokemons[index];
-          return _PokemonListTile(pokemon: pokemon);
+          return _PokemonListTile(
+            key: ValueKey('pokemon-${pokemon.id}'),
+            pokemon: pokemon,
+          );
         },
       ),
     );
