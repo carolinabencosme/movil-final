@@ -16,9 +16,23 @@ import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
 
-/// Detail screen showing comprehensive Pokemon information
+/// Pantalla de detalles que muestra información completa de un Pokémon
+/// 
+/// Esta pantalla es el corazón de la aplicación, mostrando:
+/// - Artwork destacado con animación Hero
+/// - Información básica (altura, peso, habilidades)
+/// - Estadísticas con barras visuales
+/// - Debilidades y resistencias de tipos
+/// - Cadena evolutiva completa
+/// - Lista paginada de movimientos
+/// 
+/// La pantalla usa GraphQL para obtener todos los datos del Pokémon,
+/// con manejo de estados de carga, error y datos parciales.
 class DetailScreen extends StatelessWidget {
   /// Constructor que requiere al menos el ID o nombre del Pokémon
+  /// 
+  /// Acepta pokemonId O pokemonName (al menos uno debe estar presente).
+  /// Si se proporciona initialPokemon, se muestra mientras carga la info completa.
   DetailScreen({
     super.key,
     this.pokemonId,
@@ -176,7 +190,16 @@ class DetailScreen extends StatelessWidget {
   }
 }
 
-/// Main body widget for Pokemon detail screen
+/// Widget principal del cuerpo de la pantalla de detalles
+/// 
+/// Maneja la estructura de pestañas (tabs) con PageView para navegación fluida:
+/// 1. Info: Tipos, datos básicos, características, habilidades
+/// 2. Stats: Estadísticas del Pokémon con barras visuales
+/// 3. Matchups: Debilidades, resistencias e inmunidades
+/// 4. Evolución: Cadena evolutiva completa
+/// 5. Movimientos: Lista paginada de todos los movimientos
+/// 
+/// Usa SingleTickerProviderStateMixin para controlar la animación de tabs.
 class PokemonDetailBody extends StatefulWidget {
   const PokemonDetailBody({
     super.key,

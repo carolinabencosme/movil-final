@@ -4,13 +4,20 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../pokemon_artwork.dart';
 
-/// Variant for info section cards
+/// Variante de estilo para tarjetas de sección de información
+/// 
+/// - rounded: Esquinas completamente redondeadas (estilo normal)
+/// - angled: Esquina superior derecha en ángulo (estilo distintivo)
 enum InfoSectionCardVariant { rounded, angled }
 
-/// Section title widget for detail sections
+/// Widget de título de sección para las secciones de detalles
+/// 
+/// Título grande y en negrita usado como encabezado de las diferentes
+/// secciones en la pantalla de detalles del Pokémon.
 class SectionTitle extends StatelessWidget {
   const SectionTitle({super.key, required this.title});
 
+  /// Texto del título a mostrar
   final String title;
 
   @override
@@ -25,7 +32,17 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
-/// Card widget for info sections with optional styling variants
+/// Tarjeta de sección de información con variantes de estilo opcionales
+/// 
+/// Contenedor estilizado usado en toda la pantalla de detalles para agrupar
+/// información relacionada. Incluye:
+/// - Título de la sección
+/// - Contenido personalizable (child)
+/// - Color de fondo y borde configurables
+/// - Dos variantes de estilo (rounded/angled)
+/// 
+/// El estilo "angled" usa un CustomClipper para crear una esquina cortada,
+/// agregando variedad visual a la interfaz.
 class InfoSectionCard extends StatelessWidget {
   const InfoSectionCard({
     super.key,
@@ -37,6 +54,7 @@ class InfoSectionCard extends StatelessWidget {
     this.padding,
   });
 
+  /// Título que se muestra en la parte superior de la tarjeta
   final String title;
   final Widget child;
   final Color? backgroundColor;
