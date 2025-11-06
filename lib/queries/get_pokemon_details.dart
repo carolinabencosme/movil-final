@@ -1,7 +1,26 @@
-// Language IDs: 7 = Spanish, 9 = English
+/// IDs de idiomas para las consultas de detalles del Pokémon
+/// 
+/// El ID por defecto es 7 (Español)
 const int _defaultLanguageId = 7;
+
+/// Lista de IDs de idiomas preferidos con fallback
+/// 7 = Español, 9 = Inglés
+/// Si no hay traducción en español, se usa inglés
 const List<int> _preferredLanguageIds = [7, 9];
 
+/// Query GraphQL para obtener los detalles completos de un Pokémon
+/// 
+/// Esta query obtiene toda la información necesaria para mostrar en la pantalla de detalles:
+/// - Datos básicos (nombre, altura, peso, experiencia)
+/// - Tipos del Pokémon
+/// - Estadísticas base
+/// - Habilidades con descripciones localizadas
+/// - Movimientos que puede aprender (TODOS - puede ser muchos)
+/// - Cadena evolutiva completa
+/// - Eficacias de tipo para calcular ventajas/desventajas
+/// 
+/// NOTA: Esta query carga TODOS los movimientos a la vez, lo cual puede ser ineficiente
+/// para Pokémon con muchos movimientos. La paginación en el cliente (UI) ayuda a mitigar esto.
 const String getPokemonDetailsQuery = r'''
   query PokemonDetails(
     $where: pokemon_v2_pokemon_bool_exp!,

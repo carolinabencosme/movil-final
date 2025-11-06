@@ -1,3 +1,20 @@
+/// Construye la query GraphQL para obtener la lista de Pokémon
+/// 
+/// Esta función genera dinámicamente una query de GraphQL con filtros opcionales
+/// y paginación. Es clave para el rendimiento de la aplicación ya que permite
+/// cargar solo los Pokémon necesarios en lugar de todos a la vez.
+/// 
+/// Parámetros:
+/// - [includeIdFilter]: Si debe incluir filtro por ID
+/// - [includeTypeFilter]: Si debe incluir filtro por tipo
+/// - [includeGenerationFilter]: Si debe incluir filtro por generación
+/// - [includeRegionFilter]: Si debe incluir filtro por región
+/// - [includeShapeFilter]: Si debe incluir filtro por forma
+/// - [includePagination]: Si debe incluir límite y offset para paginación
+/// - [orderField]: Campo por el cual ordenar (id, name, height, weight)
+/// - [isOrderAscending]: Si el orden es ascendente o descendente
+/// 
+/// Retorna un String con la query GraphQL completa
 String buildPokemonListQuery({
   required bool includeIdFilter,
   required bool includeTypeFilter,

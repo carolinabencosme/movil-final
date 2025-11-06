@@ -18,6 +18,7 @@ import '../widgets/pokemon_artwork.dart';
 
 /// Detail screen showing comprehensive Pokemon information
 class DetailScreen extends StatelessWidget {
+  /// Constructor que requiere al menos el ID o nombre del Pokémon
   DetailScreen({
     super.key,
     this.pokemonId,
@@ -29,11 +30,19 @@ class DetailScreen extends StatelessWidget {
           'Either pokemonId or pokemonName must be provided.',
         );
 
+  /// ID numérico del Pokémon (ej: 1 para Bulbasaur)
   final int? pokemonId;
+  
+  /// Nombre del Pokémon (ej: "pikachu")
   final String? pokemonName;
+  
+  /// Datos iniciales del Pokémon para mostrar mientras se carga la información completa
   final PokemonListItem? initialPokemon;
+  
+  /// Tag único para la animación Hero entre pantallas
   final String? heroTag;
 
+  /// Capitaliza la primera letra de un texto
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -176,8 +185,13 @@ class PokemonDetailBody extends StatefulWidget {
     required this.capitalize,
   });
 
+  /// Datos completos del Pokémon a mostrar
   final PokemonDetail pokemon;
+  
+  /// Tag para la animación Hero (único por Pokémon)
   final String resolvedHeroTag;
+  
+  /// Función para capitalizar textos
   final String Function(String) capitalize;
 
   @override
@@ -192,6 +206,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   @override
   void initState() {
     super.initState();
+    // Inicializa controladores para las 5 pestañas
     _tabController = TabController(length: 5, vsync: this);
     _pageController = PageController();
     
@@ -213,6 +228,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     super.dispose();
   }
 
+  /// Formatea la altura del Pokémon de decímetros a metros
   String _formatHeight(int height) {
     if (height <= 0) return '—';
     final meters = height / 10.0;
