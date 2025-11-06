@@ -1,7 +1,10 @@
 import 'dart:ui' show clampDouble;
 import 'package:flutter/material.dart';
 
-/// Type emojis for visual representation of Pokemon types
+/// Emojis de tipos para representación visual de los tipos de Pokémon
+/// 
+/// Mapea cada tipo de Pokémon a un emoji representativo que se usa
+/// en las tarjetas de movimientos y otras partes de la UI.
 const Map<String, String> typeEmojis = {
   'normal': '⭐️',
   'fire': '🔥',
@@ -23,10 +26,16 @@ const Map<String, String> typeEmojis = {
   'fairy': '🧚',
 };
 
-/// Preferred language IDs: ES (7) and EN (9)
+/// IDs de idiomas preferidos: ES (7) y EN (9)
+/// 
+/// Se usan en las queries GraphQL para obtener nombres y descripciones
+/// en español primero, con inglés como respaldo.
 const List<int> preferredLanguageIds = [7, 9];
 
-/// Background texture SVG for detail screen
+/// Textura SVG de fondo para la pantalla de detalles
+/// 
+/// SVG decorativo que se muestra en el header del Pokémon con
+/// círculos concéntricos y líneas que le dan un aspecto tecnológico.
 const String backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../models/pokemon_model.dart';
@@ -5,7 +7,16 @@ import '../../../theme/pokemon_type_colors.dart';
 import '../detail_constants.dart';
 import '../detail_helper_widgets.dart';
 
-/// Section displaying Pokemon moves with filtering
+/// Sección que muestra los movimientos del Pokémon con filtrado y paginación
+/// 
+/// Presenta la lista de movimientos que un Pokémon puede aprender con:
+/// - Filtros por método de aprendizaje (level-up, TM, egg moves, etc.)
+/// - Filtro para mostrar solo movimientos con nivel definido
+/// - **Paginación lazy loading**: Carga movimientos incrementalmente mientras el usuario hace scroll
+/// - Ordenamiento por nivel y nombre
+/// 
+/// La paginación evita renderizar cientos de movimientos de golpe, mejorando
+/// significativamente el rendimiento especialmente en Pokémon con muchos movimientos.
 class MovesSection extends StatefulWidget {
   const MovesSection({
     super.key,
@@ -13,7 +24,10 @@ class MovesSection extends StatefulWidget {
     required this.formatLabel,
   });
 
+  /// Lista completa de movimientos del Pokémon desde la API
   final List<PokemonMove> moves;
+  
+  /// Función para formatear etiquetas de texto (capitalización)
   final String Function(String) formatLabel;
 
   @override
@@ -21,8 +35,19 @@ class MovesSection extends StatefulWidget {
 }
 
 class _MovesSectionState extends State<MovesSection> {
+  /// Método de aprendizaje seleccionado para filtrar (null = todos)
   String? _selectedMethod;
+  
+  /// Si es true, solo muestra movimientos que tienen nivel definido
   bool _onlyWithLevel = false;
+  
+  /// Número de movimientos a mostrar inicialmente y por cada carga
+  static const int _pageSize = 15;
+  
+  /// Contador de movimientos actualmente visibles
+  int _displayedMovesCount = _pageSize;
+
+  /// Resuelve el nombre a mostrar de un movimiento
 
   String _resolveDisplayName(String value) {
     if (value.isEmpty) {
@@ -40,6 +65,25 @@ class _MovesSectionState extends State<MovesSection> {
       return 'Desconocido';
     }
     return widget.formatLabel(method);
+  }
+
+  /// Carga más movimientos para mostrar (lazy loading)
+  void _loadMoreMoves() {
+    setState(() {
+      _displayedMovesCount += _pageSize;
+    });
+  }
+
+  /// Reinicia el contador cuando cambian los filtros
+  void _resetDisplayCount() {
+    setState(() {
+      _displayedMovesCount = _pageSize;
+    });
+  }
+  
+  /// Calcula cuántos movimientos quedan por cargar
+  int _remainingMovesCount(int totalFiltered) {
+    return math.max(0, totalFiltered - _displayedMovesCount);
   }
 
   @override
@@ -79,6 +123,12 @@ class _MovesSectionState extends State<MovesSection> {
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
+    // Lista de movimientos a mostrar (paginada)
+    final displayedMoves = filteredMoves.take(_displayedMovesCount).toList();
+    
+    // Indica si hay más movimientos para cargar
+    final hasMore = _displayedMovesCount < filteredMoves.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -91,7 +141,10 @@ class _MovesSectionState extends State<MovesSection> {
               selected: _selectedMethod == null,
               onSelected: (selected) {
                 if (selected) {
-                  setState(() => _selectedMethod = null);
+                  setState(() {
+                    _selectedMethod = null;
+                    _resetDisplayCount();
+                  });
                 }
               },
             ),
@@ -102,6 +155,7 @@ class _MovesSectionState extends State<MovesSection> {
                 onSelected: (selected) {
                   setState(() {
                     _selectedMethod = selected ? method : null;
+                    _resetDisplayCount();
                   });
                 },
               ),
@@ -110,7 +164,10 @@ class _MovesSectionState extends State<MovesSection> {
               label: const Text('Solo movimientos con nivel'),
               selected: _onlyWithLevel,
               onSelected: (selected) {
-                setState(() => _onlyWithLevel = selected);
+                setState(() {
+                  _onlyWithLevel = selected;
+                  _resetDisplayCount();
+                });
               },
             ),
           ],
@@ -118,14 +175,26 @@ class _MovesSectionState extends State<MovesSection> {
         const SizedBox(height: 12),
         if (filteredMoves.isEmpty)
           const Text('No hay movimientos que coincidan con los filtros.')
-        else
+        else ...[
+          Semantics(
+            liveRegion: true,
+            label: 'Contador de movimientos mostrados',
+            child: Text(
+              'Mostrando ${displayedMoves.length} de ${filteredMoves.length} movimientos',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredMoves.length,
+            itemCount: displayedMoves.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              final move = filteredMoves[index];
+              final move = displayedMoves[index];
               final typeKey = move.type?.toLowerCase() ?? '';
               final typeColor =
                   pokemonTypeColors[typeKey] ?? colorScheme.primary;
@@ -210,6 +279,20 @@ class _MovesSectionState extends State<MovesSection> {
               );
             },
           ),
+          // Botón para cargar más movimientos si hay disponibles
+          if (hasMore) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: _loadMoreMoves,
+                icon: const Icon(Icons.expand_more),
+                label: Text(
+                  'Cargar más movimientos (${_remainingMovesCount(filteredMoves.length)} restantes)',
+                ),
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }

@@ -1,5 +1,9 @@
 import 'dart:convert';
 
+/// Mapa de IDs de tipos de Pokémon a sus nombres
+/// 
+/// Usado para resolver nombres de tipos cuando solo se tiene el ID.
+/// Incluye todos los 18 tipos principales más tipos especiales (unknown, shadow).
 const Map<int, String> _pokemonTypeNamesById = {
   1: 'normal',
   2: 'fighting',
@@ -23,6 +27,18 @@ const Map<int, String> _pokemonTypeNamesById = {
   10002: 'shadow',
 };
 
+/// Modelo de datos para un ítem de Pokémon en la lista/Pokédex
+/// 
+/// Versión ligera del modelo de Pokémon con solo la información necesaria
+/// para mostrar en la lista. Incluye datos básicos como:
+/// - ID y nombre
+/// - URL de imagen
+/// - Tipos
+/// - Estadísticas principales (HP, ATK, DEF)
+/// - Generación
+/// 
+/// Este modelo se usa en la pantalla de Pokédex donde se listan muchos Pokémon,
+/// por lo que se mantiene ligero para optimizar el rendimiento.
 class PokemonListItem {
   PokemonListItem({
     required this.id,
@@ -34,14 +50,31 @@ class PokemonListItem {
     this.generationName,
   });
 
+  /// ID numérico único del Pokémon (número de Pokédex Nacional)
   final int id;
+  
+  /// Nombre del Pokémon en minúsculas (ej: "pikachu", "charizard")
   final String name;
+  
+  /// URL de la imagen oficial del Pokémon
   final String imageUrl;
+  
+  /// Lista de tipos del Pokémon (ej: ["electric"], ["fire", "flying"])
   final List<String> types;
+  
+  /// Lista de estadísticas base (HP, ATK, DEF, etc.)
   final List<PokemonStat> stats;
+  
+  /// ID de la generación a la que pertenece (1-9)
   final int? generationId;
+  
+  /// Nombre de la generación (ej: "generation-i", "generation-ii")
   final String? generationName;
 
+  /// Factory constructor que parsea datos desde GraphQL
+  /// 
+  /// Extrae y valida todos los campos necesarios del JSON de GraphQL,
+  /// manejando valores nulos y tipos incorrectos de forma segura.
   factory PokemonListItem.fromGraphQL(Map<String, dynamic> json) {
     final types = (json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
         .map((dynamic typeEntry) {
@@ -545,16 +578,26 @@ class _EvolutionSpeciesData {
   final String imageUrl;
 }
 
+/// Modelo de estadística de un Pokémon
+/// 
+/// Representa una estadística base (HP, Attack, Defense, etc.) con
+/// su nombre y valor numérico.
 class PokemonStat {
   const PokemonStat({
     required this.name,
     required this.baseStat,
   });
 
+  /// Nombre de la estadística (hp, attack, defense, special-attack, special-defense, speed)
   final String name;
+  
+  /// Valor base de la estadística (típicamente entre 1-255)
   final int baseStat;
 }
 
+/// Modelo de detalle de habilidad de un Pokémon
+/// 
+/// Contiene información completa sobre una habilidad que el Pokémon puede tener.
 class PokemonAbilityDetail {
   const PokemonAbilityDetail({
     required this.name,
@@ -562,11 +605,19 @@ class PokemonAbilityDetail {
     this.isHidden = false,
   });
 
+  /// Nombre de la habilidad (ej: "overgrow", "blaze")
   final String name;
+  
+  /// Descripción de lo que hace la habilidad
   final String description;
+  
+  /// Si es una habilidad oculta (Hidden Ability)
   final bool isHidden;
 }
 
+/// Modelo de características físicas y de juego de un Pokémon
+/// 
+/// Agrupa datos numéricos sobre el Pokémon que no son estadísticas de batalla.
 class PokemonCharacteristics {
   const PokemonCharacteristics({
     required this.height,
@@ -576,10 +627,19 @@ class PokemonCharacteristics {
     required this.category,
   });
 
+  /// Altura en decímetros (dividir por 10 para metros)
   final int height;
+  
+  /// Peso en hectogramos (dividir por 10 para kilogramos)
   final int weight;
+  
+  /// Experiencia base que se gana al derrotarlo
   final int baseExperience;
+  
+  /// Tasa de captura (0-255, más alto = más fácil de capturar)
   final int captureRate;
+  
+  /// Categoría del Pokémon (ej: "Seed Pokémon", "Flame Pokémon")
   final String category;
 }
 
