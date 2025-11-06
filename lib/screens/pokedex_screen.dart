@@ -171,6 +171,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     super.dispose();
   }
 
+  /// Callback para detectar cuando el usuario hace scroll cerca del final
+  /// Cuando quedan menos de 200 píxeles hasta el final, carga más Pokémon
   void _onScroll() {
     if (!_hasMore || _isFetching) {
       return;
@@ -181,6 +183,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
   }
 
+  /// Maneja cambios en el campo de búsqueda con debounce
+  /// Espera 350ms después del último cambio antes de ejecutar la búsqueda
+  /// Esto evita hacer queries en cada pulsación de tecla
   void _onSearchChanged(String value) {
     setState(() => _searchTerm = value);
     _debounce?.cancel();
@@ -191,6 +196,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     });
   }
 
+  /// Aplica los filtros seleccionados y recarga la lista
+  /// Solo hace la recarga si realmente hubo cambios en los filtros
   void _applyFilters({
     Set<String>? types,
     Set<String>? generations,
@@ -243,6 +250,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
   }
 
+  /// Calcula cuántos filtros están actualmente activos
+  /// Incluye búsqueda, tipos, generaciones, regiones, formas y ordenamiento
   int _calculateActiveFiltersCount() {
     final searchCount = _debouncedSearch.trim().isEmpty ? 0 : 1;
     final sortCount = _isDefaultSort ? 0 : 1;
@@ -254,6 +263,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
         sortCount;
   }
 
+  /// Reinicia el estado de paginación y recarga desde el inicio
   void _resetAndFetch() {
     setState(() {
       _hasMore = true;
@@ -264,6 +274,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _fetchPokemons(reset: true);
   }
 
+  /// Elimina un filtro de tipo y recarga la lista
   void _removeTypeFilter(String type) {
     if (!_selectedTypes.contains(type)) return;
     setState(() {
@@ -368,11 +379,21 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
   }
 
+  /// Obtiene la lista de Pokémon desde el servidor GraphQL
+  /// 
+  /// Esta es la función clave para la paginación. Controla:
+  /// - Cuándo cargar (evita cargas duplicadas)
+  /// - Cuántos cargar (30 por página)
+  /// - Desde dónde cargar (offset basado en lista actual)
+  /// - Qué filtros aplicar
+  /// 
+  /// [reset]: Si es true, reinicia la lista desde el inicio
   Future<void> _fetchPokemons({bool reset = false}) async {
     if (_isFetching || (!_hasMore && !reset)) {
       return;
     }
 
+    // Calcula el offset: 0 si es reset, sino la cantidad actual
     final offset = reset ? 0 : _pokemons.length;
     setState(() {
       _isFetching = true;
@@ -384,11 +405,15 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final client = GraphQLProvider.of(context).value;
     final searchValue = _debouncedSearch.toLowerCase();
     final numericId = int.tryParse(_debouncedSearch);
+    
+    // Determina qué filtros aplicar en la query
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
     final includeGenerationFilter = _selectedGenerations.isNotEmpty;
     final includeRegionFilter = _selectedRegions.isNotEmpty;
     final includeShapeFilter = _selectedShapes.isNotEmpty;
+    
+    // No paginar cuando se busca por ID (solo devuelve un resultado)
     final shouldPaginate = !includeIdFilter;
 
     final document = gql(
