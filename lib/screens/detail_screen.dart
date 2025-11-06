@@ -13,6 +13,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
+import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/pokemon_artwork.dart';
 
 const Map<String, String> _typeEmojis = {
@@ -175,7 +176,7 @@ class DetailScreen extends StatelessWidget {
               : null;
 
           if (result.isLoading && data == null) {
-            return _LoadingDetailView(
+            return LoadingDetailView(
               heroTag: resolvedHeroTag,
               imageUrl: previewImage,
               name: previewName,
@@ -186,7 +187,7 @@ class DetailScreen extends StatelessWidget {
             debugPrint(
               'Error al cargar el detalle del Pokémon: ${result.exception}',
             );
-            return _PokemonDetailErrorView(
+            return PokemonDetailErrorView(
               onRetry: refetch,
             );
           }
@@ -921,7 +922,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
                       children: [
                         SizedBox(
                           width: cardWidth,
-                          child: _InfoCard(
+                          child: InfoCard(
                             icon: Icons.height,
                             label: 'Altura',
                             value: widget.formatHeight(characteristics.height),
@@ -929,7 +930,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
                         ),
                         SizedBox(
                           width: cardWidth,
-                          child: _InfoCard(
+                          child: InfoCard(
                             icon: Icons.monitor_weight_outlined,
                             label: 'Peso',
                             value: widget.formatWeight(characteristics.weight),
@@ -3560,58 +3561,6 @@ class _StatSegment extends StatelessWidget {
   }
 }
 
-class _PokemonDetailErrorView extends StatelessWidget {
-  const _PokemonDetailErrorView({this.onRetry});
-
-  final Future<QueryResult<Object?>?> Function()? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final retry = onRetry;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.cloud_off,
-              size: 48,
-              color: colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (retry != null) ...[
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: () async {
-                  try {
-                    await retry();
-                  } catch (error, stackTrace) {
-                    debugPrint('Error al reintentar la carga: $error');
-                    debugPrint('$stackTrace');
-                  }
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 extension _DetailScreenNavigationX on BuildContext {
   Future<T?> push<T>(String location) {
     if (location.startsWith('/pokedex/')) {
@@ -3630,96 +3579,5 @@ extension _DetailScreenNavigationX on BuildContext {
       );
     }
     return Navigator.of(this).pushNamed<T>(location);
-  }
-}
-
-class _LoadingDetailView extends StatelessWidget {
-  const _LoadingDetailView({
-    required this.heroTag,
-    required this.imageUrl,
-    this.name,
-  });
-
-  final String heroTag;
-  final String imageUrl;
-  final String? name;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PokemonArtwork(
-              heroTag: heroTag,
-              imageUrl: imageUrl,
-              size: 180,
-              borderRadius: 32,
-              padding: const EdgeInsets.all(20),
-            ),
-            if (name != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                name!,
-                style: theme.textTheme.titleLarge,
-              ),
-            ],
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 32, color: colorScheme.onPrimaryContainer),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withOpacity(0.85),
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
