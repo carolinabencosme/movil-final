@@ -36,6 +36,9 @@ const Map<String, String> _typeEmojis = {
   'fairy': '🧚',
 };
 
+// Preferred language IDs: ES (7) and EN (9)
+const List<int> _preferredLanguageIds = [7, 9];
+
 const String _backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -117,8 +120,6 @@ class DetailScreen extends StatelessWidget {
           'Either pokemonId or pokemonName must be provided.',
         );
 
-  static const int _defaultLanguageId = 7;
-
   final int? pokemonId;
   final String? pokemonName;
   final PokemonListItem? initialPokemon;
@@ -154,6 +155,7 @@ class DetailScreen extends StatelessWidget {
           errorPolicy: ErrorPolicy.all,
           variables: {
             'where': where,
+            'languageIds': _preferredLanguageIds,
           },
         ),
         builder: (result, {fetchMore, refetch}) {
