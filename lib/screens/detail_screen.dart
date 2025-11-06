@@ -224,30 +224,17 @@ class PokemonDetailBody extends StatefulWidget {
 class _PokemonDetailBodyState extends State<PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     // Inicializa controladores para las 5 pestañas
     _tabController = TabController(length: 5, vsync: this);
-    _pageController = PageController();
-    
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        _pageController.animateToPage(
-          _tabController.index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -284,7 +271,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     return color ?? colorScheme.primary;
   }
 
-  Widget _buildHeroHeader({
+  SliverPersistentHeader _buildHeroHeader({
     required BuildContext context,
     required ThemeData theme,
     required PokemonDetail pokemon,
@@ -304,176 +291,32 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       math.min(320.0, size.height * 0.6),
     );
     final headerHeight = isLandscape ? landscapeHeight : portraitHeight;
-    final imageSize = math.min(
-      210.0,
-      math.min(size.width, headerHeight) * 0.55,
-    );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: SizedBox(
-          height: headerHeight,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        typeColor,
-                        Color.alphaBlend(
-                          typeColor.withOpacity(0.45),
-                          theme.colorScheme.surface,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -0.4),
-                      radius: 1.05,
-                      colors: [
-                        typeColor.withOpacity(0.75),
-                        typeColor.withOpacity(0.1),
-                      ],
-                      stops: const [0.0, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.35,
-                    child: SvgPicture.string(
-                      backgroundTextureSvg,
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        onTypeColor.withOpacity(0.25),
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: ClipRect(
-                  child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(
-                      sigmaX: 18,
-                      sigmaY: 18,
-                    ),
-                    child: Container(
-                      color: typeColor.withOpacity(0.08),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.55,
-                    child: ParticleField(
-                      color: onTypeColor.withOpacity(0.4),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 24,
-                right: 24,
-                top: 24,
-                child: Text(
-                  widget.capitalize(pokemon.name),
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: onTypeColor,
-                    fontWeight: FontWeight.w800,
-                    shadows: [
-                      Shadow(
-                        color: typeColor.withOpacity(0.5),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Positioned(
-                bottom: 20,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: PokemonArtwork(
-                    heroTag: widget.resolvedHeroTag,
-                    imageUrl: pokemon.imageUrl,
-                    size: imageSize,
-                    borderRadius: 36,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return SliverPersistentHeader(
+      pinned: false,
+      delegate: _HeroHeaderDelegate(
+        pokemon: pokemon,
+        theme: theme,
+        typeColor: typeColor,
+        onTypeColor: onTypeColor,
+        heroTag: widget.resolvedHeroTag,
+        expandedHeight: headerHeight,
+        collapsedHeight: collapsedHeight,
+        capitalize: widget.capitalize,
       ),
     );
   }
 
-  Widget _buildTabBar(
+  SliverPersistentHeader _buildTabBar(
     ThemeData theme,
     Color typeColor,
-    Color onTypeColor,
   ) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(typeColor.withOpacity(0.08), theme.colorScheme.surface),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: typeColor.withOpacity(0.18), width: 1),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.center,
-        indicator: BoxDecoration(
-          color: typeColor.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        labelColor: theme.colorScheme.onSurface,
-        unselectedLabelColor: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
-        labelStyle: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
-        ),
-        unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        padding: const EdgeInsets.all(6),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-        tabs: detailTabConfigs
-            .map(
-              (config) => Tab(
-                icon: Icon(config.icon, size: 20),
-                text: config.label,
-                height: 68,
-              ),
-            )
-            .toList(),
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _TabBarHeaderDelegate(
+        tabController: _tabController,
+        theme: theme,
+        typeColor: typeColor,
       ),
     );
   }
@@ -509,88 +352,398 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          RepaintBoundary(
-            child: _buildHeroHeader(
+      child: NestedScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            _buildHeroHeader(
               context: context,
               theme: theme,
               pokemon: pokemon,
               typeColor: typeColor,
               onTypeColor: onTypeColor,
             ),
-          ),
-          _buildTabBar(theme, typeColor, onTypeColor),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: (index) {
-                if (_tabController.index != index) {
-                  _tabController.animateTo(index);
-                }
-              },
+            _buildTabBar(theme, typeColor),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          physics: const BouncingScrollPhysics(),
+          children: [
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('info-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonInfoTab(
+                pokemon: pokemon,
+                formatLabel: _formatLabel,
+                formatHeight: _formatHeight,
+                formatWeight: _formatWeight,
+                mainAbility: mainAbility,
+                abilitySubtitle: abilitySubtitle,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('stats-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonStatsTab(
+                pokemon: pokemon,
+                formatLabel: _formatLabel,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('matchups-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonMatchupsTab(
+                pokemon: pokemon,
+                formatLabel: _formatLabel,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('evolution-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonEvolutionTab(
+                pokemon: pokemon,
+                formatLabel: _formatLabel,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('moves-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonMovesTab(
+                pokemon: pokemon,
+                formatLabel: _formatLabel,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _HeroHeaderDelegate({
+    required this.pokemon,
+    required this.theme,
+    required this.typeColor,
+    required this.onTypeColor,
+    required this.heroTag,
+    required this.expandedHeight,
+    required this.collapsedHeight,
+    required this.capitalize,
+  });
+
+  final PokemonDetail pokemon;
+  final ThemeData theme;
+  final Color typeColor;
+  final Color onTypeColor;
+  final String heroTag;
+  final double expandedHeight;
+  final double collapsedHeight;
+  final String Function(String) capitalize;
+
+  @override
+  double get maxExtent => expandedHeight;
+
+  @override
+  double get minExtent => collapsedHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final backgroundOpacity = 1 - (0.25 * progress);
+    final particleOpacity = 0.55 * (1 - (0.5 * progress));
+    final titleOpacity = 1 - (0.35 * progress);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 12 - (8 * progress), 16, 0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final imageBaseSize = math.min(
+            210.0,
+            math.min(constraints.maxWidth, maxExtent) * 0.55,
+          );
+          final imageScale = 1 - (0.25 * progress);
+          final imageSize = imageBaseSize * imageScale;
+
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
               children: [
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: PokemonInfoTab(
-                    pokemon: pokemon,
-                    formatLabel: _formatLabel,
-                    formatHeight: _formatHeight,
-                    formatWeight: _formatWeight,
-                    mainAbility: mainAbility,
-                    abilitySubtitle: abilitySubtitle,
-                    sectionBackground: sectionBackground,
-                    sectionBorder: sectionBorder,
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: backgroundOpacity,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            typeColor,
+                            Color.alphaBlend(
+                              typeColor.withOpacity(0.45),
+                              theme.colorScheme.surface,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: PokemonStatsTab(
-                    pokemon: pokemon,
-                    formatLabel: _formatLabel,
-                    sectionBackground: sectionBackground,
-                    sectionBorder: sectionBorder,
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: backgroundOpacity,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.4),
+                          radius: 1.05,
+                          colors: [
+                            typeColor.withOpacity(0.75),
+                            typeColor.withOpacity(0.1),
+                          ],
+                          stops: const [0.0, 1.0],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: PokemonMatchupsTab(
-                    pokemon: pokemon,
-                    formatLabel: _formatLabel,
-                    sectionBackground: sectionBackground,
-                    sectionBorder: sectionBorder,
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.35 * (1 - (0.5 * progress)),
+                      child: SvgPicture.string(
+                        backgroundTextureSvg,
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          onTypeColor.withOpacity(0.25),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: PokemonEvolutionTab(
-                    pokemon: pokemon,
-                    formatLabel: _formatLabel,
-                    sectionBackground: sectionBackground,
-                    sectionBorder: sectionBorder,
+                Positioned.fill(
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(
+                        sigmaX: 18,
+                        sigmaY: 18,
+                      ),
+                      child: Container(
+                        color: typeColor.withOpacity(0.08 * (1 - (0.4 * progress))),
+                      ),
+                    ),
                   ),
                 ),
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.only(top: 24, bottom: bottomPadding),
-                  child: PokemonMovesTab(
-                    pokemon: pokemon,
-                    formatLabel: _formatLabel,
-                    sectionBackground: sectionBackground,
-                    sectionBorder: sectionBorder,
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: particleOpacity,
+                      child: ParticleField(
+                        color: onTypeColor.withOpacity(0.4),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  top: 24 - (12 * progress),
+                  child: Opacity(
+                    opacity: titleOpacity,
+                    child: Text(
+                      capitalize(pokemon.name),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: onTypeColor,
+                        fontWeight: FontWeight.w800,
+                        shadows: [
+                          Shadow(
+                            color: typeColor.withOpacity(0.5),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 20 - (12 * progress),
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Transform.scale(
+                      scale: imageScale,
+                      child: PokemonArtwork(
+                        heroTag: heroTag,
+                        imageUrl: pokemon.imageUrl,
+                        size: imageSize,
+                        borderRadius: 36,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16 - (6 * progress),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _HeroHeaderDelegate oldDelegate) {
+    return oldDelegate.pokemon != pokemon ||
+        oldDelegate.theme != theme ||
+        oldDelegate.typeColor != typeColor ||
+        oldDelegate.onTypeColor != onTypeColor ||
+        oldDelegate.heroTag != heroTag ||
+        oldDelegate.expandedHeight != expandedHeight ||
+        oldDelegate.collapsedHeight != collapsedHeight;
+  }
+}
+
+class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _TabBarHeaderDelegate({
+    required this.tabController,
+    required this.theme,
+    required this.typeColor,
+  });
+
+  final TabController tabController;
+  final ThemeData theme;
+  final Color typeColor;
+
+  static const double _tabHeight = 68;
+  static const double _tabPadding = 12; // TabBar padding top+bottom
+
+  @override
+  double get minExtent => _tabHeight + _tabPadding + 8;
+
+  @override
+  double get maxExtent => _tabHeight + _tabPadding + 16;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final topMargin = 16 - (8 * progress);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topMargin, 16, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            typeColor.withOpacity(0.08),
+            theme.colorScheme.surface,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: typeColor.withOpacity(0.18), width: 1),
+          boxShadow: overlapsContent
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: TabBar(
+          controller: tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.center,
+          indicator: BoxDecoration(
+            color: typeColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          labelColor: theme.colorScheme.onSurface,
+          unselectedLabelColor:
+              theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+          labelStyle: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+          ),
+          unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          dividerColor: Colors.transparent,
+          padding: const EdgeInsets.all(6),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+          tabs: detailTabConfigs
+              .map(
+                (config) => Tab(
+                  icon: Icon(config.icon, size: 20),
+                  text: config.label,
+                  height: _tabHeight,
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _TabBarHeaderDelegate oldDelegate) {
+    return oldDelegate.tabController != tabController ||
+        oldDelegate.theme != theme ||
+        oldDelegate.typeColor != typeColor;
+  }
+}
+
+class _DetailTabScrollView extends StatelessWidget {
+  const _DetailTabScrollView({
+    required this.child,
+    required this.topPadding,
+    required this.bottomPadding,
+    this.storageKey,
+  });
+
+  final Widget child;
+  final double topPadding;
+  final double bottomPadding;
+  final PageStorageKey<String>? storageKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      key: storageKey,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.only(top: topPadding, bottom: bottomPadding),
+          sliver: SliverToBoxAdapter(child: child),
+        ),
+      ],
     );
   }
 }
