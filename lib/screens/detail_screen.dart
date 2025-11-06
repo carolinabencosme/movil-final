@@ -1426,7 +1426,7 @@ class _CharacteristicsSection extends StatelessWidget {
             for (final item in items)
               SizedBox(
                 width: effectiveTileWidth,
-                child: _CharacteristicTile(
+                child: CharacteristicTile(
                   icon: item.icon,
                   label: item.label,
                   value: item.value,
@@ -1763,18 +1763,18 @@ class _MovesSectionState extends State<_MovesSection> {
                       spacing: 8,
                       runSpacing: 6,
                       children: [
-                        _MoveInfoChip(
+                        MoveInfoChip(
                           icon: Icons.school_outlined,
                           label: methodLabel,
                         ),
-                        _MoveInfoChip(
+                        MoveInfoChip(
                           icon: Icons.trending_up,
                           label: move.hasLevel
                               ? 'Nivel ${move.level}'
                               : 'Sin nivel definido',
                         ),
                         if (versionLabel != null)
-                          _MoveInfoChip(
+                          MoveInfoChip(
                             icon: Icons.videogame_asset_outlined,
                             label: versionLabel,
                           ),
@@ -2569,101 +2569,6 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: card,
-      ),
-    );
-  }
-}
-
-class _MoveInfoChip extends StatelessWidget {
-  const _MoveInfoChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.55),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CharacteristicTile extends StatelessWidget {
-  const _CharacteristicTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: colorScheme.primary, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.75),
-              fontWeight: FontWeight.w600,
-            ),
-            softWrap: true,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            softWrap: true,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
       ),
     );
   }
