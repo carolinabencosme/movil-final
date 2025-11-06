@@ -15,6 +15,8 @@ import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 
+/// Mapa de emojis para representar visualmente cada tipo de Pokémon
+/// Utilizado en la interfaz para dar un toque visual a los tipos
 const Map<String, String> _typeEmojis = {
   'normal': '⭐️',
   'fire': '🔥',
@@ -36,9 +38,12 @@ const Map<String, String> _typeEmojis = {
   'fairy': '🧚',
 };
 
-// Preferred language IDs: ES (7) and EN (9)
+/// IDs de idiomas preferidos para las consultas GraphQL
+/// 7 = Español, 9 = Inglés (fallback si no hay traducción al español)
 const List<int> _preferredLanguageIds = [7, 9];
 
+/// Textura de fondo SVG para el encabezado del Pokémon
+/// Crea un efecto visual con círculos y líneas que se superponen
 const String _backgroundTextureSvg = '''
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -58,6 +63,8 @@ const String _backgroundTextureSvg = '''
 </svg>
 ''';
 
+/// Configuración para cada pestaña de detalles del Pokémon
+/// Contiene el ícono y la etiqueta que se mostrarán en la barra de pestañas
 class _DetailTabConfig {
   const _DetailTabConfig({required this.icon, required this.label});
 
@@ -65,6 +72,8 @@ class _DetailTabConfig {
   final String label;
 }
 
+/// Lista de configuraciones para las 5 pestañas principales de detalles
+/// Información, Estadísticas, Matchups (ventajas/desventajas), Evoluciones y Movimientos
 const List<_DetailTabConfig> _detailTabConfigs = [
   _DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
   _DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
@@ -74,7 +83,8 @@ const List<_DetailTabConfig> _detailTabConfigs = [
 ];
 
 
-// Constants for evolution stage card sizing
+/// Constantes para el tamaño de las tarjetas de evolución
+/// Se usan diferentes tamaños según el diseño compacto o normal
 const double _evolutionCardImageSizeNormal = 110.0;
 const double _evolutionCardImageSizeCompact = 90.0;
 const double _evolutionCardImageBorderRadiusNormal = 24.0;
@@ -92,15 +102,20 @@ const double _evolutionCardConditionFontSizeCompact = 12.0;
 const double _evolutionCardConditionDetailFontSizeCompact = 11.0;
 
 
-// Constants for horizontal evolution layout
+/// Constantes para el diseño horizontal de evoluciones
+/// Controlan el ancho y espaciado de las tarjetas cuando se muestran en fila
 const double _horizontalEvolutionCardMinWidth = 160.0;
 const double _horizontalEvolutionCardMaxWidth = 220.0;
 const double _horizontalEvolutionPadding = 100.0;
 const double _horizontalArrowTranslationDistance = 4.0;
 const int _horizontalEvolutionMaxStages = 3;
 
+/// Mapa temporal para almacenar IDs de especies durante la navegación entre evoluciones
+/// Permite pasar el ID correcto al navegar a una evolución
 final Map<String, int> _pendingEvolutionNavigation = <String, int>{};
 
+/// Calcula el padding responsivo para las pestañas de detalles
+/// Se ajusta según el ancho de la pantalla para una mejor experiencia en diferentes dispositivos
 EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final horizontalPadding = clampDouble(size.width * 0.06, 16, 32);
@@ -108,7 +123,18 @@ EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
       .copyWith(top: 24, bottom: 32);
 }
 
+/// Pantalla de detalles del Pokémon
+/// 
+/// Muestra información completa sobre un Pokémon específico incluyendo:
+/// - Imagen y datos básicos (altura, peso, tipos)
+/// - Estadísticas base
+/// - Ventajas y desventajas de tipo (matchups)
+/// - Cadena evolutiva
+/// - Lista de movimientos que puede aprender
+/// 
+/// La pantalla obtiene datos mediante GraphQL y los muestra en pestañas navegables.
 class DetailScreen extends StatelessWidget {
+  /// Constructor que requiere al menos el ID o nombre del Pokémon
   DetailScreen({
     super.key,
     this.pokemonId,
@@ -120,11 +146,19 @@ class DetailScreen extends StatelessWidget {
           'Either pokemonId or pokemonName must be provided.',
         );
 
+  /// ID numérico del Pokémon (ej: 1 para Bulbasaur)
   final int? pokemonId;
+  
+  /// Nombre del Pokémon (ej: "pikachu")
   final String? pokemonName;
+  
+  /// Datos iniciales del Pokémon para mostrar mientras se carga la información completa
   final PokemonListItem? initialPokemon;
+  
+  /// Tag único para la animación Hero entre pantallas
   final String? heroTag;
 
+  /// Capitaliza la primera letra de un texto
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -260,6 +294,10 @@ class DetailScreen extends StatelessWidget {
   }
 }
 
+/// Widget del cuerpo principal de la pantalla de detalles del Pokémon
+/// 
+/// Maneja la navegación por pestañas y la visualización del contenido.
+/// Incluye un PageView sincronizado con TabController para permitir deslizar entre secciones.
 class _PokemonDetailBody extends StatefulWidget {
   const _PokemonDetailBody({
     required this.pokemon,
@@ -267,14 +305,23 @@ class _PokemonDetailBody extends StatefulWidget {
     required this.capitalize,
   });
 
+  /// Datos completos del Pokémon a mostrar
   final PokemonDetail pokemon;
+  
+  /// Tag para la animación Hero (único por Pokémon)
   final String resolvedHeroTag;
+  
+  /// Función para capitalizar textos
   final String Function(String) capitalize;
 
   @override
   State<_PokemonDetailBody> createState() => _PokemonDetailBodyState();
 }
 
+/// Estado del cuerpo de detalles del Pokémon
+/// 
+/// Gestiona los controladores de pestañas y página, manteniendo ambos sincronizados
+/// para que el usuario pueda navegar tanto con las pestañas como deslizando.
 class _PokemonDetailBodyState extends State<_PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -283,10 +330,12 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
   @override
   void initState() {
     super.initState();
+    // Inicializa controladores para las 5 pestañas
     _tabController = TabController(length: 5, vsync: this);
     _pageController = PageController();
     
-    // Sync TabController with PageController
+    // Sincroniza el TabController con el PageController
+    // Cuando se selecciona una pestaña, la página se desliza a ella
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _pageController.animateToPage(
@@ -305,6 +354,7 @@ class _PokemonDetailBodyState extends State<_PokemonDetailBody>
     super.dispose();
   }
 
+  /// Formatea la altura del Pokémon de decímetros a metros
   String _formatHeight(int height) {
     if (height <= 0) return '—';
     final meters = height / 10.0;

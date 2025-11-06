@@ -11,9 +11,15 @@ import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 
+/// Opciones de ordenamiento para la lista de Pokémon
+/// Permite ordenar por número, nombre, altura o peso
+/// Opciones de ordenamiento para la lista de Pokémon
+/// Permite ordenar por número, nombre, altura o peso
 enum PokemonSortOption { id, name, height, weight }
 
+/// Extensión para PokemonSortOption que proporciona etiquetas y campos de GraphQL
 extension PokemonSortOptionX on PokemonSortOption {
+  /// Etiqueta en español para mostrar al usuario
   String get label {
     switch (this) {
       case PokemonSortOption.id:
@@ -27,6 +33,7 @@ extension PokemonSortOptionX on PokemonSortOption {
     }
   }
 
+  /// Campo de GraphQL correspondiente para la query
   String get graphqlField {
     switch (this) {
       case PokemonSortOption.id:
@@ -41,9 +48,22 @@ extension PokemonSortOptionX on PokemonSortOption {
   }
 }
 
+/// Opción de ordenamiento por defecto: por número de Pokédex
 const PokemonSortOption kDefaultSortOption = PokemonSortOption.id;
+
+/// Dirección de ordenamiento por defecto: ascendente
 const bool kDefaultSortAscending = true;
 
+/// Pantalla principal de la Pokédex
+/// 
+/// Muestra una lista paginada de Pokémon con capacidades de:
+/// - Búsqueda por nombre o número
+/// - Filtrado por tipo, generación, región y forma
+/// - Ordenamiento por diferentes criterios
+/// - Carga perezosa (lazy loading) al hacer scroll
+/// 
+/// La implementación usa paginación para no cargar todos los 1300+ Pokémon a la vez,
+/// mejorando significativamente el rendimiento y la experiencia del usuario.
 class PokedexScreen extends StatefulWidget {
   const PokedexScreen({
     super.key,
@@ -52,45 +72,78 @@ class PokedexScreen extends StatefulWidget {
     this.title = 'Pokédex',
   });
 
+  /// Tag opcional para la animación Hero del título
   final String? heroTag;
+  
+  /// Color de acento opcional para la AppBar
   final Color? accentColor;
+  
+  /// Título de la pantalla
   final String title;
 
   @override
   State<PokedexScreen> createState() => _PokedexScreenState();
 }
 
+/// Estado de la pantalla Pokédex
+/// 
+/// Gestiona la lógica de:
+/// - Paginación: carga incremental de Pokémon (30 a la vez)
+/// - Búsqueda: con debounce de 350ms para optimizar las queries
+/// - Filtros: tipos, generaciones, regiones y formas
+/// - Ordenamiento: por diferentes criterios y direcciones
 class _PokedexScreenState extends State<PokedexScreen> {
+  /// Tamaño de cada página de resultados
+  /// Se cargan 30 Pokémon a la vez para balance entre rendimiento y UX
+  /// Tamaño de cada página de resultados
+  /// Se cargan 30 Pokémon a la vez para balance entre rendimiento y UX
   static const int _pageSize = 30;
+  
+  /// Controlador para detectar cuándo el usuario llega al final de la lista
   final ScrollController _scrollController = ScrollController();
+  
+  /// Controlador para el campo de búsqueda
   final TextEditingController _searchController = TextEditingController();
+  
+  /// Filtros activos seleccionados por el usuario
   final Set<String> _selectedTypes = <String>{};
   final Set<String> _selectedGenerations = <String>{};
   final Set<String> _selectedRegions = <String>{};
   final Set<String> _selectedShapes = <String>{};
 
+  /// Opción de ordenamiento actual
   PokemonSortOption _sortOption = kDefaultSortOption;
+  
+  /// Dirección de ordenamiento (ascendente/descendente)
   bool _isSortAscending = kDefaultSortAscending;
 
+  /// Timer para el debounce de la búsqueda (evita queries excesivas)
   Timer? _debounce;
+  
+  /// Lista de Pokémon actualmente mostrados
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
+  
+  /// Opciones disponibles para los filtros
   List<String> _availableTypes = <String>[];
   List<String> _availableGenerations = <String>[];
   List<String> _availableRegions = <String>[];
   List<String> _availableShapes = <String>[];
 
-  bool _isFetching = false;
-  bool _isInitialLoading = true;
-  bool _hasMore = true;
-  bool _filtersLoading = false;
-  bool _didInit = false;
+  /// Estados de carga y paginación
+  bool _isFetching = false;           // Indica si hay una petición en curso
+  bool _isInitialLoading = true;       // Indica la primera carga
+  bool _hasMore = true;                // Indica si hay más resultados para cargar
+  bool _filtersLoading = false;        // Indica si se están cargando los filtros
+  bool _didInit = false;               // Indica si ya se inicializó
 
-  int _totalCount = 0;
-  int _activeFiltersCount = 0;
-  String _searchTerm = '';
-  String _debouncedSearch = '';
-  String _errorMessage = '';
+  /// Métricas y estado de la UI
+  int _totalCount = 0;                 // Total de Pokémon que coinciden con filtros
+  int _activeFiltersCount = 0;         // Número de filtros activos
+  String _searchTerm = '';             // Término de búsqueda actual (sin debounce)
+  String _debouncedSearch = '';        // Término de búsqueda aplicado (con debounce)
+  String _errorMessage = '';           // Mensaje de error si algo falla
 
+  /// Verifica si el ordenamiento actual es el predeterminado
   bool get _isDefaultSort =>
       _sortOption == kDefaultSortOption && _isSortAscending == kDefaultSortAscending;
 
