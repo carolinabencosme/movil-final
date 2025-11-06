@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
 
+/// Widget para mostrar la imagen artwork de un Pokémon con estilo consistente
+/// 
+/// Presenta la imagen oficial del Pokémon con:
+/// - Contenedor con gradiente de colores del tema
+/// - Sombra opcional para darle profundidad
+/// - Manejo de estados de carga y error
+/// - Animación de Hero opcional para transiciones entre pantallas
+/// - Caché optimizado para mejor rendimiento
+/// 
+/// El widget maneja automáticamente la carga, errores y estados vacíos,
+/// mostrando iconos apropiados cuando la imagen no está disponible.
 class PokemonArtwork extends StatelessWidget {
   const PokemonArtwork({
     super.key,
@@ -11,11 +22,22 @@ class PokemonArtwork extends StatelessWidget {
     this.heroTag,
   });
 
+  /// URL de la imagen del Pokémon (vacío si no hay imagen disponible)
   final String imageUrl;
+  
+  /// Tamaño del widget en píxeles (ancho y alto), null usa 96.0 por defecto
   final double? size;
+  
+  /// Radio de borde para las esquinas redondeadas
   final double borderRadius;
+  
+  /// Padding interno entre el contenedor y la imagen
   final EdgeInsets padding;
+  
+  /// Si es true, muestra sombra debajo del widget
   final bool showShadow;
+  
+  /// Tag opcional para animación Hero, si es null no se usa Hero
   final String? heroTag;
 
   @override

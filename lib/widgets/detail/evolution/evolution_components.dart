@@ -6,11 +6,21 @@ import '../../../models/pokemon_model.dart';
 import '../../../widgets/pokemon_artwork.dart';
 import '../detail_constants.dart';
 
-/// Helper class for species data
+/// Clase auxiliar para almacenar datos de una especie Pokémon
+/// 
+/// Representa una especie en la cadena evolutiva con información básica
+/// necesaria para renderizar las tarjetas de evolución.
 class Species {
+  /// ID único de la especie en la base de datos
   final int id;
+  
+  /// Nombre de la especie (ej: "bulbasaur", "charizard")
   final String name;
+  
+  /// ID de la especie padre (pre-evolución), null si es la forma base
   final int? parentId;
+  
+  /// URL de la imagen artwork oficial del Pokémon
   final String imageUrl;
 
   const Species({
@@ -21,7 +31,13 @@ class Species {
   });
 }
 
-/// Build species map from raw evolution data
+/// Construye un mapa de especies desde datos crudos de evolución
+/// 
+/// Convierte una lista de nodos de evolución en un mapa indexado por ID
+/// para facilitar la navegación y búsqueda en la cadena evolutiva.
+/// 
+/// [raw]: Lista de nodos de evolución desde la API GraphQL
+/// Retorna: Mapa donde la clave es el ID de especie y el valor es el objeto Species
 Map<int, Species> speciesMapFromRaw(List<PokemonEvolutionNode> raw) {
   final map = <int, Species>{};
   for (final node in raw) {
@@ -35,7 +51,14 @@ Map<int, Species> speciesMapFromRaw(List<PokemonEvolutionNode> raw) {
   return map;
 }
 
-/// Get the full pre-evolution chain including current pokemon
+/// Obtiene la cadena completa de pre-evoluciones incluyendo el Pokémon actual
+/// 
+/// Recorre hacia atrás desde el Pokémon actual hasta la forma base,
+/// construyendo una lista ordenada de todas las formas previas.
+/// 
+/// [currentId]: ID del Pokémon actual
+/// [map]: Mapa de especies indexado por ID
+/// Retorna: Lista ordenada desde la forma base hasta el Pokémon actual
 List<Species> preChain(int currentId, Map<int, Species> map) {
   final chain = <Species>[];
   int? cursor = currentId;
@@ -48,7 +71,15 @@ List<Species> preChain(int currentId, Map<int, Species> map) {
   return chain;
 }
 
-/// Get all forward evolution chains from current pokemon
+/// Obtiene todas las cadenas de evolución futuras desde el Pokémon actual
+/// 
+/// Construye las diferentes rutas evolutivas posibles desde el Pokémon actual.
+/// Maneja ramificaciones (como Eevee con múltiples evoluciones) creando
+/// una cadena separada para cada rama.
+/// 
+/// [currentId]: ID del Pokémon actual
+/// [map]: Mapa de especies indexado por ID
+/// Retorna: Lista de cadenas, donde cada cadena es una posible ruta evolutiva
 List<List<Species>> forwardChains(int currentId, Map<int, Species> map) {
   final result = <List<Species>>[];
   final firstLevel = map.values.where((n) => n.parentId == currentId).toList();
@@ -70,15 +101,23 @@ List<List<Species>> forwardChains(int currentId, Map<int, Species> map) {
   return result;
 }
 
-/// Constants for sprite URLs
+/// URL base para las imágenes artwork oficiales de Pokémon desde PokeAPI
 const String officialArtworkBaseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
 
-/// Helper to get sprite URL
+/// Genera la URL del sprite oficial para un Pokémon dado su ID
+/// 
+/// [id]: ID numérico del Pokémon (ej: 1 para Bulbasaur)
+/// Retorna: URL completa de la imagen PNG del artwork oficial
 String spriteUrl(int id) {
   return '$officialArtworkBaseUrl/$id.png';
 }
 
-/// Section displaying Pokemon evolution chain
+/// Sección que muestra la cadena evolutiva del Pokémon
+/// 
+/// Presenta visualmente las evoluciones de un Pokémon, incluyendo:
+/// - Cadena evolutiva completa (pre-evoluciones)
+/// - Evoluciones posibles futuras
+/// - Ramificaciones evolutivas (como Eevee)
 class EvolutionSection extends StatelessWidget {
   const EvolutionSection({
     super.key,
@@ -87,8 +126,13 @@ class EvolutionSection extends StatelessWidget {
     required this.formatLabel,
   });
 
+  /// Cadena evolutiva completa del Pokémon con todos los nodos
   final PokemonEvolutionChain? evolutionChain;
+  
+  /// ID de la especie del Pokémon actual que se está visualizando
   final int? currentSpeciesId;
+  
+  /// Función para formatear etiquetas de texto (capitalización)
   final String Function(String) formatLabel;
 
   @override
@@ -193,7 +237,10 @@ class EvolutionSection extends StatelessWidget {
   }
 }
 
-/// Linear evolution chain display (horizontal with arrows)
+/// Visualización lineal de cadena evolutiva (horizontal con flechas)
+/// 
+/// Muestra una secuencia de evoluciones en línea horizontal con flechas
+/// entre cada etapa, ideal para evoluciones simples sin ramificaciones.
 class LinearEvolutionChain extends StatelessWidget {
   const LinearEvolutionChain({
     super.key,
@@ -202,8 +249,13 @@ class LinearEvolutionChain extends StatelessWidget {
     required this.formatLabel,
   });
 
+  /// Lista ordenada de especies en la cadena evolutiva
   final List<Species> chain;
+  
+  /// ID del Pokémon actual para resaltarlo visualmente
   final int currentId;
+  
+  /// Función para formatear etiquetas de texto
   final String Function(String) formatLabel;
 
   @override
@@ -239,7 +291,14 @@ class LinearEvolutionChain extends StatelessWidget {
   }
 }
 
-/// Branched evolution display (circular/ramified layout)
+/// Visualización de evoluciones ramificadas (diseño circular/ramificado)
+/// 
+/// Muestra evoluciones con múltiples ramas (como Eevee) en un diseño vertical:
+/// - Pokémon actual en la parte superior central
+/// - Flecha hacia abajo
+/// - Todas las posibles evoluciones en un Wrap horizontal
+/// 
+/// Cada rama puede tener múltiples etapas (ej: Eevee -> Umbreon -> [futura evolución])
 class BranchedEvolutionDisplay extends StatelessWidget {
   const BranchedEvolutionDisplay({
     super.key,
@@ -248,8 +307,13 @@ class BranchedEvolutionDisplay extends StatelessWidget {
     required this.formatLabel,
   });
 
+  /// Lista de cadenas evolutivas posibles, cada una es una lista de Species
   final List<List<Species>> chains;
+  
+  /// Especie del Pokémon actual que se muestra en el centro
   final Species currentSpecies;
+  
+  /// Función para formatear etiquetas de texto
   final String Function(String) formatLabel;
 
   @override
@@ -310,7 +374,16 @@ class BranchedEvolutionDisplay extends StatelessWidget {
   }
 }
 
-/// Individual evolution card
+/// Tarjeta individual de evolución
+/// 
+/// Muestra un Pokémon en la cadena evolutiva con:
+/// - Imagen del Pokémon
+/// - Nombre
+/// - Indicador visual si es el Pokémon actual
+/// - Navegación táctil a otros Pokémon (si no es el actual)
+/// 
+/// IMPORTANTE: No usa Hero widget para evitar conflictos de tags duplicados
+/// cuando múltiples evoluciones se muestran en la misma pantalla.
 class EvolutionCard extends StatelessWidget {
   const EvolutionCard({
     super.key,
@@ -319,8 +392,13 @@ class EvolutionCard extends StatelessWidget {
     required this.formatLabel,
   });
 
+  /// Datos de la especie a mostrar
   final Species species;
+  
+  /// Si es true, este es el Pokémon que el usuario está viendo actualmente
   final bool isCurrent;
+  
+  /// Función para formatear etiquetas de texto
   final String Function(String) formatLabel;
 
   @override
@@ -366,27 +444,26 @@ class EvolutionCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Hero(
-            tag: 'pokemon-artwork-${species.id}',
-            child: Image.network(
-              imageUrl,
-              height: 80,
-              width: 80,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 80,
-                  width: 80,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.image_not_supported,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                );
-              },
-            ),
+          // No se usa Hero aquí para evitar conflictos de tags duplicados
+          // en la cadena evolutiva donde múltiples especies se muestran simultáneamente
+          Image.network(
+            imageUrl,
+            height: 80,
+            width: 80,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           Text(
@@ -557,7 +634,14 @@ class _AnimatedEvolutionArrowHorizontalState
   }
 }
 
-/// Evolution stage card with animation
+/// Tarjeta de etapa evolutiva con animación
+/// 
+/// Widget animado que muestra una etapa en la cadena evolutiva con:
+/// - Animaciones de entrada (escala y fade)
+/// - Imagen del Pokémon
+/// - Nombre y condiciones de evolución
+/// - Indicador visual si es el Pokémon actual
+/// - Navegación táctil a otros Pokémon
 class EvolutionStageCard extends StatefulWidget {
   const EvolutionStageCard({
     super.key,
@@ -567,9 +651,16 @@ class EvolutionStageCard extends StatefulWidget {
     this.isCompact = false,
   });
 
+  /// Nodo de evolución con datos de la especie y condiciones
   final PokemonEvolutionNode node;
+  
+  /// Si es true, este es el Pokémon que el usuario está viendo
   final bool isCurrent;
+  
+  /// Función para formatear etiquetas de texto
   final String Function(String) formatLabel;
+  
+  /// Si es true, usa un diseño más compacto
   final bool isCompact;
 
   @override
@@ -689,8 +780,9 @@ class _EvolutionStageCardState extends State<EvolutionStageCard>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // No se usa heroTag para evitar conflictos de tags duplicados
+            // en la cadena evolutiva donde múltiples especies pueden tener el mismo ID
             PokemonArtwork(
-              heroTag: 'pokemon-artwork-${widget.node.speciesId}',
               imageUrl: widget.node.imageUrl,
               size: imageSize,
               borderRadius: widget.isCompact
