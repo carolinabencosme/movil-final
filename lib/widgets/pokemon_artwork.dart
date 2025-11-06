@@ -51,6 +51,8 @@ class PokemonArtwork extends StatelessWidget {
       child = Image.network(
         imageUrl,
         fit: BoxFit.contain,
+        cacheWidth: dimension.ceil() * 2, // Cache at 2x resolution for quality
+        cacheHeight: dimension.ceil() * 2,
         frameBuilder: (context, widget, frame, wasSynchronouslyLoaded) {
           final isLoaded = frame != null || wasSynchronouslyLoaded;
           return AnimatedOpacity(
