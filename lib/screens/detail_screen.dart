@@ -887,7 +887,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Tipos',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -900,7 +900,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
                 : const Text('Sin información de tipos disponible.'),
           ),
           const SizedBox(height: 16),
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Datos básicos',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -989,7 +989,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
             ),
           ),
           const SizedBox(height: 16),
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Características',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -1002,7 +1002,7 @@ class _PokemonInfoTabState extends State<_PokemonInfoTab>
             ),
           ),
           const SizedBox(height: 16),
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Habilidades',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -1050,7 +1050,7 @@ class _PokemonStatsTabState extends State<_PokemonStatsTab>
 
     return Padding(
       padding: padding,
-      child: _InfoSectionCard(
+      child: InfoSectionCard(
         title: 'Estadísticas',
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
@@ -1103,7 +1103,7 @@ class _PokemonMatchupsTabState extends State<_PokemonMatchupsTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Debilidades',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -1113,7 +1113,7 @@ class _PokemonMatchupsTabState extends State<_PokemonMatchupsTab>
             ),
           ),
           const SizedBox(height: 16),
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Resistencias e inmunidades',
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
@@ -1150,7 +1150,7 @@ class _PokemonFutureTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Movimientos',
             backgroundColor: sectionBackground,
             borderColor: sectionBorder,
@@ -1160,7 +1160,7 @@ class _PokemonFutureTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _InfoSectionCard(
+          InfoSectionCard(
             title: 'Cadena evolutiva',
             backgroundColor: sectionBackground,
             borderColor: sectionBorder,
@@ -1205,7 +1205,7 @@ class _PokemonEvolutionTabState extends State<_PokemonEvolutionTab>
 
     return Padding(
       padding: padding,
-      child: _InfoSectionCard(
+      child: InfoSectionCard(
         title: 'Cadena evolutiva',
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
@@ -1248,7 +1248,7 @@ class _PokemonMovesTabState extends State<_PokemonMovesTab>
 
     return Padding(
       padding: padding,
-      child: _InfoSectionCard(
+      child: InfoSectionCard(
         title: 'Movimientos',
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
@@ -1264,115 +1264,6 @@ class _PokemonMovesTabState extends State<_PokemonMovesTab>
 Color _resolveStaticTypeColor(String type, ColorScheme colorScheme) {
   final color = pokemonTypeColors[type.toLowerCase()];
   return color ?? colorScheme.primary;
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context)
-          .textTheme
-          .titleLarge
-          ?.copyWith(fontWeight: FontWeight.bold),
-    );
-  }
-}
-
-enum InfoSectionCardVariant { rounded, angled }
-
-class _InfoSectionCard extends StatelessWidget {
-  const _InfoSectionCard({
-    required this.title,
-    required this.child,
-    this.backgroundColor,
-    this.borderColor,
-    this.variant = InfoSectionCardVariant.rounded,
-    this.padding,
-  });
-
-  final String title;
-  final Widget child;
-  final Color? backgroundColor;
-  final Color? borderColor;
-  final InfoSectionCardVariant variant;
-  final EdgeInsetsGeometry? padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final cardColor = backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.4);
-    final outlineColor = borderColor ?? colorScheme.outline.withOpacity(0.12);
-    final effectivePadding = padding ?? const EdgeInsets.all(20);
-    final content = Padding(
-      padding: effectivePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(title: title),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-
-    switch (variant) {
-      case InfoSectionCardVariant.rounded:
-        return Card(
-          margin: EdgeInsets.zero,
-          color: cardColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-            side: BorderSide(color: outlineColor),
-          ),
-          child: content,
-        );
-      case InfoSectionCardVariant.angled:
-        return ClipPath(
-          clipper: const _AngledCardClipper(),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: cardColor,
-              border: Border.all(color: outlineColor),
-            ),
-            child: content,
-          ),
-        );
-    }
-  }
-}
-
-class _AngledCardClipper extends CustomClipper<Path> {
-  const _AngledCardClipper();
-
-  @override
-  Path getClip(Size size) {
-    const double cut = 26;
-    return Path()
-      ..moveTo(0, cut)
-      ..quadraticBezierTo(0, 0, cut, 0)
-      ..lineTo(size.width - cut, 0)
-      ..quadraticBezierTo(size.width, 0, size.width, cut)
-      ..lineTo(size.width, size.height - cut)
-      ..quadraticBezierTo(
-        size.width,
-        size.height,
-        size.width - cut,
-        size.height,
-      )
-      ..lineTo(cut, size.height)
-      ..quadraticBezierTo(0, size.height, 0, size.height - cut)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 class _TypeLayout extends StatelessWidget {

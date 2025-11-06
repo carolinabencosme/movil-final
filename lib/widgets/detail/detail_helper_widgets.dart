@@ -4,6 +4,120 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../pokemon_artwork.dart';
 
+/// Variant for info section cards
+enum InfoSectionCardVariant { rounded, angled }
+
+/// Section title widget for detail sections
+class SectionTitle extends StatelessWidget {
+  const SectionTitle({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context)
+          .textTheme
+          .titleLarge
+          ?.copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+/// Card widget for info sections with optional styling variants
+class InfoSectionCard extends StatelessWidget {
+  const InfoSectionCard({
+    super.key,
+    required this.title,
+    required this.child,
+    this.backgroundColor,
+    this.borderColor,
+    this.variant = InfoSectionCardVariant.rounded,
+    this.padding,
+  });
+
+  final String title;
+  final Widget child;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final InfoSectionCardVariant variant;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardColor = backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.4);
+    final outlineColor = borderColor ?? colorScheme.outline.withOpacity(0.12);
+    final effectivePadding = padding ?? const EdgeInsets.all(20);
+    final content = Padding(
+      padding: effectivePadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionTitle(title: title),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+
+    switch (variant) {
+      case InfoSectionCardVariant.rounded:
+        return Card(
+          margin: EdgeInsets.zero,
+          color: cardColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+            side: BorderSide(color: outlineColor),
+          ),
+          child: content,
+        );
+      case InfoSectionCardVariant.angled:
+        return ClipPath(
+          clipper: const AngledCardClipper(),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: cardColor,
+              border: Border.all(color: outlineColor),
+            ),
+            child: content,
+          ),
+        );
+    }
+  }
+}
+
+/// Custom clipper for angled card variant
+class AngledCardClipper extends CustomClipper<Path> {
+  const AngledCardClipper();
+
+  @override
+  Path getClip(Size size) {
+    const double cut = 26;
+    return Path()
+      ..moveTo(0, cut)
+      ..quadraticBezierTo(0, 0, cut, 0)
+      ..lineTo(size.width - cut, 0)
+      ..quadraticBezierTo(size.width, 0, size.width, cut)
+      ..lineTo(size.width, size.height - cut)
+      ..quadraticBezierTo(
+        size.width,
+        size.height,
+        size.width - cut,
+        size.height,
+      )
+      ..lineTo(cut, size.height)
+      ..quadraticBezierTo(0, size.height, 0, size.height - cut)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
 /// Error view displayed when Pokemon detail data cannot be loaded
 class PokemonDetailErrorView extends StatelessWidget {
   const PokemonDetailErrorView({super.key, this.onRetry});
