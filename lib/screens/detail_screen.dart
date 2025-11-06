@@ -353,15 +353,20 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
       child: NestedScrollView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const BouncingScrollPhysics(),
         headerSliverBuilder: (context, innerBoxIsScrolled) {
+          final overlapHandle =
+              NestedScrollView.sliverOverlapAbsorberHandleFor(context);
           return [
-            _buildHeroHeader(
-              context: context,
-              theme: theme,
-              pokemon: pokemon,
-              typeColor: typeColor,
-              onTypeColor: onTypeColor,
+            SliverOverlapAbsorber(
+              handle: overlapHandle,
+              sliver: _buildHeroHeader(
+                context: context,
+                theme: theme,
+                pokemon: pokemon,
+                typeColor: typeColor,
+                onTypeColor: onTypeColor,
+              ),
             ),
             _buildTabBar(theme, typeColor),
           ];
@@ -733,12 +738,13 @@ class _DetailTabScrollView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final overlapHandle =
+        NestedScrollView.sliverOverlapAbsorberHandleFor(context);
     return CustomScrollView(
       key: storageKey,
-      physics: const BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-      ),
+      physics: const BouncingScrollPhysics(),
       slivers: [
+        SliverOverlapInjector(handle: overlapHandle),
         SliverPadding(
           padding: EdgeInsets.only(top: topPadding, bottom: bottomPadding),
           sliver: SliverToBoxAdapter(child: child),
