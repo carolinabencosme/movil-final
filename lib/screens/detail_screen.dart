@@ -1636,6 +1636,10 @@ class _MatchupHexGrid extends StatelessWidget {
   }
 }
 
+/// Sección de movimientos del Pokémon con carga perezosa
+/// 
+/// Muestra los movimientos del Pokémon con opciones de filtrado por método de aprendizaje
+/// y nivel. Implementa paginación para optimizar el rendimiento cuando hay muchos movimientos.
 class _MovesSection extends StatefulWidget {
   const _MovesSection({
     required this.moves,
@@ -1652,6 +1656,11 @@ class _MovesSection extends StatefulWidget {
 class _MovesSectionState extends State<_MovesSection> {
   String? _selectedMethod;
   bool _onlyWithLevel = false;
+  
+  // Paginación para carga perezosa de movimientos
+  static const int _initialMovesCount = 20;
+  static const int _movesIncrement = 20;
+  int _displayedMovesCount = _initialMovesCount;
 
   String _resolveDisplayName(String value) {
     if (value.isEmpty) {
@@ -1669,6 +1678,20 @@ class _MovesSectionState extends State<_MovesSection> {
       return 'Desconocido';
     }
     return widget.formatLabel(method);
+  }
+
+  /// Reinicia el contador de movimientos mostrados cuando cambian los filtros
+  void _resetPagination() {
+    setState(() {
+      _displayedMovesCount = _initialMovesCount;
+    });
+  }
+
+  /// Carga más movimientos cuando el usuario presiona el botón
+  void _loadMoreMoves() {
+    setState(() {
+      _displayedMovesCount += _movesIncrement;
+    });
   }
 
   @override
@@ -1720,7 +1743,10 @@ class _MovesSectionState extends State<_MovesSection> {
               selected: _selectedMethod == null,
               onSelected: (selected) {
                 if (selected) {
-                  setState(() => _selectedMethod = null);
+                  setState(() {
+                    _selectedMethod = null;
+                  });
+                  _resetPagination();
                 }
               },
             ),
@@ -1732,6 +1758,7 @@ class _MovesSectionState extends State<_MovesSection> {
                   setState(() {
                     _selectedMethod = selected ? method : null;
                   });
+                  _resetPagination();
                 },
               ),
             ),
@@ -1740,6 +1767,7 @@ class _MovesSectionState extends State<_MovesSection> {
               selected: _onlyWithLevel,
               onSelected: (selected) {
                 setState(() => _onlyWithLevel = selected);
+                _resetPagination();
               },
             ),
           ],
@@ -1747,11 +1775,14 @@ class _MovesSectionState extends State<_MovesSection> {
         const SizedBox(height: 12),
         if (filteredMoves.isEmpty)
           const Text('No hay movimientos que coincidan con los filtros.')
-        else
+        else ...[
+          // Mostramos solo los primeros N movimientos para optimizar rendimiento
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredMoves.length,
+            itemCount: filteredMoves.length > _displayedMovesCount 
+                ? _displayedMovesCount 
+                : filteredMoves.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final move = filteredMoves[index];
@@ -1839,6 +1870,20 @@ class _MovesSectionState extends State<_MovesSection> {
               );
             },
           ),
+          // Botón para cargar más movimientos si hay más disponibles
+          if (filteredMoves.length > _displayedMovesCount) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: _loadMoreMoves,
+                icon: const Icon(Icons.expand_more),
+                label: Text(
+                  'Cargar más movimientos (${filteredMoves.length - _displayedMovesCount} restantes)',
+                ),
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -2059,6 +2104,7 @@ class _LinearEvolutionChain extends StatelessWidget {
               species: chain[i],
               isCurrent: chain[i].id == currentId,
               formatLabel: formatLabel,
+              heroTagSuffix: '-linear-$i',
             ),
             if (i < chain.length - 1)
               Padding(
@@ -2099,6 +2145,7 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
             species: currentSpecies,
             isCurrent: true,
             formatLabel: formatLabel,
+            heroTagSuffix: '-branched-current',
           ),
         ),
         const SizedBox(height: 16),
@@ -2117,17 +2164,18 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
           spacing: 24,
           runSpacing: 24,
           children: [
-            for (final chain in chains)
+            for (var chainIndex = 0; chainIndex < chains.length; chainIndex++)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  for (var i = 0; i < chain.length; i++) ...[
+                  for (var i = 0; i < chains[chainIndex].length; i++) ...[
                     _EvolutionCard(
-                      species: chain[i],
+                      species: chains[chainIndex][i],
                       isCurrent: false,
                       formatLabel: formatLabel,
+                      heroTagSuffix: '-branch-$chainIndex-$i',
                     ),
-                    if (i < chain.length - 1)
+                    if (i < chains[chainIndex].length - 1)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Icon(
@@ -2146,17 +2194,22 @@ class _BranchedEvolutionDisplay extends StatelessWidget {
   }
 }
 
-// Individual evolution card
+/// Tarjeta individual de evolución
+/// 
+/// Muestra un Pokémon en la cadena evolutiva con su imagen y nombre.
+/// Si no es el Pokémon actual, permite navegar a su pantalla de detalles.
 class _EvolutionCard extends StatelessWidget {
   const _EvolutionCard({
     required this.species,
     required this.isCurrent,
     required this.formatLabel,
+    this.heroTagSuffix,
   });
 
   final _Species species;
   final bool isCurrent;
   final String Function(String) formatLabel;
+  final String? heroTagSuffix;
 
   @override
   Widget build(BuildContext context) {
@@ -2202,7 +2255,7 @@ class _EvolutionCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Hero(
-            tag: 'pokemon-artwork-${species.id}',
+            tag: 'pokemon-artwork-${species.id}${heroTagSuffix ?? '-evolution'}',
             child: Image.network(
               imageUrl,
               height: 80,
@@ -2300,6 +2353,7 @@ class _EvolutionPathRow extends StatelessWidget {
                   isCurrent: currentSpeciesId != null &&
                       currentSpeciesId == nodes[index].speciesId,
                   formatLabel: formatLabel,
+                  heroTagSuffix: '-stage-$index',
                 ),
               ),
               // Arrow between stages
@@ -2392,18 +2446,24 @@ class _AnimatedEvolutionArrowHorizontalState
   }
 }
 
+/// Tarjeta de etapa de evolución con animaciones
+/// 
+/// Muestra un nodo de evolución con efectos de escala y fade al aparecer.
+/// Utilizada en la visualización horizontal de cadenas evolutivas.
 class _EvolutionStageCard extends StatefulWidget {
   const _EvolutionStageCard({
     required this.node,
     required this.isCurrent,
     required this.formatLabel,
     this.isCompact = false,
+    this.heroTagSuffix,
   });
 
   final PokemonEvolutionNode node;
   final bool isCurrent;
   final String Function(String) formatLabel;
   final bool isCompact;
+  final String? heroTagSuffix;
 
   @override
   State<_EvolutionStageCard> createState() => _EvolutionStageCardState();
@@ -2525,7 +2585,7 @@ class _EvolutionStageCardState extends State<_EvolutionStageCard>
           mainAxisSize: MainAxisSize.min,
           children: [
             PokemonArtwork(
-              heroTag: 'pokemon-artwork-${widget.node.speciesId}',
+              heroTag: 'pokemon-artwork-${widget.node.speciesId}${widget.heroTagSuffix ?? '-evolution-stage'}',
               imageUrl: widget.node.imageUrl,
               size: imageSize,
               borderRadius: widget.isCompact
