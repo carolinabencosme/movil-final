@@ -954,7 +954,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
             return const _LoadingTile();
           }
           final pokemon = _pokemons[index];
-          return _PokemonListTile(pokemon: pokemon);
+          return _PokemonListTile(
+            key: ValueKey('pokemon-${pokemon.id}'),
+            pokemon: pokemon,
+          );
         },
       ),
     );
@@ -1387,7 +1390,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
 }
 
 class _PokemonListTile extends StatefulWidget {
-  const _PokemonListTile({required this.pokemon});
+  const _PokemonListTile({super.key, required this.pokemon});
 
   final PokemonListItem pokemon;
 
