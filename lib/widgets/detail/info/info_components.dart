@@ -3,14 +3,15 @@ import 'dart:ui' show clampDouble;
 import 'package:flutter/material.dart';
 
 import '../../../models/pokemon_model.dart';
+import '../../../theme/pokemon_type_colors.dart';
 import '../detail_helper_widgets.dart';
 import '../matchups/matchup_components.dart';
 import '../stats/stat_components.dart';
 
 /// Helper to resolve type color statically
 Color _resolveStaticTypeColor(String type, ColorScheme scheme) {
-  // Import and use pokemonTypeColors if available, otherwise use primary
-  return scheme.primary;
+  final color = pokemonTypeColors[type.toLowerCase()];
+  return color ?? scheme.primary;
 }
 
 /// Layout widget for Pokemon types
