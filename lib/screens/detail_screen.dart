@@ -106,7 +106,7 @@ EdgeInsets _responsiveDetailTabPadding(BuildContext context) {
 }
 
 class DetailScreen extends StatelessWidget {
-  const DetailScreen({
+  DetailScreen({
     super.key,
     this.pokemonId,
     this.pokemonName,
