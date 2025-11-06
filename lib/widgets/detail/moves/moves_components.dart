@@ -80,6 +80,11 @@ class _MovesSectionState extends State<MovesSection> {
       _displayedMovesCount = _pageSize;
     });
   }
+  
+  /// Calcula cuántos movimientos quedan por cargar
+  int _remainingMovesCount(int totalFiltered) {
+    return math.max(0, totalFiltered - _displayedMovesCount);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +178,7 @@ class _MovesSectionState extends State<MovesSection> {
         else ...[
           Semantics(
             liveRegion: true,
+            label: 'Contador de movimientos mostrados',
             child: Text(
               'Mostrando ${displayedMoves.length} de ${filteredMoves.length} movimientos',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -281,7 +287,7 @@ class _MovesSectionState extends State<MovesSection> {
                 onPressed: _loadMoreMoves,
                 icon: const Icon(Icons.expand_more),
                 label: Text(
-                  'Cargar más movimientos (${math.max(0, filteredMoves.length - _displayedMovesCount)} restantes)',
+                  'Cargar más movimientos (${_remainingMovesCount(filteredMoves.length)} restantes)',
                 ),
               ),
             ),
