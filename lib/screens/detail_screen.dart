@@ -15,6 +15,7 @@ import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
+import 'pokedex_screen.dart';
 
 /// ===============================
 /// DETAIL SCREEN (CONTENEDOR)
@@ -57,6 +58,16 @@ class DetailScreen extends StatelessWidget {
     return value[0].toUpperCase() + value.substring(1);
   }
 
+  Future<bool> _navigateBackToPokedex(BuildContext context) async {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => const PokedexScreen(),
+      ),
+      (route) => false,
+    );
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     // HeroTag estable incluso si entra por id o name
@@ -74,21 +85,28 @@ class DetailScreen extends StatelessWidget {
         ? <String, dynamic>{'id': {'_eq': pokemonId}}
         : <String, dynamic>{'name': {'_eq': pokemonName!}};
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(previewName ?? 'Detalles del Pokémon'),
-      ),
-      body: Query(
-        options: QueryOptions(
-          document: gql(getPokemonDetailsQuery),
-          fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
-          errorPolicy: ErrorPolicy.all, // permite datos parciales
-          variables: {
-            'where': where,
-            'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
-          },
+    return WillPopScope(
+      onWillPop: () => _navigateBackToPokedex(context),
+      child: Scaffold(
+        appBar: AppBar(
+          leading: BackButton(
+            onPressed: () {
+              _navigateBackToPokedex(context);
+            },
+          ),
+          title: Text(previewName ?? 'Detalles del Pokémon'),
         ),
-        builder: (result, {fetchMore, refetch}) {
+        body: Query(
+          options: QueryOptions(
+            document: gql(getPokemonDetailsQuery),
+            fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
+            errorPolicy: ErrorPolicy.all, // permite datos parciales
+            variables: {
+              'where': where,
+              'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
+            },
+          ),
+          builder: (result, {fetchMore, refetch}) {
           // Logs de depuración (solo en debug)
           if (kDebugMode) {
             debugPrint(
@@ -196,6 +214,7 @@ class DetailScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }
