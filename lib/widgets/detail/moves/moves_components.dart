@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../models/move_filters.dart';
 import '../../../models/pokemon_model.dart';
 import '../../../theme/pokemon_type_colors.dart';
 import '../detail_constants.dart';
@@ -16,44 +17,50 @@ import '../detail_helper_widgets.dart';
 /// - Filtro para mostrar solo movimientos con nivel definido
 /// - **Paginación lazy loading**: Carga movimientos incrementalmente mientras el usuario hace scroll
 /// - Ordenamiento por nivel y nombre
-/// 
+///
 /// La paginación evita renderizar cientos de movimientos de golpe, mejorando
 /// significativamente el rendimiento especialmente en Pokémon con muchos movimientos.
-/// 
+///
 /// La deduplicación se basa en el nombre del movimiento, mostrando solo una entrada
 /// por movimiento único para evitar repeticiones entre diferentes versiones del juego.
+///
+/// Los filtros activos se reciben desde la pestaña de movimientos mediante el modelo
+/// [MoveFilters], permitiendo desacoplar la lógica de filtrado de la interfaz que los
+/// modifica.
 class MovesSection extends StatefulWidget {
   const MovesSection({
     super.key,
     required this.moves,
     required this.formatLabel,
+    required this.filters,
+    this.onCountsChanged,
   });
 
   /// Lista completa de movimientos del Pokémon desde la API
   final List<PokemonMove> moves;
-  
+
   /// Función para formatear etiquetas de texto (capitalización)
   final String Function(String) formatLabel;
+
+  /// Filtros activos a aplicar sobre la lista
+  final MoveFilters filters;
+
+  /// Callback opcional para informar cuántos movimientos se están mostrando
+  final void Function(int visible, int total)? onCountsChanged;
 
   @override
   State<MovesSection> createState() => _MovesSectionState();
 }
 
 class _MovesSectionState extends State<MovesSection> {
-  /// Método de aprendizaje seleccionado para filtrar (null = todos)
-  String? _selectedMethod;
-  
-  /// Versión del juego seleccionada para filtrar (null = todos)
-  String? _selectedGame;
-  
-  /// Si es true, solo muestra movimientos que tienen nivel definido
-  bool _onlyWithLevel = false;
-  
   /// Número de movimientos a mostrar inicialmente y por cada carga
   static const int _pageSize = 15;
-  
+
   /// Contador de movimientos actualmente visibles
   int _displayedMovesCount = _pageSize;
+
+  int? _lastReportedVisible;
+  int? _lastReportedTotal;
 
   /// Resuelve el nombre a mostrar de un movimiento
 
@@ -95,13 +102,6 @@ class _MovesSectionState extends State<MovesSection> {
     });
   }
 
-  /// Reinicia el contador cuando cambian los filtros
-  void _resetDisplayCount() {
-    setState(() {
-      _displayedMovesCount = _pageSize;
-    });
-  }
-  
   /// Calcula cuántos movimientos quedan por cargar
   int _remainingMovesCount(int totalFiltered) {
     return math.max(0, totalFiltered - _displayedMovesCount);
@@ -118,7 +118,7 @@ class _MovesSectionState extends State<MovesSection> {
   /// Retorna una lista de movimientos sin duplicados
   List<PokemonMove> _deduplicateMoves(List<PokemonMove> moves) {
     final Map<String, PokemonMove> uniqueMoves = {};
-    
+
     for (final move in moves) {
       final key = move.name.toLowerCase();
       
@@ -132,6 +132,34 @@ class _MovesSectionState extends State<MovesSection> {
     return uniqueMoves.values.toList();
   }
 
+  void _notifyCounts(int visible, int total) {
+    if (widget.onCountsChanged == null) return;
+    if (_lastReportedVisible == visible && _lastReportedTotal == total) {
+      return;
+    }
+    _lastReportedVisible = visible;
+    _lastReportedTotal = total;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onCountsChanged?.call(visible, total);
+    });
+  }
+
+  void _resetPagination() {
+    _displayedMovesCount = _pageSize;
+    _lastReportedVisible = null;
+    _lastReportedTotal = null;
+  }
+
+  @override
+  void didUpdateWidget(covariant MovesSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.filters != widget.filters ||
+        oldWidget.moves != widget.moves) {
+      _resetPagination();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.moves.isEmpty) {
@@ -141,35 +169,17 @@ class _MovesSectionState extends State<MovesSection> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Extraer métodos únicos para filtros
-    final methods = widget.moves
-        .map((move) => move.method)
-        .where((method) => method.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort(
-        (a, b) => widget.formatLabel(a).compareTo(widget.formatLabel(b)),
-      );
-
-    // Extraer versiones de juego únicas para filtros
-    final games = widget.moves
-        .where((move) => move.versionGroup != null && move.versionGroup!.isNotEmpty)
-        .map((move) => move.versionGroup!)
-        .toSet()
-        .toList()
-      ..sort(
-        (a, b) => _formatVersionGroup(a).compareTo(_formatVersionGroup(b)),
-      );
-
     // Filtrar movimientos según criterios seleccionados
     var filteredMoves = widget.moves.where((move) {
-      if (_selectedMethod != null && move.method != _selectedMethod) {
+      if (widget.filters.method != null &&
+          move.method != widget.filters.method) {
         return false;
       }
-      if (_selectedGame != null && move.versionGroup != _selectedGame) {
+      if (widget.filters.versionGroup != null &&
+          move.versionGroup != widget.filters.versionGroup) {
         return false;
       }
-      if (_onlyWithLevel && !move.hasLevel) {
+      if (widget.filters.onlyWithLevel && !move.hasLevel) {
         return false;
       }
       return true;
@@ -189,153 +199,18 @@ class _MovesSectionState extends State<MovesSection> {
 
     // Lista de movimientos a mostrar (paginada)
     final displayedMoves = filteredMoves.take(_displayedMovesCount).toList();
-    
+
     // Indica si hay más movimientos para cargar
     final hasMore = _displayedMovesCount < filteredMoves.length;
+
+    _notifyCounts(displayedMoves.length, filteredMoves.length);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sección: Filtros por método de aprendizaje
-        Text(
-          'Método de aprendizaje',
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ChoiceChip(
-              label: const Text('Todos'),
-              selected: _selectedMethod == null,
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedMethod = null;
-                    _resetDisplayCount();
-                  });
-                }
-              },
-            ),
-            ...methods.map(
-              (method) => ChoiceChip(
-                label: Text(_formatMethod(method)),
-                selected: _selectedMethod == method,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedMethod = selected ? method : null;
-                    _resetDisplayCount();
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Sección: Filtros por versión del juego
-        if (games.isNotEmpty) ...[
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Versión del juego',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Dropdown para selección de juego
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _selectedGame != null
-                        ? colorScheme.primary.withOpacity(0.5)
-                        : colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                child: DropdownButton<String?>(
-                  value: _selectedGame,
-                  hint: const Text('Todas las versiones'),
-                  underline: const SizedBox(),
-                  isDense: true,
-                  icon: Icon(
-                    Icons.arrow_drop_down,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: _selectedGame != null
-                        ? FontWeight.w600
-                        : FontWeight.w500,
-                  ),
-                  items: [
-                    DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(
-                        'Todas las versiones',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                    ...games.map(
-                      (game) => DropdownMenuItem<String?>(
-                        value: game,
-                        child: Text(
-                          _formatVersionGroup(game),
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (newGame) {
-                    setState(() {
-                      _selectedGame = newGame;
-                      _resetDisplayCount();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-        // Filtro adicional: Solo con nivel
-        FilterChip(
-          label: const Text('Solo movimientos con nivel'),
-          selected: _onlyWithLevel,
-          onSelected: (selected) {
-            setState(() {
-              _onlyWithLevel = selected;
-              _resetDisplayCount();
-            });
-          },
-          avatar: _onlyWithLevel
-              ? Icon(Icons.check_circle, size: 18, color: colorScheme.primary)
-              : null,
-        ),
-        const SizedBox(height: 12),
         if (filteredMoves.isEmpty)
           const Text('No hay movimientos que coincidan con los filtros.')
         else ...[
-          Semantics(
-            liveRegion: true,
-            label: 'Contador de movimientos mostrados',
-            child: Text(
-              'Mostrando ${displayedMoves.length} de ${filteredMoves.length} movimientos',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

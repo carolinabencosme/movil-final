@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/move_filters.dart';
 import '../../../models/pokemon_model.dart';
 import '../detail_constants.dart';
 import '../detail_helper_widgets.dart';
@@ -8,6 +9,7 @@ import '../info/info_components.dart';
 import '../matchups/matchup_components.dart';
 import '../moves/moves_components.dart';
 import '../stats/stat_components.dart';
+import 'moves_filter_sheet.dart';
 
 /// Info tab showing Pokemon types, basic data, characteristics, and abilities
 class PokemonInfoTab extends StatefulWidget {
@@ -364,8 +366,89 @@ class PokemonMovesTab extends StatefulWidget {
 
 class _PokemonMovesTabState extends State<PokemonMovesTab>
     with AutomaticKeepAliveClientMixin {
+  MoveFilters _filters = const MoveFilters();
+  int _visibleMoves = 0;
+  int _totalMoves = 0;
+  bool _hasCounts = false;
+
   @override
   bool get wantKeepAlive => true;
+
+  List<String> _availableMethods() {
+    return widget.pokemon.moves
+        .map((move) => move.method)
+        .where((method) => method.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort((a, b) => widget.formatLabel(a).compareTo(widget.formatLabel(b)));
+  }
+
+  List<String> _availableVersionGroups() {
+    return widget.pokemon.moves
+        .where((move) => move.versionGroup != null && move.versionGroup!.isNotEmpty)
+        .map((move) => move.versionGroup!)
+        .toSet()
+        .toList()
+      ..sort((a, b) => _formatVersionGroup(a).compareTo(_formatVersionGroup(b)));
+  }
+
+  String _formatVersionGroup(String versionGroup) {
+    if (versionGroup.isEmpty) {
+      return 'Desconocido';
+    }
+
+    return versionGroup
+        .split('-')
+        .where((word) => word.isNotEmpty)
+        .map(widget.formatLabel)
+        .join(' ');
+  }
+
+  void _handleCountsChanged(int visible, int total) {
+    if (_hasCounts && _visibleMoves == visible && _totalMoves == total) {
+      return;
+    }
+    setState(() {
+      _visibleMoves = visible;
+      _totalMoves = total;
+      _hasCounts = true;
+    });
+  }
+
+  void _resetFilters() {
+    if (_filters.isDefault) {
+      return;
+    }
+    setState(() {
+      _filters = const MoveFilters();
+    });
+  }
+
+  Future<void> _openFilterSheet() async {
+    final methods = _availableMethods();
+    final versions = _availableVersionGroups();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return MovesFilterSheet(
+          filters: _filters,
+          availableMethods: methods,
+          availableVersionGroups: versions,
+          formatLabel: widget.formatLabel,
+          formatVersionGroup: _formatVersionGroup,
+          onApply: (filters) {
+            setState(() {
+              _filters = filters;
+            });
+            Navigator.of(sheetContext).pop();
+          },
+          onReset: _resetFilters,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -378,9 +461,50 @@ class _PokemonMovesTabState extends State<PokemonMovesTab>
         title: 'Movimientos',
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
-        child: MovesSection(
-          moves: widget.pokemon.moves,
-          formatLabel: widget.formatLabel,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _openFilterSheet,
+                    icon: const Icon(Icons.filter_alt_outlined),
+                    label: const Text('Filtros'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _filters.isDefault ? null : _resetFilters,
+                    child: const Text('Reset filtros'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_hasCounts)
+              Semantics(
+                liveRegion: true,
+                label: 'Contador de movimientos mostrados',
+                child: Text(
+                  'Mostrando $_visibleMoves de $_totalMoves movimientos',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+            if (_hasCounts) const SizedBox(height: 12) else const SizedBox(height: 4),
+            MovesSection(
+              moves: widget.pokemon.moves,
+              formatLabel: widget.formatLabel,
+              filters: _filters,
+              onCountsChanged: _handleCountsChanged,
+            ),
+          ],
         ),
       ),
     );
