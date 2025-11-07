@@ -5,6 +5,11 @@ import '../models/ability_model.dart';
 import '../queries/get_pokemon_abilities.dart';
 import 'ability_detail_screen.dart';
 
+/// Pantalla que lista habilidades de Pokémon usando GraphQL + cache de `graphql_flutter`.
+/// - Trae todas las habilidades (EN/ES) con `getPokemonAbilitiesQuery`.
+/// - Permite buscar por nombre (displayName o name).
+/// - Muestra estados de carga, vacío y error.
+/// - Navega a un detalle con animaciones (Hero + Fade).
 class AbilitiesScreen extends StatefulWidget {
   const AbilitiesScreen({
     super.key,
@@ -12,9 +17,11 @@ class AbilitiesScreen extends StatefulWidget {
     this.accentColor,
     this.title = 'Abilities',
   });
-
+  /// Tag para la transición Hero del título (opcional).
   final String? heroTag;
+  /// Color de acento para AppBar y estilos de la lista (opcional).
   final Color? accentColor;
+  /// Título de la pantalla.
   final String title;
 
   @override
@@ -22,11 +29,14 @@ class AbilitiesScreen extends StatefulWidget {
 }
 
 class _AbilitiesScreenState extends State<AbilitiesScreen> {
+  /// Controlador del campo de búsqueda (se limpia en `dispose`).
   final TextEditingController _searchController = TextEditingController();
+  /// Término actual de búsqueda (minúsculas y sin espacios laterales).
   String _searchTerm = '';
 
   @override
   void dispose() {
+    // Evita memory leaks del TextEditingController.
     _searchController.dispose();
     super.dispose();
   }
@@ -43,6 +53,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
         backgroundColor: accentColor,
         foregroundColor: Colors.white,
         title: heroTag != null
+        // Cuando hay heroTag, animamos el título entre pantallas.
             ? Hero(
                 tag: heroTag,
                 child: Material(
@@ -56,6 +67,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                   ),
                 ),
               )
+        // Sin heroTag, título simple.
             : Text(
                 widget.title,
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -68,29 +80,36 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Barra de búsqueda (actualiza _searchTerm en onChanged).
             _buildSearchBar(theme),
+            // Contenido principal: Query de GraphQL + lista de resultados.
             Expanded(
               child: Query(
                 options: QueryOptions(
+                  // Document de la query (nombres + efectos EN/ES).
                   document: gql(getPokemonAbilitiesQuery),
+                  // Estrategia: usa cache inmediatamente y luego red consulta (UX fluida).
                   fetchPolicy: FetchPolicy.cacheAndNetwork,
                 ),
                 builder: (result, {fetchMore, refetch}) {
+                  // Datos crudos de la respuesta (o lista vacía en error/primer render).
                   final abilitiesData =
                       result.data?['pokemon_v2_ability'] as List<dynamic>? ??
                           <dynamic>[];
-
+                  // Si hubo excepción y no hay datos en cache → mostrar estado de error con retry.
                   if (result.hasException && abilitiesData.isEmpty) {
                     return _AbilitiesErrorState(
                       message: 'No se pudieron cargar las habilidades.',
                       onRetry: refetch,
                     );
                   }
+                  // Parseo a modelo de dominio (AbilitySummary).
                   final abilities = abilitiesData
                       .map((dynamic entry) => AbilitySummary.fromGraphQL(
                           entry as Map<String, dynamic>))
                       .toList();
 
+                  // Filtro local por término de búsqueda en displayName o name.
                   final filteredAbilities = abilities.where((ability) {
                     if (_searchTerm.isEmpty) return true;
                     final term = _searchTerm.toLowerCase();
@@ -98,18 +117,20 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                         ability.name.toLowerCase().contains(term);
                   }).toList();
 
+                  // Indicador de carga inicial (cuando no hay cache aún).
                   if (result.isLoading && abilities.isEmpty) {
                     return const Center(
                       child: CircularProgressIndicator(color: Color(0xFF9C27B0)),
                     );
                   }
 
+                  // Estado vacío: no hay resultados (por búsqueda o porque no hay datos).
                   if (filteredAbilities.isEmpty) {
                     return _AbilitiesEmptyState(
                       isSearching: _searchTerm.isNotEmpty,
                     );
                   }
-
+                  // Lista con pull-to-refresh (llama a `refetch` si existe).
                   return RefreshIndicator(
                     color: accentColor,
                     onRefresh: () async {
@@ -123,6 +144,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                       itemBuilder: (context, index) {
                         final ability = filteredAbilities[index];
                         final heroTag = 'ability-card-${ability.id}';
+                        // Aparición con Tween (fade + translate) para UX más viva.
                         return TweenAnimationBuilder<double>(
                           tween: Tween<double>(begin: 0, end: 1),
                           duration: Duration(milliseconds: 400 + index * 60),
@@ -141,6 +163,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                             accentColor: accentColor,
                             heroTag: heroTag,
                             onTap: () {
+                              // Navegación hacia la pantalla de detalle con transición fade.
                               Navigator.of(context).push(
                                 PageRouteBuilder(
                                   transitionDuration:
@@ -161,6 +184,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                           ),
                         );
                       },
+                      // Espaciado entre cards.
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemCount: filteredAbilities.length,
                     ),
@@ -174,6 +198,8 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
     );
   }
 
+  /// Construye la barra de búsqueda con estilo y comportamiento.
+  /// - Actualiza `_searchTerm` en cada cambio para re-filtrar la lista.
   Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -196,6 +222,10 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
     );
   }
 }
+/// Card de habilidad en la lista:
+/// - Muestra `displayName` y `shortEffect`.
+/// - Tiene fondo con gradiente, shadow suave y leading icon.
+/// - Usa `Hero` para transiciones fluidas hacia la pantalla de detalle.
 
 class _AbilityCard extends StatelessWidget {
   const _AbilityCard({
@@ -248,6 +278,7 @@ class _AbilityCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Icon container de color de acento (consistente con AppBar).
                     Container(
                       width: 48,
                       height: 48,
@@ -262,6 +293,7 @@ class _AbilityCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
+                    // Nombre localizado en negrita.
                     Expanded(
                       child: Text(
                         ability.displayName,
@@ -274,6 +306,7 @@ class _AbilityCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // Descripción corta o fallback si no hay texto.
                 Text(
                   ability.shortEffect.isEmpty
                       ? 'Sin descripción disponible.'
@@ -291,6 +324,9 @@ class _AbilityCard extends StatelessWidget {
     );
   }
 }
+
+/// Vista de error con mensaje y botón de reintento.
+/// - Usa `refetch` de graphql_flutter para reintentar la query.
 
 class _AbilitiesErrorState extends StatelessWidget {
   const _AbilitiesErrorState({
@@ -346,6 +382,10 @@ class _AbilitiesErrorState extends StatelessWidget {
     );
   }
 }
+
+/// Vista vacía para dos escenarios:
+/// - `isSearching == true`: el término no encontró coincidencias.
+/// - `isSearching == false`: no hay habilidades disponibles todavía.
 
 class _AbilitiesEmptyState extends StatelessWidget {
   const _AbilitiesEmptyState({required this.isSearching});

@@ -6,6 +6,11 @@ import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
 
+/// Pantalla principal (Home) que presenta accesos a secciones de la app.
+/// - Muestra una tarjeta “hero” (la primera) y un grid con el resto.
+/// - Cada tarjeta tiene animaciones sutiles, acentos decorativos y un Hero tag
+///   para transiciones fluidas hacia las pantallas destino.
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,8 +19,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// Controla si ya se debe mostrar el grid (se habilita un frame después para
+  /// permitir animaciones de entrada suaves con AnimatedSwitcher).
   bool _showGrid = false;
 
+  /// Configuración estática de secciones a mostrar en Home.
+  /// Cada sección define:
+  /// - título, subtítulo, icono, color y heroTag
+  /// - gráficos decorativos (icons/assets) y acentos de fondo (shapes)
   final List<_SectionInfo> _sections = const [
     _SectionInfo(
       title: 'Pokédex',
@@ -316,12 +327,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Difere el render del grid un frame para activar la animación del switcher
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _showGrid = true);
     });
   }
 
+  /// Navega a la vista correspondiente según la sección seleccionada.
+  /// Para secciones no implementadas, abre un placeholder genérico.
   void _openSection(_SectionInfo section) {
     Widget destination;
     switch (section.title) {
@@ -343,6 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
         destination = SectionPlaceholderScreen(info: section);
     }
 
+    // Transición fade custom (PageRouteBuilder) para consistencia visual
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 450),
@@ -356,11 +371,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Separamos la primera sección (hero) del resto (grid)
     final List<_SectionInfo> sections = _sections;
     final _SectionInfo? heroSection =
         sections.isNotEmpty ? sections.first : null;
     final List<_SectionInfo> otherSections =
         sections.length > 1 ? sections.sublist(1) : <_SectionInfo>[];
+    // Métricas y constantes para layout responsivo
     const double pageHorizontalPadding = 20;
     const double gridSpacing = 16;
     final Size size = MediaQuery.of(context).size;
@@ -373,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heroWidth = math.max(0, size.width - (pageHorizontalPadding * 2));
     final double heroHeight =
         heroWidth > 0 ? math.max(280, heroWidth * 0.58) : 280;
+    // Chips de acceso rápido (placeholder de navegación futura)
     const quickAccess = [
       'Gym Leaders & Elite 4',
       'Natures',
@@ -389,6 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
             horizontal: pageHorizontalPadding,
             vertical: 16,
           ),
+          // Alterna entre un SizedBox.shrink y el scroll con animación
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             switchInCurve: Curves.easeOutCubic,
@@ -398,6 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     key: const ValueKey('home-scroll'),
                     physics: const BouncingScrollPhysics(),
                     slivers: [
+                      // Encabezado con título y acciones (notificaciones, tienda, ajustes)
                       SliverToBoxAdapter(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,6 +462,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      // Tarjeta “hero” (primera sección destacada)
                       if (heroSection != null) ...[
                         const SliverToBoxAdapter(child: SizedBox(height: 12)),
                         SliverToBoxAdapter(
@@ -457,6 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                       ],
+                      // Grid del resto de secciones
                       if (otherSections.isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.only(bottom: 28),
@@ -480,6 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
+                      // Fila horizontal con chips de acceso rápido
                       SliverToBoxAdapter(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,7 +543,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
+/// Tarjeta de sección reutilizable para el hero y los ítems del grid.
+/// - Maneja animación de “press” (scale) y resalta con sombras.
+/// - Dibuja fondo degradado, grupos de gráficos (iconos/assets) y acentos.
 class _HomeSectionCard extends StatefulWidget {
   const _HomeSectionCard({
     required this.info,
@@ -548,6 +573,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // Estilos de tipografía adaptados si es hero o grid
     final bool isHero = widget.isHero;
     final double? heroHeight = widget.heroHeight;
     final baseTitleStyle = isHero
@@ -597,6 +623,8 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                 final double verticalPadding = isHero ? 30 : 24;
                 final double maxTextWidth =
                     constraints.maxWidth * (isHero ? 0.68 : 0.74);
+                // Cuando la tarjeta hero está en un SliverToBoxAdapter sin altura
+                // acotada, fijamos un alto para evitar “unbounded height”.
                 final bool needsHeroHeight =
                     !constraints.hasBoundedHeight && heroHeight != null;
                 final BoxConstraints effectiveConstraints = needsHeroHeight
@@ -608,6 +636,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                       )
                     : constraints;
 
+                // Grupo de gráficos decorativos (iconos o assets) en la esquina
                 final List<_SectionGraphic> graphics =
                     widget.info.graphics.isNotEmpty
                         ? widget.info.graphics
@@ -618,11 +647,17 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                               opacity: 0.94,
                             ),
                           ];
+                // Stack principal de la tarjeta:
+                // - Fondo degradado
+                // - Acentos (shapes)
+                // - Grupo de gráficos (íconos/assets)
+                // - Texto (título/subtítulo) alineado abajo-izquierda
 
                 final stack = Stack(
                   fit: StackFit.expand,
                   clipBehavior: Clip.none,
                   children: [
+                    // Fondo con gradiente en función del color de la sección
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -639,10 +674,12 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                         ),
                       ),
                     ),
+                    // Acentos decorativos (círculos/rectángulos redondeados)
                     ..._buildBackgroundAccents(
                       constraints: effectiveConstraints,
                       fallbackRadius: cornerRadius,
                     ),
+                    // Grupo de gráficos (íconos grandes) arriba-derecha
                     Positioned(
                       right: basePadding - (isHero ? 8 : 6),
                       top: verticalPadding - (isHero ? 8 : 6),
@@ -651,6 +688,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
                         graphics: graphics,
                       ),
                     ),
+                    // Texto (título + subtítulo) limitado en ancho para no chocar con gráficos
                     Positioned(
                       left: basePadding,
                       bottom: verticalPadding,
@@ -698,6 +736,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
       ),
     );
 
+// La tarjeta hero viaja con un Hero para transición hacia la pantalla destino
     if (!isHero) {
       return card;
     }
@@ -707,7 +746,8 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
       child: card,
     );
   }
-
+  /// Construye un grupo de gráficos decorativos en la esquina superior derecha.
+  /// Los tamaños escalan con el tamaño disponible de la tarjeta.
   Widget _buildGraphicGroup({
     required BoxConstraints constraints,
     required List<_SectionGraphic> graphics,
@@ -742,7 +782,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
       ),
     );
   }
-
+  /// Renderiza un gráfico individual (icono o asset) con color y opacidad.
   Widget _buildGraphic(
     _SectionGraphic graphic, {
     required double baseExtent,
@@ -776,7 +816,8 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
       color: effectiveColor ?? Colors.white.withOpacity(graphic.opacity),
     );
   }
-
+  /// Dibuja los acentos de fondo (círculos y rectángulos redondeados) con
+  /// posiciones absolutas opcionales (top/right/bottom/left) y tamaños relativos.
   List<Widget> _buildBackgroundAccents({
     required BoxConstraints constraints,
     required double fallbackRadius,
@@ -817,7 +858,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
     }).toList();
   }
 }
-
+/// Iconos del header (campana, bolsa, ajustes) con feedback táctil.
 class _HeaderIcon extends StatelessWidget {
   const _HeaderIcon({
     required this.icon,
@@ -849,7 +890,8 @@ class _HeaderIcon extends StatelessWidget {
     );
   }
 }
-
+/// Pantalla placeholder para secciones aún no implementadas.
+/// Reutiliza el Hero para mantener coherencia de la transición.
 class SectionPlaceholderScreen extends StatelessWidget {
   const SectionPlaceholderScreen({
     super.key,
@@ -927,7 +969,7 @@ class SectionPlaceholderScreen extends StatelessWidget {
     );
   }
 }
-
+/// DTO interno con la definición de cada sección del Home.
 class _SectionInfo {
   const _SectionInfo({
     required this.title,
@@ -944,10 +986,15 @@ class _SectionInfo {
   final IconData icon;
   final Color color;
   final String heroTag;
+  /// Grupo de gráficos decorativos que se dibujan arriba-derecha.
   final List<_SectionGraphic> graphics;
+  /// Acentos geométricos de fondo (círculos/rectángulos).
   final List<_AccentShape> accents;
 }
-
+/// Definición de un gráfico decorativo:
+/// - Puede ser un icono (IconData) o un asset (ruta).
+/// - `scale` y `fixedSize` controlan su tamaño relativo/absoluto.
+/// - `alignment` y `offset` posicionan dentro del contenedor.
 class _SectionGraphic {
   const _SectionGraphic.icon({
     required this.icon,
@@ -978,7 +1025,8 @@ class _SectionGraphic {
   final Alignment alignment;
   final Offset offset;
 }
-
+/// Acento geométrico de fondo.
+/// Usa fábrica `circle` o `roundedRect` para crear formas comunes.
 class _AccentShape {
   const _AccentShape._({
     this.top,
@@ -995,6 +1043,7 @@ class _AccentShape {
     this.opacity = 1,
   });
 
+  /// Círculo con diámetro absoluto (`diameter`) o relativo (`diameterFactor`).
   const _AccentShape.circle({
     double? top,
     double? right,
@@ -1018,6 +1067,7 @@ class _AccentShape {
           opacity: opacity,
         );
 
+  /// Rectángulo redondeado con tamaño absoluto o relativo.
   const _AccentShape.roundedRect({
     double? top,
     double? right,
@@ -1045,10 +1095,12 @@ class _AccentShape {
           opacity: opacity,
         );
 
+  // Posicionamiento absoluto opcional dentro del Stack
   final double? top;
   final double? right;
   final double? bottom;
   final double? left;
+  // Tamaños absolutos o relativos (si no se provee, usa factores * dimensión base)
   final double? width;
   final double? height;
   final double? widthFactor;

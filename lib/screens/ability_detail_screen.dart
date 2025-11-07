@@ -3,6 +3,11 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/ability_model.dart';
 
+/// Pantalla de detalle para una habilidad de Pokémon.
+/// - Recibe un `AbilitySummary` base (nombre/ids/textos ya listos para mostrar).
+/// - Lanza una query por `id` para completar datos (descripción completa y lista de Pokémon que la tienen).
+/// - Usa `graphql_flutter` con `cacheAndNetwork` para UX fluida (muestra cache y luego refresca).
+
 class AbilityDetailScreen extends StatelessWidget {
   const AbilityDetailScreen({
     super.key,
@@ -11,10 +16,14 @@ class AbilityDetailScreen extends StatelessWidget {
     this.heroTag,
   });
 
+  /// Resumen a partir del cual renderizamos inmediatamente (optimiza primer paint).
   final AbilitySummary ability;
+  /// Color de acento para AppBar y componentes de esta vista.
   final Color accentColor;
+  /// Tag opcional para transición Hero sincronizada con la lista.
   final String? heroTag;
 
+  /// Query: detalle por PK (id) con nombres EN/ES, textos de efecto EN/ES, y Pokémon que poseen la habilidad.
   static const String _abilityDetailQuery = r'''
     query AbilityDetail($id: Int!) {
       pokemon_v2_ability_by_pk(id: $id) {
@@ -57,13 +66,15 @@ class AbilityDetailScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Query(
+        // Query ejecutada con el id de la habilidad; cache primero y luego red.
+      child: Query(
           options: QueryOptions(
             document: gql(_abilityDetailQuery),
             variables: <String, dynamic>{'id': ability.id},
             fetchPolicy: FetchPolicy.cacheAndNetwork,
           ),
           builder: (result, {fetchMore, refetch}) {
+            // Creamos un detalle base usando el summary para evitar pantallas en blanco.
             AbilityDetail baseDetail = AbilityDetail(
               id: ability.id,
               name: ability.name,
@@ -73,6 +84,7 @@ class AbilityDetailScreen extends StatelessWidget {
               pokemon: const <AbilityPokemonRef>[],
             );
 
+            // Si llega data, parseamos el detalle “real” desde GraphQL.
             if (result.data != null) {
               final abilityData = result.data?['pokemon_v2_ability_by_pk']
                   as Map<String, dynamic>?;
@@ -81,9 +93,11 @@ class AbilityDetailScreen extends StatelessWidget {
               }
             }
 
+            // Flags de estado de red para decidir qué UI mostrar.
             final isLoading = result.isLoading && result.data == null;
             final hasError = result.hasException && result.data == null;
 
+            // Contenido desplazable: hero card, descripción completa y lista de Pokémon (o estados).
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
@@ -94,6 +108,7 @@ class AbilityDetailScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   _buildEffectSection(theme, baseDetail),
                   const SizedBox(height: 24),
+                  // Manejo de estados: error → retry, loading → spinner, ok → lista o vacío.
                   if (hasError)
                     _DetailErrorState(onRetry: refetch)
                   else if (isLoading)
@@ -105,6 +120,8 @@ class AbilityDetailScreen extends StatelessWidget {
                       ),
                     )
                   else
+                  // Cambios suaves entre “vacío” y “lista” cuando llega la data.
+
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 350),
                       child: baseDetail.pokemon.isEmpty
@@ -123,11 +140,14 @@ class AbilityDetailScreen extends StatelessWidget {
     );
   }
 
+  /// Tarjeta superior con transición Hero que muestra nombre y shortEffect.
+  /// Sirve para dar continuidad visual desde la lista de habilidades.
   Widget _buildHeroCard(ThemeData theme, AbilityDetail detail) {
     return Hero(
       tag: heroTag ?? 'ability-card-${detail.id}',
       child: Material(
         color: Colors.transparent,
+        // Ícono/Avatar de la habilidad con color de acento.
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -165,6 +185,7 @@ class AbilityDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 18),
+              // Nombre + descripción corta (fallback si no hay texto).
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,6 +216,8 @@ class AbilityDetailScreen extends StatelessWidget {
     );
   }
 
+  /// Sección con la descripción completa de la habilidad (`fullEffect`).
+  /// Envuelta en un contenedor con sombra y títulos consistentes con la UI.
   Widget _buildEffectSection(ThemeData theme, AbilityDetail detail) {
     return Container(
       decoration: BoxDecoration(
@@ -240,7 +263,8 @@ class AbilityDetailScreen extends StatelessWidget {
     );
   }
 }
-
+/// Lista de Pokémon que poseen la habilidad, presentada como chips.
+/// Renderiza un contenedor estilizado y usa `formattedName` para capitalizar.
 class _PokemonList extends StatelessWidget {
   const _PokemonList({
     required this.detail,
@@ -283,6 +307,7 @@ class _PokemonList extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          // Chips responsivos (Wrap) para una grilla fluida.
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -311,7 +336,8 @@ class _PokemonList extends StatelessWidget {
     );
   }
 }
-
+/// Estado vacío cuando la habilidad no está asociada a ningún Pokémon.
+/// Mantiene el mismo estilo de tarjeta para consistencia visual.
 class _EmptyPokemonState extends StatelessWidget {
   const _EmptyPokemonState({required this.accentColor});
 
@@ -362,7 +388,8 @@ class _EmptyPokemonState extends StatelessWidget {
     );
   }
 }
-
+/// Estado de error para la sección de Pokémon asociados.
+/// Provee un botón de reintento que ejecuta `refetch` de `graphql_flutter`.
 class _DetailErrorState extends StatelessWidget {
   const _DetailErrorState({this.onRetry});
 

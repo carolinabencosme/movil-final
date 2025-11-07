@@ -16,23 +16,16 @@ import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
 
-/// Pantalla de detalles que muestra información completa de un Pokémon
-/// 
-/// Esta pantalla es el corazón de la aplicación, mostrando:
-/// - Artwork destacado con animación Hero
-/// - Información básica (altura, peso, habilidades)
-/// - Estadísticas con barras visuales
-/// - Debilidades y resistencias de tipos
-/// - Cadena evolutiva completa
-/// - Lista paginada de movimientos
-/// 
-/// La pantalla usa GraphQL para obtener todos los datos del Pokémon,
-/// con manejo de estados de carga, error y datos parciales.
+/// ===============================
+/// DETAIL SCREEN (CONTENEDOR)
+/// ===============================
+/// Pantalla de detalles que muestra información completa de un Pokémon:
+/// - Hero artwork + cabecera colapsable con Slivers
+/// - Tabs con secciones (Info, Stats, Matchups, Evolución, Movimientos)
+/// - Carga de datos con GraphQL: manejo de loading, error y datos parciales
+/// - Pull-to-refresh (refetch)
 class DetailScreen extends StatelessWidget {
-  /// Constructor que requiere al menos el ID o nombre del Pokémon
-  /// 
-  /// Acepta pokemonId O pokemonName (al menos uno debe estar presente).
-  /// Si se proporciona initialPokemon, se muestra mientras carga la info completa.
+  /// Requiere `pokemonId` o `pokemonName`. Si llega `initialPokemon`, se usa como preview.
   DetailScreen({
     super.key,
     this.pokemonId,
@@ -40,23 +33,23 @@ class DetailScreen extends StatelessWidget {
     this.initialPokemon,
     this.heroTag,
   }) : assert(
-          pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
-          'Either pokemonId or pokemonName must be provided.',
-        );
+  pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
+  'Either pokemonId or pokemonName must be provided.',
+  );
 
-  /// ID numérico del Pokémon (ej: 1 para Bulbasaur)
+  /// ID del Pokémon (National Dex)
   final int? pokemonId;
-  
-  /// Nombre del Pokémon (ej: "pikachu")
+
+  /// Nombre del Pokémon (slug en minúsculas)
   final String? pokemonName;
-  
-  /// Datos iniciales del Pokémon para mostrar mientras se carga la información completa
+
+  /// Datos mínimos para render inmediato mientras llega el detalle completo
   final PokemonListItem? initialPokemon;
-  
-  /// Tag único para la animación Hero entre pantallas
+
+  /// Tag único para transición Hero del artwork
   final String? heroTag;
 
-  /// Capitaliza la primera letra de un texto
+  /// Capitaliza primera letra (para títulos bonitos)
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -66,12 +59,17 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // HeroTag estable incluso si entra por id o name
     final resolvedHeroTag =
         heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
+
+    // Nombre e imagen para el “skeleton/preview” antes del GraphQL completo
     final previewName = initialPokemon != null
         ? _capitalize(initialPokemon!.name)
         : (pokemonName != null ? _capitalize(pokemonName!) : null);
     final previewImage = initialPokemon?.imageUrl ?? '';
+
+    // Filtro dinámico para GraphQL (por id o por name)
     final where = pokemonId != null
         ? <String, dynamic>{'id': {'_eq': pokemonId}}
         : <String, dynamic>{'name': {'_eq': pokemonName!}};
@@ -83,27 +81,32 @@ class DetailScreen extends StatelessWidget {
       body: Query(
         options: QueryOptions(
           document: gql(getPokemonDetailsQuery),
-          fetchPolicy: FetchPolicy.cacheAndNetwork,
-          errorPolicy: ErrorPolicy.all,
+          fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
+          errorPolicy: ErrorPolicy.all, // permite datos parciales
           variables: {
             'where': where,
-            'languageIds': preferredLanguageIds,
+            'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
           },
         ),
         builder: (result, {fetchMore, refetch}) {
+          // Logs de depuración (solo en debug)
           if (kDebugMode) {
-            debugPrint('[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-            debugPrint('[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+            debugPrint(
+                '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            debugPrint(
+                '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
             if (result.hasException) {
               debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
             }
           }
-          
+
+          // Tomamos el primer Pokémon que cumpla el where
           final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
           final data = (pokemonList?.isNotEmpty ?? false)
               ? pokemonList?.first as Map<String, dynamic>?
               : null;
 
+          // 1) Carga inicial sin cache → vista de loading personalizada
           if (result.isLoading && data == null) {
             return LoadingDetailView(
               heroTag: resolvedHeroTag,
@@ -112,6 +115,7 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
+          // 2) Error sin datos → estado de error con retry
           if (result.hasException && data == null) {
             debugPrint(
               'Error al cargar el detalle del Pokémon: ${result.exception}',
@@ -121,6 +125,7 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
+          // 3) Sin datos (no encontró) → mensaje + botón para reintentar
           if (data == null) {
             if (kDebugMode) {
               debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
@@ -143,20 +148,24 @@ class DetailScreen extends StatelessWidget {
             );
           }
 
+          // 4) Datos parciales con error → seguimos mostrando lo que hay
           if (result.hasException) {
             debugPrint(
               'Se recibieron datos parciales con errores: ${result.exception}',
             );
           }
 
+          // Eficacias de tipo para calcular matchups (deb/resist/inmunidad)
           final typeEfficacies =
               result.data?['type_efficacy'] as List<dynamic>? ?? [];
 
+          // Parse a modelo de dominio completo
           final pokemon = PokemonDetail.fromGraphQL(
             data,
             typeEfficacies: typeEfficacies,
           );
 
+          // Pull-to-refresh que llama refetch()
           return RefreshIndicator(
             onRefresh: () async {
               await refetch?.call();
@@ -166,11 +175,13 @@ class DetailScreen extends StatelessWidget {
                 builder: (context) {
                   return Stack(
                     children: [
+                      // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
                       PokemonDetailBody(
                         pokemon: pokemon,
                         resolvedHeroTag: resolvedHeroTag,
                         capitalize: _capitalize,
                       ),
+                      // Barra de progreso fina cuando llegan actualizaciones
                       if (result.isLoading)
                         const Positioned(
                           left: 0,
@@ -190,16 +201,13 @@ class DetailScreen extends StatelessWidget {
   }
 }
 
-/// Widget principal del cuerpo de la pantalla de detalles
-/// 
-/// Maneja la estructura de pestañas (tabs) con PageView para navegación fluida:
-/// 1. Info: Tipos, datos básicos, características, habilidades
-/// 2. Stats: Estadísticas del Pokémon con barras visuales
-/// 3. Matchups: Debilidades, resistencias e inmunidades
-/// 4. Evolución: Cadena evolutiva completa
-/// 5. Movimientos: Lista paginada de todos los movimientos
-/// 
-/// Usa SingleTickerProviderStateMixin para controlar la animación de tabs.
+/// ===============================
+/// DETAIL BODY (LAYOUT + TABS)
+/// ===============================
+/// Orquesta:
+/// - Cabecera hero colapsable (SliverPersistentHeader)
+/// - TabBar "sticky" (SliverPersistentHeader pinned)
+/// - TabBarView con 5 secciones
 class PokemonDetailBody extends StatefulWidget {
   const PokemonDetailBody({
     super.key,
@@ -208,13 +216,13 @@ class PokemonDetailBody extends StatefulWidget {
     required this.capitalize,
   });
 
-  /// Datos completos del Pokémon a mostrar
+  /// Modelo completo del Pokémon (tipos, stats, habilidades, evolución, etc.)
   final PokemonDetail pokemon;
-  
-  /// Tag para la animación Hero (único por Pokémon)
+
+  /// Tag del Hero del artwork (debe matchear con la lista)
   final String resolvedHeroTag;
-  
-  /// Función para capitalizar textos
+
+  /// Helper para capitalizar strings
   final String Function(String) capitalize;
 
   @override
@@ -228,7 +236,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   @override
   void initState() {
     super.initState();
-    // Inicializa controladores para las 5 pestañas
+    // 5 pestañas: Info, Stats, Matchups, Evolución, Movimientos
     _tabController = TabController(length: 5, vsync: this);
   }
 
@@ -238,19 +246,23 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     super.dispose();
   }
 
-  /// Formatea la altura del Pokémon de decímetros a metros
+  /// ============ Helpers de formato ============
+
+  /// Decímetros → metros con formato amigable
   String _formatHeight(int height) {
     if (height <= 0) return '—';
     final meters = height / 10.0;
     return '${_stripTrailingZeros(meters)} m';
   }
 
+  /// Hectogramos → kilogramos con formato amigable
   String _formatWeight(int weight) {
     if (weight <= 0) return '—';
     final kilograms = weight / 10.0;
     return '${_stripTrailingZeros(kilograms)} kg';
   }
 
+  /// Evita “2.00” → “2” y “10.50” → “10.5”
   String _stripTrailingZeros(double value) {
     final fixed = value.toStringAsFixed(value >= 10 ? 1 : 2);
     return fixed
@@ -258,6 +270,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         .replaceAll(RegExp(r'\.$'), '');
   }
 
+  /// “special-attack” → “Special attack”
   String _formatLabel(String value) {
     if (value.isEmpty) {
       return value;
@@ -266,11 +279,13 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     return widget.capitalize(sanitized);
   }
 
+  /// Colores por tipo (fallback al primary si no existe mapping)
   Color _resolveTypeColor(String type, ColorScheme colorScheme) {
     final color = pokemonTypeColors[type.toLowerCase()];
     return color ?? colorScheme.primary;
   }
 
+  /// Construye SliverPersistentHeader con cabecera hero colapsable
   SliverPersistentHeader _buildHeroHeader({
     required BuildContext context,
     required ThemeData theme,
@@ -281,6 +296,8 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     final mediaQuery = MediaQuery.of(context);
     final size = mediaQuery.size;
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    // Alturas mínima y máxima (ajustadas a orientación y alto de pantalla)
     const double collapsedHeight = kToolbarHeight + 72.0;
     final portraitHeight = math.max(
       collapsedHeight,
@@ -293,7 +310,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     final headerHeight = isLandscape ? landscapeHeight : portraitHeight;
 
     return SliverPersistentHeader(
-      pinned: false,
+      pinned: false, // no queda fija; se desplaza con el scroll
       delegate: _HeroHeaderDelegate(
         pokemon: pokemon,
         theme: theme,
@@ -307,10 +324,11 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     );
   }
 
+  /// SliverPersistentHeader con TabBar “sticky” (pinned)
   SliverPersistentHeader _buildTabBar(
-    ThemeData theme,
-    Color typeColor,
-  ) {
+      ThemeData theme,
+      Color typeColor,
+      ) {
     return SliverPersistentHeader(
       pinned: true,
       delegate: _TabBarHeaderDelegate(
@@ -325,28 +343,34 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
+
+    // Habilidad “principal” para mostrar en el bloque de info
     final mainAbilityDetail =
-        pokemon.abilities.isNotEmpty ? pokemon.abilities.first : null;
+    pokemon.abilities.isNotEmpty ? pokemon.abilities.first : null;
     final mainAbility =
-        mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
+    mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
     final abilitySubtitle = mainAbilityDetail == null
         ? null
         : (mainAbilityDetail.isHidden ? 'Habilidad oculta' : 'Habilidad principal');
 
+    // Paleta reactiva según el primer tipo del Pokémon
     final colorScheme = theme.colorScheme;
     final typeColor = pokemon.types.isNotEmpty
         ? _resolveTypeColor(pokemon.types.first, colorScheme)
         : colorScheme.primary;
     final onTypeColor =
-        ThemeData.estimateBrightnessForColor(typeColor) == Brightness.dark
-            ? Colors.white
-            : Colors.black87;
+    ThemeData.estimateBrightnessForColor(typeColor) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
+
+    // Colores de fondo secciones (tintes del color de tipo)
     final backgroundTint =
-        Color.alphaBlend(typeColor.withOpacity(0.04), colorScheme.surface);
+    Color.alphaBlend(typeColor.withOpacity(0.04), colorScheme.surface);
     final sectionBackground =
-        Color.alphaBlend(typeColor.withOpacity(0.08), colorScheme.surfaceVariant);
+    Color.alphaBlend(typeColor.withOpacity(0.08), colorScheme.surfaceVariant);
     final sectionBorder = typeColor.withOpacity(0.25);
 
+    // Padding inferior para evitar solapamiento con gestos/teclado
     final mediaQuery = MediaQuery.of(context);
     final bottomPadding = 48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
 
@@ -356,8 +380,9 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         physics: const BouncingScrollPhysics(),
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           final overlapHandle =
-              NestedScrollView.sliverOverlapAbsorberHandleFor(context);
+          NestedScrollView.sliverOverlapAbsorberHandleFor(context);
           return [
+            // Absorbe el solapamiento entre header y body dentro del NestedScroll
             SliverOverlapAbsorber(
               handle: overlapHandle,
               sliver: _buildHeroHeader(
@@ -371,6 +396,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
             _buildTabBar(theme, typeColor),
           ];
         },
+        // Contenido de cada tab
         body: TabBarView(
           controller: _tabController,
           physics: const BouncingScrollPhysics(),
@@ -441,6 +467,13 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   }
 }
 
+/// ===============================
+/// CABECERA HERO (SLIVER DELEGATE)
+/// ===============================
+/// Dibuja el header colapsable con:
+/// - Gradientes de fondo + textura SVG + blur + partículas
+/// - Título animado
+/// - Hero del artwork (PokemonArtwork)
 class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
   _HeroHeaderDelegate({
     required this.pokemon,
@@ -470,11 +503,14 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
+    // Progreso de colapso [0..1]
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+
+    // Al colapsar: baja opacidad de fondos/partículas/título e imagen escala
     final backgroundOpacity = 1 - (0.25 * progress);
     final particleOpacity = 0.55 * (1 - (0.5 * progress));
     final titleOpacity = 1 - (0.35 * progress);
@@ -483,6 +519,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
       padding: EdgeInsets.fromLTRB(16, 12 - (8 * progress), 16, 0),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // Tamaño base del artwork relativo al espacio disponible
           final imageBaseSize = math.min(
             210.0,
             math.min(constraints.maxWidth, maxExtent) * 0.55,
@@ -495,6 +532,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
             child: Stack(
               clipBehavior: Clip.hardEdge,
               children: [
+                // Fondo gradiente vertical (tipo → surface)
                 Positioned.fill(
                   child: Opacity(
                     opacity: backgroundOpacity,
@@ -515,6 +553,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Radial highlight para dar profundidad
                 Positioned.fill(
                   child: Opacity(
                     opacity: backgroundOpacity,
@@ -533,6 +572,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Textura SVG tenue (decorativo)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: Opacity(
@@ -548,6 +588,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Blur suave para efecto “vidrioso”
                 Positioned.fill(
                   child: ClipRect(
                     child: BackdropFilter(
@@ -561,6 +602,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Partículas sutiles encima
                 Positioned.fill(
                   child: IgnorePointer(
                     child: Opacity(
@@ -571,6 +613,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Título centrado que se desvanece al colapsar
                 Positioned(
                   left: 24,
                   right: 24,
@@ -594,6 +637,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Hero del artwork: escalado según el colapso
                 Positioned(
                   bottom: 20 - (12 * progress),
                   left: 0,
@@ -624,6 +668,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _HeroHeaderDelegate oldDelegate) {
+    // Rebuild si cambian inputs críticos (evita repaints innecesarios)
     return oldDelegate.pokemon != pokemon ||
         oldDelegate.theme != theme ||
         oldDelegate.typeColor != typeColor ||
@@ -634,6 +679,10 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
+/// ===============================
+/// TABBAR HEADER (SLIVER DELEGATE)
+/// ===============================
+/// Cabecera “pinned” con TabBar estilizada que flota sobre el contenido.
 class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   _TabBarHeaderDelegate({
     required this.tabController,
@@ -671,12 +720,12 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           border: Border.all(color: typeColor.withOpacity(0.18), width: 1),
           boxShadow: overlapsContent
               ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ]
               : null,
         ),
         child: TabBar(
@@ -689,7 +738,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           ),
           labelColor: theme.colorScheme.onSurface,
           unselectedLabelColor:
-              theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+          theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
           labelStyle: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
@@ -701,14 +750,15 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           dividerColor: Colors.transparent,
           padding: const EdgeInsets.all(6),
           labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+          // Usa la configuración compartida de tabs (icono + etiqueta)
           tabs: detailTabConfigs
               .map(
                 (config) => Tab(
-                  icon: Icon(config.icon, size: 20),
-                  text: config.label,
-                  height: _tabHeight,
-                ),
-              )
+              icon: Icon(config.icon, size: 20),
+              text: config.label,
+              height: _tabHeight,
+            ),
+          )
               .toList(),
         ),
       ),
@@ -723,6 +773,11 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
+/// ===============================
+/// CONTENEDOR SCROLL POR TAB
+/// ===============================
+/// Envuelve cada contenido de Tab en un CustomScrollView que
+/// inyecta el solapamiento correcto con el header del NestedScrollView.
 class _DetailTabScrollView extends StatelessWidget {
   const _DetailTabScrollView({
     required this.child,
@@ -734,16 +789,19 @@ class _DetailTabScrollView extends StatelessWidget {
   final Widget child;
   final double topPadding;
   final double bottomPadding;
+
+  /// PageStorageKey para mantener el scroll por pestaña
   final PageStorageKey<String>? storageKey;
 
   @override
   Widget build(BuildContext context) {
     final overlapHandle =
-        NestedScrollView.sliverOverlapAbsorberHandleFor(context);
+    NestedScrollView.sliverOverlapAbsorberHandleFor(context);
     return CustomScrollView(
       key: storageKey,
       physics: const BouncingScrollPhysics(),
       slivers: [
+        // Inserta el espacio ocupado por el header para que el contenido no quede tapado
         SliverOverlapInjector(handle: overlapHandle),
         SliverPadding(
           padding: EdgeInsets.only(top: topPadding, bottom: bottomPadding),
@@ -754,7 +812,12 @@ class _DetailTabScrollView extends StatelessWidget {
   }
 }
 
-/// Extension for context navigation
+/// ===============================
+/// EXTENSION DE NAVEGACIÓN
+/// ===============================
+/// Permite navegar a detalles usando rutas tipo `/pokedex/<slug>`.
+/// Si existe un `pendingEvolutionNavigation[slug]`, lo usa como `pokemonId`
+/// para construir el DetailScreen (mejorando la navegación desde la evolución).
 extension DetailScreenNavigationX on BuildContext {
   Future<T?> push<T>(String location) {
     if (location.startsWith('/pokedex/')) {

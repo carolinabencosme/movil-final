@@ -75,7 +75,14 @@ class PokemonListItem {
   /// 
   /// Extrae y valida todos los campos necesarios del JSON de GraphQL,
   /// manejando valores nulos y tipos incorrectos de forma segura.
+  ///
+  /// Crea una instancia desde el JSON de GraphQL.
+  /// - Lee tipos desde `pokemon_v2_pokemontypes`.
+  /// - Convierte estadísticas desde `pokemon_v2_pokemonstats`.
+  /// - Toma generación desde `pokemon_v2_pokemonspecy`.
+   /// - Resuelve la mejor URL de sprite disponible.
   factory PokemonListItem.fromGraphQL(Map<String, dynamic> json) {
+    // Tipos: mapea y filtra nulos/formatos inesperados.
     final types = (json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
         .map((dynamic typeEntry) {
           final type = typeEntry as Map<String, dynamic>?;
@@ -86,6 +93,7 @@ class PokemonListItem {
         .whereType<String>()
         .toList();
 
+    // Stats: crea PokemonStat solo si hay nombre y base_stat válidos.
     final statsEntries = json['pokemon_v2_pokemonstats'] as List<dynamic>? ?? [];
     final stats = statsEntries
         .map((dynamic statEntry) {
@@ -101,6 +109,7 @@ class PokemonListItem {
         .whereType<PokemonStat>()
         .toList();
 
+    // Generación: datos viven dentro de la "species".
     final species = json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
     final generationId = species?['generation_id'];
     int? resolvedGenerationId;
@@ -108,6 +117,7 @@ class PokemonListItem {
       resolvedGenerationId = generationId;
     }
 
+    // Nombre de generación (si existe), cae a species.name como fallback.
     String? resolvedGenerationName;
     final generationInfo =
         species?['pokemon_v2_generation'] as Map<String, dynamic>?;
@@ -128,6 +138,7 @@ class PokemonListItem {
   }
 }
 
+/// Modelo “full” para la vista de detalle del Pokémon.
 class PokemonDetail {
   PokemonDetail({
     required this.id,
@@ -155,10 +166,14 @@ class PokemonDetail {
   final PokemonEvolutionChain? evolutionChain;
   final int? speciesId;
 
+  /// Construye el detalle a partir del JSON principal del Pokémon.
+  ///
+  /// - `typeEfficacies` debe traer la tabla de efectividades (damage_factor).
   factory PokemonDetail.fromGraphQL(
     Map<String, dynamic> json, {
     Iterable<dynamic> typeEfficacies = const [],
   }) {
+    // Recolecta tipos y sus IDs (IDs necesarios para matchups).
     final typeEntries = json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [];
     final List<String> types = <String>[];
     final Set<int> typeIds = <int>{};
@@ -178,7 +193,7 @@ class PokemonDetail {
         typeIds.add(typeId);
       }
     }
-
+// Stats del Pokémon.
     final stats = (json['pokemon_v2_pokemonstats'] as List<dynamic>? ?? [])
         .map((dynamic statEntry) {
           final stat = statEntry as Map<String, dynamic>?;
@@ -192,7 +207,7 @@ class PokemonDetail {
         })
         .whereType<PokemonStat>()
         .toList();
-
+    // Habilidades con nombre localizado y descripción normalizada.
     final abilitiesEntries =
         json['pokemon_v2_pokemonabilities'] as List<dynamic>? ?? [];
     final abilities = abilitiesEntries
@@ -203,7 +218,7 @@ class PokemonDetail {
           if (abilityInfo == null) {
             return null;
           }
-
+          // Nombre para mostrar: prioriza la primera traducción disponible.
           final localizedNames =
               abilityInfo['pokemon_v2_abilitynames'] as List<dynamic>? ?? [];
           String displayName = abilityInfo['name'] as String? ?? '';
@@ -215,7 +230,7 @@ class PokemonDetail {
               break;
             }
           }
-
+        // Descripción: toma short_effect si está; si no, effect.
           final effectTexts =
               abilityInfo['pokemon_v2_abilityeffecttexts'] as List<dynamic>? ??
                   [];
@@ -237,8 +252,10 @@ class PokemonDetail {
             description = 'Sin descripción disponible.';
           }
 
+          // Hidden ability flag.
           final isHidden = ability?['is_hidden'];
 
+          // Limpieza de textos (one-liner y espacios).
           description = description
               .replaceAll('\n', ' ')
               .replaceAll(RegExp(r'\s+'), ' ')
@@ -253,10 +270,12 @@ class PokemonDetail {
         .whereType<PokemonAbilityDetail>()
         .toList();
 
+    // Movimientos (ordenados por nivel y luego alfabético).
     final moves = _parsePokemonMoves(
       json['pokemon_v2_pokemonmoves'] as List<dynamic>? ?? const [],
     );
 
+    // Datos de especie (genus/categoría, rate, etc.).
     final species = json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
     final speciesNames =
         species?['pokemon_v2_pokemonspeciesnames'] as List<dynamic>? ?? [];
@@ -270,11 +289,13 @@ class PokemonDetail {
       }
     }
 
+// Características “no de batalla”.
     final baseExperience = json['base_experience'] as int? ?? 0;
     final captureRate = species?['capture_rate'] as int? ?? 0;
     final height = json['height'] as int? ?? 0;
     final weight = json['weight'] as int? ?? 0;
 
+    // Cadena evolutiva (si existe).
     final speciesId = species?['id'] as int?;
     final evolutionChain =
         PokemonEvolutionChain.fromGraphQL(
@@ -290,6 +311,7 @@ class PokemonDetail {
       category: category,
     );
 
+    // Efectividades de tipos (agregadas multiplicativamente).
     final typeMatchups =
         _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
 
@@ -308,7 +330,7 @@ class PokemonDetail {
     );
   }
 }
-
+/// Movimiento aprendible por un Pokémon (método, nivel, tipo, etc.).
 class PokemonMove {
   const PokemonMove({
     this.id,
@@ -321,14 +343,17 @@ class PokemonMove {
 
   final int? id;
   final String name;
+  /// Método de aprendizaje (level-up, machine, tutor, etc.).
   final String method;
   final String? type;
   final int? level;
   final String? versionGroup;
 
+  /// Verdadero si el movimiento se aprende a un nivel específico (>0).
   bool get hasLevel => level != null && level! > 0;
 }
 
+/// Representa la cadena evolutiva como niveles (groups) y rutas (paths).
 class PokemonEvolutionChain {
   const PokemonEvolutionChain({
     required this.groups,
@@ -336,8 +361,12 @@ class PokemonEvolutionChain {
     this.currentSpeciesId,
   });
 
+  /// Grupos por nivel evolutivo (raíces → intermedios → finales).
   final List<List<PokemonEvolutionNode>> groups;
+  /// Rutas completas raíz→hoja (útil para dibujar líneas de evolución).
   final List<List<PokemonEvolutionNode>> paths;
+
+  /// Especie actual (para resaltar en UI, si se desea).
   final int? currentSpeciesId;
 
   bool get isEmpty {
@@ -347,6 +376,10 @@ class PokemonEvolutionChain {
     return !hasGroups && !hasPaths;
   }
 
+  /// Construye la cadena evolutiva a partir del nodo de especie.
+  ///
+  /// - Agrupa por `evolves_from_species_id`.
+  /// - Genera niveles (groups) por BFS y rutas (paths) por DFS.
   static PokemonEvolutionChain? fromGraphQL(
     Map<String, dynamic>? species, {
     int? currentSpeciesId,
@@ -365,6 +398,7 @@ class PokemonEvolutionChain {
       return null;
     }
 
+    // Pre-arma nombres/slug por ID para evitar NPE más adelante.
     final Map<int, String> nameById = <int, String>{};
     final Map<int, String> slugById = <int, String>{};
 
@@ -388,6 +422,7 @@ class PokemonEvolutionChain {
       return null;
     }
 
+    // Extrae datos mínimos de especie (id, nombre, img, padre).
     final Map<int, _EvolutionSpeciesData> speciesData =
         <int, _EvolutionSpeciesData>{};
 
@@ -404,6 +439,7 @@ class PokemonEvolutionChain {
 
       final fromSpeciesId = speciesMap['evolves_from_species_id'] as int?;
 
+      // Busca un sprite válido de cualquier Pokémon asociado a la especie.
       String imageUrl = '';
       final pokemons = speciesMap['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
       for (final dynamic pokemonEntry in pokemons) {
@@ -423,7 +459,7 @@ class PokemonEvolutionChain {
         id: speciesId,
         name: nameById[speciesId] ?? '',
         slug: slugById[speciesId] ?? '',
-        order: speciesId,
+        order: speciesId,  // Fallback: usa el ID como orden relativo.
         fromSpeciesId: fromSpeciesId,
         imageUrl: imageUrl,
       );
@@ -433,6 +469,7 @@ class PokemonEvolutionChain {
       return null;
     }
 
+// Construye nodos consumibles por UI.
     final List<PokemonEvolutionNode> nodes = <PokemonEvolutionNode>[];
     speciesData.forEach((int id, _EvolutionSpeciesData data) {
       nodes.add(
@@ -448,6 +485,7 @@ class PokemonEvolutionChain {
       );
     });
 
+    // Agrupa nodos por su padre (id de la especie de la que evolucionan).
     final Map<int?, List<PokemonEvolutionNode>> groupedByParent =
         <int?, List<PokemonEvolutionNode>>{};
     for (final node in nodes) {
@@ -459,6 +497,7 @@ class PokemonEvolutionChain {
       siblings.add(node);
     }
 
+    // Construye niveles (BFS): raíces → hijos → nietos...
     List<PokemonEvolutionNode> currentLevel =
         List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
     currentLevel.sort((a, b) => a.order.compareTo(b.order));
@@ -466,6 +505,7 @@ class PokemonEvolutionChain {
     final List<List<PokemonEvolutionNode>> groups = <List<PokemonEvolutionNode>>[];
 
     if (currentLevel.isEmpty) {
+      // Si no hay raíces claras, cae a una sola “línea”.
       nodes.sort((a, b) => a.order.compareTo(b.order));
       groups.add(List<PokemonEvolutionNode>.from(nodes));
     } else {
@@ -484,6 +524,7 @@ class PokemonEvolutionChain {
       }
     }
 
+    // Construye rutas completas raíz→hoja (útil para diagramas).
     final paths = PokemonEvolutionChain.buildPaths(groupedByParent);
 
     return PokemonEvolutionChain(
@@ -493,15 +534,18 @@ class PokemonEvolutionChain {
     );
   }
 
+  /// DFS para construir todas las rutas de evolución desde las raíces.
   static List<List<PokemonEvolutionNode>> buildPaths(
     Map<int?, List<PokemonEvolutionNode>> groupedByParent,
   ) {
     final List<List<PokemonEvolutionNode>> paths = <List<PokemonEvolutionNode>>[];
 
+    // Raíces: especies sin padre.
     final List<PokemonEvolutionNode> roots =
         List<PokemonEvolutionNode>.from(groupedByParent[null] ?? const []);
 
     if (roots.isEmpty) {
+      // Fallback: si no hay raíces claras, usar todos en orden ascendente.
       final fallback = groupedByParent.values
           .expand((nodes) => nodes)
           .toList()
@@ -512,6 +556,7 @@ class PokemonEvolutionChain {
       return paths;
     }
 
+    // DFS para registrar cada camino completo.
     void dfs(PokemonEvolutionNode node, List<PokemonEvolutionNode> current) {
       final List<PokemonEvolutionNode> next =
           List<PokemonEvolutionNode>.from(current)..add(node);
@@ -540,6 +585,7 @@ class PokemonEvolutionChain {
   }
 }
 
+/// Nodo de una especie dentro de la cadena evolutiva.
 class PokemonEvolutionNode {
   const PokemonEvolutionNode({
     required this.speciesId,
@@ -555,11 +601,14 @@ class PokemonEvolutionNode {
   final String name;
   final String slug;
   final String imageUrl;
+  /// Orden relativo para ordenar hermanos/lineales (a falta de otro criterio).
   final int order;
   final int? fromSpeciesId;
+  /// Texto de condiciones de evolución (si se desea mostrar en UI).
   final List<String> conditions;
 }
 
+/// Estructura interna para recolectar datos mínimos de especie.
 class _EvolutionSpeciesData {
   const _EvolutionSpeciesData({
     required this.id,
@@ -643,16 +692,22 @@ class PokemonCharacteristics {
   final String category;
 }
 
+/// Relación de daño para un tipo atacante contra el Pokémon actual.
 class TypeMatchup {
   const TypeMatchup({
     required this.type,
     required this.multiplier,
   });
 
+  /// Tipo atacante (ej: "fire").
   final String type;
+  /// Multiplicador total (0.5, 2.0, 4.0, etc.).
   final double multiplier;
 }
 
+/// Parsea los movimientos aprendibles y evita duplicados.
+///
+/// La clave de duplicado incluye (id o nombre) + método + versión + nivel.
 List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
   if (entries.isEmpty) {
     return const <PokemonMove>[];
@@ -671,24 +726,28 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
     if (moveInfo == null) {
       continue;
     }
-
+    // ID y nombre localizado del movimiento.
     final int? moveId = moveInfo['id'] as int?;
     final String fallbackName = moveInfo['name'] as String? ?? '';
     final localizedNames =
         moveInfo['pokemon_v2_movenames'] as List<dynamic>? ?? [];
     final resolvedName = _resolveLocalizedName(localizedNames, fallbackName);
 
+    // Método de aprendizaje (level-up/machine/tutor/egg/unknown).
     final methodInfo =
         moveEntry['pokemon_v2_movelearnmethod'] as Map<String, dynamic>?;
     final method = methodInfo?['name'] as String? ?? 'unknown';
 
+    // Grupo de versión (para diferenciar sets por generación/juego).
     final versionGroupInfo =
         moveEntry['pokemon_v2_versiongroup'] as Map<String, dynamic>?;
     final versionGroup = versionGroupInfo?['name'] as String?;
 
+    // Tipo del movimiento (si se desea taggear).
     final typeInfo = moveInfo['pokemon_v2_type'] as Map<String, dynamic>?;
     final type = typeInfo?['name'] as String?;
 
+    // Nivel (solo aplica para level-up; otros métodos suelen ser null/0).
     final levelValue = moveEntry['level'];
     final int? level;
     if (levelValue is int) {
@@ -697,6 +756,7 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
       level = null;
     }
 
+    // Clave única para evitar duplicados en la UI/lista.
     final key =
         '${moveId ?? resolvedName}_${method}_${versionGroup ?? ''}_${level ?? ''}';
     if (!seen.add(key)) {
@@ -715,6 +775,7 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
     );
   }
 
+  // Orden: primero por nivel (los sin nivel al final), luego alfabético.
   moves.sort((a, b) {
     final levelA = a.level ?? 999;
     final levelB = b.level ?? 999;
@@ -728,6 +789,7 @@ List<PokemonMove> _parsePokemonMoves(List<dynamic> entries) {
   return moves;
 }
 
+/// Devuelve el primer nombre localizado disponible; si no, usa `fallback`.
 String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
   if (entries != null) {
     for (final dynamic entry in entries) {
@@ -741,6 +803,7 @@ String _resolveLocalizedName(List<dynamic>? entries, String fallback) {
   return fallback;
 }
 
+/// Resuelve un nombre localizado para una entidad genérica (item, tipo, especie).
 String _resolveLocalizedEntityName(
   Map<String, dynamic>? entity,
   String namesKey,
@@ -754,6 +817,10 @@ String _resolveLocalizedEntityName(
   return _resolveLocalizedName(names, fallback);
 }
 
+/// Construye una descripción legible de condiciones de evolución.
+///
+/// Nota: muchas condiciones aquí pueden no estar presentes (null),
+/// por eso se agregan solo si tienen contenido válido.
 String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
   final List<String> details = <String>[];
 
@@ -777,6 +844,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Afecto mínimo: $minAffection');
   }
 
+  // Items: uso directo o “sosteniendo” al subir de nivel.
   final itemName = _resolveLocalizedEntityName(
     evolution['item'] as Map<String, dynamic>?,
     'pokemon_v2_itemnames',
@@ -793,6 +861,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Subir de nivel sosteniendo $heldItemName');
   }
 
+  // Ubicación específica.
   final locationName = _resolveLocalizedEntityName(
     evolution['location'] as Map<String, dynamic>?,
     'pokemon_v2_locationnames',
@@ -801,6 +870,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Subir de nivel en $locationName');
   }
 
+  // Requisito de conocer un movimiento concreto o al menos uno de cierto tipo.
   final knownMove = evolution['known_move'] as Map<String, dynamic>?;
   if (knownMove != null) {
     final knownMoveName = _resolveLocalizedEntityName(
@@ -810,6 +880,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     if (knownMoveName.isNotEmpty) {
       details.add('Debe conocer $knownMoveName');
     } else {
+      // Edge case: si existe el movimiento pero sin nombre, intenta mostrar el tipo.
       // Fallback: if move data exists but no specific name is available,
       // try to show the type requirement (edge case, unlikely in practice)
       final knownMoveType = knownMove['pokemon_v2_type'] as Map<String, dynamic>?;
@@ -824,7 +895,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
       }
     }
   }
-
+  // Requisitos de party (especie o tipo).
   final partySpeciesName = _resolveLocalizedEntityName(
     evolution['party_species'] as Map<String, dynamic>?,
     'pokemon_v2_pokemonspeciesnames',
@@ -841,6 +912,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Tener un Pokémon de tipo $partyTypeName en el equipo');
   }
 
+  // Intercambio (con o sin especie concreta).
   final tradeSpeciesName = _resolveLocalizedEntityName(
     evolution['trade_species'] as Map<String, dynamic>?,
     'pokemon_v2_pokemonspeciesnames',
@@ -849,6 +921,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Intercambiar con $tradeSpeciesName');
   }
 
+  // Condición de clima (lluvia).
   final needsOverworldRain = evolution['needs_overworld_rain'];
   final bool needsRain = (needsOverworldRain is bool && needsOverworldRain) ||
       (needsOverworldRain is int && needsOverworldRain != 0);
@@ -856,6 +929,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     details.add('Debe llover en el mundo');
   }
 
+  // Relación entre Ataque y Defensa (solo para ciertas especies)
   final relativeStats = evolution['relative_physical_stats'];
   if (relativeStats is int) {
     final relativeDescription = switch (relativeStats) {
@@ -869,6 +943,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     }
   }
 
+  // Restricción de género.
   final genderId = evolution['gender_id'];
   if (genderId is int) {
     if (genderId == 1) {
@@ -878,11 +953,13 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     }
   }
 
+  // Caso especial (Inkay → Malamar).
   final bool? turnUpsideDown = evolution['turn_upside_down'] as bool?;
   if (turnUpsideDown == true) {
     details.add('Girar el dispositivo');
   }
 
+  // Disparador genérico (trade, use-item, etc.).
   final triggerMap =
       evolution['pokemon_v2_evolutiontrigger'] as Map<String, dynamic>?;
   final trigger = triggerMap?['name'] as String?;
@@ -901,6 +978,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
     }
   }
 
+  // Momento del día (day/night/dusk...).
   final timeOfDay = evolution['time_of_day'];
   if (timeOfDay is String && timeOfDay.isNotEmpty) {
     details.add('Momento: ${_formatGraphqlLabel(timeOfDay)}');
@@ -909,6 +987,7 @@ String? _describeEvolutionCondition(Map<String, dynamic> evolution) {
   return details.isEmpty ? null : details.join(' · ');
 }
 
+/// Convierte labels de GraphQL (snake/kebab) a “Title Case”.
 String _formatGraphqlLabel(String value) {
   final cleaned = value.replaceAll('-', ' ').replaceAll('_', ' ');
   final parts = cleaned.split(RegExp(r'\s+'))..removeWhere((part) => part.isEmpty);
@@ -921,6 +1000,11 @@ String _formatGraphqlLabel(String value) {
       .join(' ');
 }
 
+/// Calcula efectividades por tipo atacante contra la combinación de tipos del Pokémon.
+///
+/// - Multiplica acumulativamente los `damage_factor/100`.
+/// - Omite multiplicadores ~1.0 (neutros) para mostrar solo ventajas/desventajas.
+
 List<TypeMatchup> _buildTypeMatchups(
   Set<int> pokemonTypeIds,
   Iterable<Map<String, dynamic>> typeEfficacies,
@@ -928,7 +1012,7 @@ List<TypeMatchup> _buildTypeMatchups(
   if (pokemonTypeIds.isEmpty) {
     return <TypeMatchup>[];
   }
-
+  // Acumula multiplicadores por tipo atacante.
   final Map<int, double> accumulator = <int, double>{};
 
   for (final Map<String, dynamic> efficacy in typeEfficacies) {
@@ -951,6 +1035,7 @@ List<TypeMatchup> _buildTypeMatchups(
 
   final List<TypeMatchup> matchups = <TypeMatchup>[];
 
+  // Convierte a lista de salida omitiendo ~1.0 (neutro).
   accumulator.forEach((int damageTypeId, double multiplier) {
     final normalized = double.parse(multiplier.toStringAsFixed(4));
     if ((normalized - 1.0).abs() < 0.01) {
@@ -961,11 +1046,12 @@ List<TypeMatchup> _buildTypeMatchups(
         _pokemonTypeNamesById[damageTypeId] ?? 'unknown';
     matchups.add(TypeMatchup(type: typeName, multiplier: normalized));
   });
-
+// Ordena de mayor a menor multiplicador (primero las mayores debilidades).
   matchups.sort((a, b) => b.multiplier.compareTo(a.multiplier));
   return matchups;
 }
-
+/// Extrae una URL de sprite “mejor disponible”
+/// desde la colección de sprites (puede venir en String JSON o Map).
 String _extractSpriteUrl(dynamic spriteEntries) {
   final sprites = spriteEntries as List<dynamic>?;
   if (sprites == null || sprites.isEmpty) {
@@ -981,7 +1067,7 @@ String _extractSpriteUrl(dynamic spriteEntries) {
     if (decoded == null) {
       continue;
     }
-
+// Prioriza official-artwork/home; luego shiny/dream_world; luego front_default.
     final candidate = _selectSpriteFromMap(decoded);
     if (candidate != null) {
       return candidate;
@@ -991,6 +1077,11 @@ String _extractSpriteUrl(dynamic spriteEntries) {
   return '';
 }
 
+/// Decodifica la estructura de `sprites`, que a veces llega como String JSON.
+///
+/// Acepta:
+/// - `String` JSON → lo parsea a `Map<String, dynamic>`.
+/// - `Map` ya estructurado → lo normaliza a `Map<String, dynamic>`.
 Map<String, dynamic>? _decodeSprites(dynamic rawSprites) {
   if (rawSprites == null) {
     return null;
@@ -1007,6 +1098,7 @@ Map<String, dynamic>? _decodeSprites(dynamic rawSprites) {
         return Map<String, dynamic>.from(parsed);
       }
     } catch (_) {
+      // Si falla el decode, retorna null silenciosamente (se intentarán otros sprites).
       return null;
     }
 
@@ -1014,6 +1106,7 @@ Map<String, dynamic>? _decodeSprites(dynamic rawSprites) {
   }
 
   if (rawSprites is Map) {
+    // Normaliza a Map<String,dynamic>.
     final map = <String, dynamic>{};
     rawSprites.forEach((key, value) {
       if (key != null) {
@@ -1026,6 +1119,14 @@ Map<String, dynamic>? _decodeSprites(dynamic rawSprites) {
   return null;
 }
 
+/// Selecciona la mejor URL disponible de un mapa de sprites.
+///
+/// Orden de preferencia:
+/// 1) other.official-artwork.front_default
+/// 2) other.home.front_default
+/// 3) official-artwork/front_shiny, home/front_shiny
+/// 4) dream_world.front_default
+/// 5) front_default / front_shiny
 String? _selectSpriteFromMap(Map<String, dynamic> decoded) {
   final rawCandidates = <String?>[
     _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
@@ -1047,6 +1148,7 @@ String? _selectSpriteFromMap(Map<String, dynamic> decoded) {
   return null;
 }
 
+/// Lee un String anidado por ruta de claves; retorna null si falta en cualquier nivel.
 String? _getNestedString(
   Map<String, dynamic> root,
   List<String> path,
@@ -1061,6 +1163,7 @@ String? _getNestedString(
   return _asNonEmptyString(current);
 }
 
+/// Devuelve `value` si es String no vacío; en otro caso, null.
 String? _asNonEmptyString(dynamic value) {
   if (value is String && value.isNotEmpty) {
     return value;
@@ -1068,6 +1171,7 @@ String? _asNonEmptyString(dynamic value) {
   return null;
 }
 
+/// Asegura HTTPS y descarta cadenas vacías.
 String? _normalizeSpriteUrl(String? value) {
   if (value == null || value.isEmpty) {
     return null;
