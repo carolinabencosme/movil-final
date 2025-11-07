@@ -118,10 +118,10 @@ Es el repositorio que maneja toda la persistencia y lógica de autenticación:
 **Almacenamiento:**
 ```dart
 // Caja para usuarios registrados
-Box<UserModel> usersBox = 'auth_users_box'
+final usersBox = await Hive.openBox<UserModel>('auth_users_box');
 
 // Caja para sesión activa
-Box<String> sessionBox = 'auth_session_box'
+final sessionBox = await Hive.openBox<String>('auth_session_box');
 ```
 
 **Seguridad:**
@@ -918,7 +918,7 @@ Esta función (de `graphql_flutter`):
 
 **Caja de usuarios:**
 ```dart
-Box<UserModel> usersBox = 'auth_users_box'
+final usersBox = await Hive.openBox<UserModel>('auth_users_box');
 ```
 - Almacena todos los usuarios registrados
 - Key: email normalizado
@@ -926,7 +926,7 @@ Box<UserModel> usersBox = 'auth_users_box'
 
 **Caja de sesión:**
 ```dart
-Box<String> sessionBox = 'auth_session_box'
+final sessionBox = await Hive.openBox<String>('auth_session_box');
 ```
 - Almacena email del usuario actual
 - Key: 'current_user_email'
