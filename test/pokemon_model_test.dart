@@ -137,7 +137,7 @@ void main() {
   group('PokemonMove deduplication', () {
     test('moves with same name should be considered duplicates', () {
       final moves = [
-        PokemonMove(
+        const PokemonMove(
           id: 1,
           name: 'Tackle',
           method: 'level-up',
@@ -145,7 +145,7 @@ void main() {
           level: 1,
           versionGroup: 'red-blue',
         ),
-        PokemonMove(
+        const PokemonMove(
           id: 1,
           name: 'Tackle',
           method: 'level-up',
@@ -155,7 +155,7 @@ void main() {
         ),
       ];
 
-      // Simular deduplicación (mismo algoritmo que en MovesSection)
+      // Simular deduplicación (mismo algoritmo que _deduplicateMoves)
       final uniqueMoves = <String, PokemonMove>{};
       for (final move in moves) {
         final key = move.name.toLowerCase();
@@ -171,7 +171,7 @@ void main() {
 
     test('moves with different names should not be deduplicated', () {
       final moves = [
-        PokemonMove(
+        const PokemonMove(
           id: 1,
           name: 'Tackle',
           method: 'level-up',
@@ -179,7 +179,7 @@ void main() {
           level: 1,
           versionGroup: 'red-blue',
         ),
-        PokemonMove(
+        const PokemonMove(
           id: 2,
           name: 'Quick Attack',
           method: 'level-up',
@@ -202,7 +202,7 @@ void main() {
 
     test('deduplication prioritizes moves with versionGroup', () {
       final moves = [
-        PokemonMove(
+        const PokemonMove(
           id: 1,
           name: 'Tackle',
           method: 'level-up',
@@ -210,7 +210,7 @@ void main() {
           level: 1,
           versionGroup: null,
         ),
-        PokemonMove(
+        const PokemonMove(
           id: 1,
           name: 'Tackle',
           method: 'level-up',

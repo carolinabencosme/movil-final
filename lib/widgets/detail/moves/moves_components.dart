@@ -83,7 +83,8 @@ class _MovesSectionState extends State<MovesSection> {
     // Convierte "black-2-white-2" a "Black 2 White 2"
     return versionGroup
         .split('-')
-        .map((word) => word.isEmpty ? '' : widget.formatLabel(word))
+        .where((word) => word.isNotEmpty)
+        .map(widget.formatLabel)
         .join(' ');
   }
 
@@ -104,6 +105,31 @@ class _MovesSectionState extends State<MovesSection> {
   /// Calcula cuántos movimientos quedan por cargar
   int _remainingMovesCount(int totalFiltered) {
     return math.max(0, totalFiltered - _displayedMovesCount);
+  }
+
+  /// Elimina movimientos duplicados basándose en el nombre
+  /// 
+  /// Mantiene solo un movimiento por nombre único. Si hay múltiples movimientos
+  /// con el mismo nombre, prioriza el que tiene `versionGroup` definido.
+  /// 
+  /// Ejemplo: Si "Tackle" aparece en 3 versiones diferentes, solo se mantiene una entrada.
+  /// 
+  /// [moves] Lista de movimientos a deduplicar
+  /// Retorna una lista de movimientos sin duplicados
+  List<PokemonMove> _deduplicateMoves(List<PokemonMove> moves) {
+    final Map<String, PokemonMove> uniqueMoves = {};
+    
+    for (final move in moves) {
+      final key = move.name.toLowerCase();
+      
+      // Si no existe o el nuevo tiene versionGroup y el anterior no
+      if (!uniqueMoves.containsKey(key) ||
+          (move.versionGroup != null && uniqueMoves[key]!.versionGroup == null)) {
+        uniqueMoves[key] = move;
+      }
+    }
+    
+    return uniqueMoves.values.toList();
   }
 
   @override
@@ -149,17 +175,8 @@ class _MovesSectionState extends State<MovesSection> {
       return true;
     }).toList();
 
-    // Eliminar duplicados: mantener solo un movimiento por nombre
-    // (prioriza el que tiene versionGroup si está disponible)
-    final Map<String, PokemonMove> uniqueMoves = {};
-    for (final move in filteredMoves) {
-      final key = move.name.toLowerCase();
-      if (!uniqueMoves.containsKey(key) ||
-          (move.versionGroup != null && uniqueMoves[key]!.versionGroup == null)) {
-        uniqueMoves[key] = move;
-      }
-    }
-    filteredMoves = uniqueMoves.values.toList()
+    // Aplicar deduplicación
+    filteredMoves = _deduplicateMoves(filteredMoves)
       ..sort((a, b) {
         final levelA = a.level ?? 999;
         final levelB = b.level ?? 999;
