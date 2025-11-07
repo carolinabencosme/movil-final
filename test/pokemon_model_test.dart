@@ -133,6 +133,106 @@ void main() {
       expect(item.generationName, 'generation-i');
     });
   });
+
+  group('PokemonMove deduplication', () {
+    test('moves with same name should be considered duplicates', () {
+      final moves = [
+        const PokemonMove(
+          id: 1,
+          name: 'Tackle',
+          method: 'level-up',
+          type: 'normal',
+          level: 1,
+          versionGroup: 'red-blue',
+        ),
+        const PokemonMove(
+          id: 1,
+          name: 'Tackle',
+          method: 'level-up',
+          type: 'normal',
+          level: 1,
+          versionGroup: 'gold-silver',
+        ),
+      ];
+
+      // Simular deduplicación (mismo algoritmo que _deduplicateMoves)
+      final uniqueMoves = <String, PokemonMove>{};
+      for (final move in moves) {
+        final key = move.name.toLowerCase();
+        if (!uniqueMoves.containsKey(key) ||
+            (move.versionGroup != null && uniqueMoves[key]!.versionGroup == null)) {
+          uniqueMoves[key] = move;
+        }
+      }
+
+      expect(uniqueMoves.length, 1);
+      expect(uniqueMoves.values.first.name, 'Tackle');
+    });
+
+    test('moves with different names should not be deduplicated', () {
+      final moves = [
+        const PokemonMove(
+          id: 1,
+          name: 'Tackle',
+          method: 'level-up',
+          type: 'normal',
+          level: 1,
+          versionGroup: 'red-blue',
+        ),
+        const PokemonMove(
+          id: 2,
+          name: 'Quick Attack',
+          method: 'level-up',
+          type: 'normal',
+          level: 4,
+          versionGroup: 'red-blue',
+        ),
+      ];
+
+      final uniqueMoves = <String, PokemonMove>{};
+      for (final move in moves) {
+        final key = move.name.toLowerCase();
+        if (!uniqueMoves.containsKey(key)) {
+          uniqueMoves[key] = move;
+        }
+      }
+
+      expect(uniqueMoves.length, 2);
+    });
+
+    test('deduplication prioritizes moves with versionGroup', () {
+      final moves = [
+        const PokemonMove(
+          id: 1,
+          name: 'Tackle',
+          method: 'level-up',
+          type: 'normal',
+          level: 1,
+          versionGroup: null,
+        ),
+        const PokemonMove(
+          id: 1,
+          name: 'Tackle',
+          method: 'level-up',
+          type: 'normal',
+          level: 1,
+          versionGroup: 'red-blue',
+        ),
+      ];
+
+      final uniqueMoves = <String, PokemonMove>{};
+      for (final move in moves) {
+        final key = move.name.toLowerCase();
+        if (!uniqueMoves.containsKey(key) ||
+            (move.versionGroup != null && uniqueMoves[key]!.versionGroup == null)) {
+          uniqueMoves[key] = move;
+        }
+      }
+
+      expect(uniqueMoves.length, 1);
+      expect(uniqueMoves.values.first.versionGroup, 'red-blue');
+    });
+  });
 }
 
 List<Map<String, dynamic>> _buildSpriteEntries(Map<String, dynamic> sprites) {
