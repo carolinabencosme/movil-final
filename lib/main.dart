@@ -4,9 +4,11 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'graphql_config.dart';
 import 'controllers/auth_controller.dart';
 import 'screens/auth/auth_gate.dart';
+import 'screens/detail_screen.dart';
+import 'services/auth_repository.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
-import 'services/auth_repository.dart';
+import 'widgets/detail/detail_constants.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +56,25 @@ class MyApp extends StatelessWidget {
                 themeMode: themeController.themeMode,
                 theme: AppTheme.light,
                 darkTheme: AppTheme.dark,
+                onGenerateRoute: (settings) {
+                  final routeName = settings.name;
+                  if (routeName != null && routeName.startsWith('/pokedex/')) {
+                    final slug = routeName.substring('/pokedex/'.length);
+                    final speciesId = pendingEvolutionNavigation.remove(slug);
+
+                    return MaterialPageRoute<void>(
+                      settings: settings,
+                      builder: (_) => DetailScreen(
+                        pokemonId: speciesId,
+                        pokemonName: slug,
+                        heroTag: speciesId != null
+                            ? 'pokemon-artwork-$speciesId'
+                            : 'pokemon-artwork-$slug',
+                      ),
+                    );
+                  }
+                  return null;
+                },
                 home: AuthGate(controller: authController),
               ),
             );
