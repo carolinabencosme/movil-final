@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/pokemon_model.dart';
+import '../models/evolution_chain_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/detail/animations/particle_field.dart';
@@ -855,5 +856,406 @@ extension DetailScreenNavigationX on BuildContext {
       );
     }
     return Navigator.of(this).pushNamed<T>(location);
+  }
+}
+
+// Tab Navigation Bar
+class _TabNavigationBar extends StatelessWidget {
+  const _TabNavigationBar({
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
+
+  final int selectedIndex;
+  final void Function(int) onTabSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          _TabButton(
+            label: 'Información',
+            isSelected: selectedIndex == 0,
+            onTap: () => onTabSelected(0),
+          ),
+          _TabButton(
+            label: 'Estadísticas',
+            isSelected: selectedIndex == 1,
+            onTap: () => onTabSelected(1),
+          ),
+          _TabButton(
+            label: 'Matchups',
+            isSelected: selectedIndex == 2,
+            onTap: () => onTabSelected(2),
+          ),
+          _TabButton(
+            label: 'Futuras',
+            isSelected: selectedIndex == 3,
+            onTap: () => onTabSelected(3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primaryContainer
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Tab Content Widgets
+class _InformacionTab extends StatelessWidget {
+  const _InformacionTab({
+    required this.pokemon,
+    required this.capitalize,
+    required this.formatLabel,
+    required this.resolveTypeColor,
+    required this.formatHeight,
+    required this.formatWeight,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) capitalize;
+  final String Function(String) formatLabel;
+  final Color Function(String, ColorScheme) resolveTypeColor;
+  final String Function(int) formatHeight;
+  final String Function(int) formatWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final characteristics = pokemon.characteristics;
+    final mainAbilityDetail =
+        pokemon.abilities.isNotEmpty ? pokemon.abilities.first : null;
+    final mainAbility =
+        mainAbilityDetail != null ? formatLabel(mainAbilityDetail.name) : null;
+    final abilitySubtitle = mainAbilityDetail == null
+        ? null
+        : (mainAbilityDetail.isHidden ? 'Habilidad oculta' : 'Habilidad principal');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InfoSectionCard(
+          title: 'Tipos',
+          child: pokemon.types.isNotEmpty
+              ? Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: pokemon.types
+                      .map((type) {
+                        final typeColor = resolveTypeColor(type, theme.colorScheme);
+                        return Chip(
+                          label: Text(formatLabel(type)),
+                          backgroundColor: typeColor.withOpacity(0.18),
+                          labelStyle: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          side: BorderSide(color: typeColor.withOpacity(0.45)),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        );
+                      })
+                      .toList(),
+                )
+              : const Text('Sin información de tipos disponible.'),
+        ),
+        const SizedBox(height: 16),
+        _InfoSectionCard(
+          title: 'Evoluciones',
+          child: Query(
+            options: QueryOptions(
+              document: gql(getPokemonEvolutionQuery),
+              variables: {'pokemonId': pokemon.id},
+            ),
+            builder: (result, {fetchMore, refetch}) {
+              if (result.isLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              if (result.hasException) {
+                return Text(
+                  'Error al cargar evoluciones: ${result.exception}',
+                  style: theme.textTheme.bodySmall,
+                );
+              }
+
+              final pokemonData = result.data?['pokemon_v2_pokemon_by_pk'] as Map<String, dynamic>?;
+              final speciesData = pokemonData?['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?;
+              final chainData = speciesData?['pokemon_v2_evolutionchain'] as Map<String, dynamic>?;
+
+              if (chainData == null) {
+                return const Text('No hay información de evoluciones disponible.');
+              }
+
+              final evolutionChain = EvolutionChain.fromGraphQL(chainData);
+
+              return EvolutionChainWidget(
+                evolutionChain: evolutionChain,
+                onPokemonTap: (pokemonId) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => DetailScreen(
+                        pokemonId: pokemonId,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        _InfoSectionCard(
+          title: 'Datos básicos',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _InfoCard(
+                      icon: Icons.height,
+                      label: 'Altura',
+                      value: formatHeight(characteristics.height),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _InfoCard(
+                      icon: Icons.monitor_weight_outlined,
+                      label: 'Peso',
+                      value: formatWeight(characteristics.weight),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Card(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.45),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              mainAbility ?? 'Sin habilidad principal disponible.',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (abilitySubtitle != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                abilitySubtitle,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withOpacity(0.75),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _InfoSectionCard(
+          title: 'Características',
+          child: _CharacteristicsSection(
+            characteristics: characteristics,
+            formatHeight: formatHeight,
+            formatWeight: formatWeight,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _InfoSectionCard(
+          title: 'Habilidades',
+          child: pokemon.abilities.isNotEmpty
+              ? Column(
+                  children: pokemon.abilities
+                      .map(
+                        (ability) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: _AbilityTile(
+                            ability: ability,
+                            formatLabel: formatLabel,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                )
+              : const Text('Sin información de habilidades disponible.'),
+        ),
+      ],
+    );
+  }
+}
+
+class _EstadisticasTab extends StatelessWidget {
+  const _EstadisticasTab({
+    required this.pokemon,
+    required this.formatLabel,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoSectionCard(
+      title: 'Estadísticas',
+      child: pokemon.stats.isNotEmpty
+          ? Column(
+              children: pokemon.stats
+                  .map(
+                    (stat) => _StatBar(
+                      label: formatLabel(stat.name.replaceAll('-', ' ')),
+                      value: stat.baseStat,
+                    ),
+                  )
+                  .toList(),
+            )
+          : const Text('Sin información de estadísticas disponible.'),
+    );
+  }
+}
+
+class _MatchupsTab extends StatelessWidget {
+  const _MatchupsTab({
+    required this.pokemon,
+    required this.formatLabel,
+  });
+
+  final PokemonDetail pokemon;
+  final String Function(String) formatLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InfoSectionCard(
+          title: 'Debilidades',
+          child: _WeaknessSection(
+            matchups: pokemon.typeMatchups,
+            formatLabel: formatLabel,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _InfoSectionCard(
+          title: 'Resistencias e inmunidades',
+          child: _TypeMatchupSection(
+            matchups: pokemon.typeMatchups,
+            formatLabel: formatLabel,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FuturasTab extends StatelessWidget {
+  const _FuturasTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return _InfoSectionCard(
+      title: 'Futuras funcionalidades',
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(
+              Icons.construction,
+              size: 64,
+              color: theme.colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Esta sección estará disponible próximamente',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
