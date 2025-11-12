@@ -375,13 +375,17 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     // Padding inferior para evitar solapamiento con gestos/teclado
     final mediaQuery = MediaQuery.of(context);
     final bottomPadding = 48.0 + mediaQuery.padding.bottom + mediaQuery.viewInsets.bottom;
+    final scrollBehavior =
+        ScrollConfiguration.of(context).copyWith(scrollbars: false);
 
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
-      child: NestedScrollView(
-        physics: const BouncingScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          final overlapHandle =
+      child: ScrollConfiguration(
+        behavior: scrollBehavior,
+        child: NestedScrollView(
+          physics: const BouncingScrollPhysics(),
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            final overlapHandle =
           NestedScrollView.sliverOverlapAbsorberHandleFor(context);
           return [
             // Absorbe el solapamiento entre header y body dentro del NestedScroll
