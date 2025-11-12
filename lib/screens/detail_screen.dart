@@ -15,7 +15,6 @@ import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
-import 'pokedex_screen.dart';
 
 /// ===============================
 /// DETAIL SCREEN (CONTENEDOR)
@@ -58,15 +57,7 @@ class DetailScreen extends StatelessWidget {
     return value[0].toUpperCase() + value.substring(1);
   }
 
-  Future<bool> _navigateBackToPokedex(BuildContext context) async {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => const PokedexScreen(),
-      ),
-      (route) => false,
-    );
-    return false;
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +76,8 @@ class DetailScreen extends StatelessWidget {
         ? <String, dynamic>{'id': {'_eq': pokemonId}}
         : <String, dynamic>{'name': {'_eq': pokemonName!}};
 
-    return WillPopScope(
-      onWillPop: () => _navigateBackToPokedex(context),
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
-          leading: BackButton(
-            onPressed: () {
-              _navigateBackToPokedex(context);
-            },
-          ),
           title: Text(previewName ?? 'Detalles del Pokémon'),
         ),
         body: Query(
@@ -214,7 +198,6 @@ class DetailScreen extends StatelessWidget {
             ),
           );
         },
-      ),
       ),
     );
   }
