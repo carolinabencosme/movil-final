@@ -9,10 +9,10 @@ export 'models/pokemon_location.dart';
 // Exportar servicios
 export 'data/location_service.dart';
 export 'data/region_coordinates.dart';
+export 'data/region_map_markers.dart';
 
 // Exportar widgets
-export 'widgets/location_marker.dart';
-export 'widgets/pokemon_location_map.dart';
+export 'widgets/region_map_viewer.dart';
 
 // Exportar pantallas
 export 'screens/locations_tab.dart';
