@@ -445,9 +445,11 @@ class _PokedexScreenState extends State<PokedexScreen> {
       }
     });
 
-    final ConnectivityResult connectivityResult =
+    final List<ConnectivityResult> connectivityResults =
         await _connectivity.checkConnectivity();
-    final bool hasConnection = connectivityResult != ConnectivityResult.none;
+    final bool hasConnection = connectivityResults.any(
+      (ConnectivityResult result) => result != ConnectivityResult.none,
+    );
 
     final searchValue = _debouncedSearch.toLowerCase();
     final numericId = int.tryParse(_debouncedSearch);
