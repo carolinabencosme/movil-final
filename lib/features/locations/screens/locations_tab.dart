@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/pokemon_model.dart';
 import '../../../widgets/detail/detail_constants.dart';
+import '../../../widgets/detail/detail_helper_widgets.dart';
 import '../../../widgets/detail/info/info_components.dart';
 import '../data/location_service.dart';
 import '../models/pokemon_location.dart';
