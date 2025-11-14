@@ -61,7 +61,7 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _offlineSnackShown = false;
   bool _hasConnection = true;
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
 
@@ -70,8 +70,9 @@ class _DetailScreenState extends State<DetailScreen> {
     super.initState();
     _initializeConnectivity();
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-      final bool hasConnection = result != ConnectivityResult.none;
+        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      final bool hasConnection =
+          results.any((status) => status != ConnectivityResult.none);
       if (!mounted || hasConnection == _hasConnection) {
         return;
       }
@@ -85,9 +86,11 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _initializeConnectivity() async {
-    final ConnectivityResult result = await _connectivity.checkConnectivity();
+    final List<ConnectivityResult> results =
+        await _connectivity.checkConnectivity();
     if (!mounted) return;
-    final bool hasConnection = result != ConnectivityResult.none;
+    final bool hasConnection =
+        results.any((status) => status != ConnectivityResult.none);
     if (hasConnection != _hasConnection) {
       setState(() {
         _hasConnection = hasConnection;
