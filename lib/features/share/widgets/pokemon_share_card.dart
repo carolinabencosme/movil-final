@@ -41,134 +41,143 @@ class PokemonShareCard extends StatelessWidget {
         ? (pokemonTypeColors[pokemon.types[1].toLowerCase()] ?? themeColor)
         : themeColor;
 
-    return Container(
-      width: 1080,
-      height: 1920,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [themeColor, secondaryColor],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 80),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // --- IMAGE ---
-            SizedBox(
-              height: 600,
-              child: pokemon.imageUrl.isNotEmpty
-                  ? Image.network(
-                      pokemon.imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: Container(
+          width: 1080,
+          height: 1920,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [themeColor, secondaryColor],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 80),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // --- IMAGE ---
+                SizedBox(
+                  height: 600,
+                  child: pokemon.imageUrl.isNotEmpty
+                      ? Image.network(
+                          pokemon.imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.catching_pokemon,
+                              size: 400,
+                              color: Colors.white.withOpacity(0.5),
+                            );
+                          },
+                        )
+                      : Icon(
                           Icons.catching_pokemon,
                           size: 400,
                           color: Colors.white.withOpacity(0.5),
-                        );
-                      },
-                    )
-                  : Icon(
-                      Icons.catching_pokemon,
-                      size: 400,
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-            ),
+                        ),
+                ),
 
-            // --- NAME & NUMBER ---
-            Column(
-              children: [
-                Text(
-                  _formatPokedexNumber(pokemon.id),
-                  style: const TextStyle(
-                    fontSize: 70,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
+                // --- NAME & NUMBER ---
+                Column(
+                  children: [
+                    Text(
+                      _formatPokedexNumber(pokemon.id),
+                      style: const TextStyle(
+                        fontSize: 70,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    Text(
+                      _capitalize(pokemon.name),
+                      style: const TextStyle(
+                        fontSize: 120,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+
+                // --- TYPES ---
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 20,
+                  runSpacing: 12,
+                  children: pokemon.types.map((type) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.25),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Text(
+                        type.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+
+                // --- STATS BOX ---
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(.25),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "STATS",
+                        style: TextStyle(
+                          fontSize: 50,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 40,
+                        runSpacing: 20,
+                        children: [
+                          _statColumn("HP", _getStatValue("hp")),
+                          _statColumn("ATK", _getStatValue("attack")),
+                          _statColumn("DEF", _getStatValue("defense")),
+                          _statColumn("SPD", _getStatValue("speed")),
+                        ],
+                      )
+                    ],
                   ),
                 ),
+
+                // --- FOOTER (logo) ---
                 Text(
-                  _capitalize(pokemon.name),
-                  style: const TextStyle(
-                    fontSize: 120,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  "ExploreDex",
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(.8),
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
-
-            // --- TYPES ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: pokemon.types.map((type) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(.25),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Text(
-                    type.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-
-            // --- STATS BOX ---
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(.25),
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    "STATS",
-                    style: TextStyle(
-                      fontSize: 50,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _statColumn("HP", _getStatValue("hp")),
-                      _statColumn("ATK", _getStatValue("attack")),
-                      _statColumn("DEF", _getStatValue("defense")),
-                      _statColumn("SPD", _getStatValue("speed")),
-                    ],
-                  )
-                ],
-              ),
-            ),
-
-            // --- FOOTER (logo) ---
-            Text(
-              "ExploreDex",
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(.8),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

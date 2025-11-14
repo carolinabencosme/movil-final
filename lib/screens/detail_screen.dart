@@ -1023,9 +1023,12 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                 borderRadius: BorderRadius.circular(16),
                 child: RepaintBoundary(
                   key: _cardKey,
-                  child: PokemonShareCard(
-                    pokemon: widget.pokemon,
-                    themeColor: widget.themeColor,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: PokemonShareCard(
+                      pokemon: widget.pokemon,
+                      themeColor: widget.themeColor,
+                    ),
                   ),
                 ),
               ),
