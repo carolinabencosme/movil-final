@@ -12,6 +12,8 @@ import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 
+part 'favorites_screen.dart';
+
 /// Opciones de ordenamiento para la lista de Pokémon
 /// Permite ordenar por número, nombre, altura o peso
 /// Opciones de ordenamiento para la lista de Pokémon

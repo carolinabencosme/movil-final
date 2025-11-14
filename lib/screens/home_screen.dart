@@ -77,6 +77,47 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     ),
     _SectionInfo(
+      title: 'Favoritos',
+      subtitle: 'Tus Pokémon guardados',
+      icon: Icons.favorite,
+      color: Color(0xFFFF8FAB),
+      heroTag: 'section-favorites',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.favorite,
+          scale: 0.92,
+          color: Colors.white,
+          opacity: 0.94,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.star_rounded,
+          scale: 0.42,
+          color: Colors.white,
+          opacity: 0.52,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-14, 22),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -48,
+          right: -24,
+          diameterFactor: 0.95,
+          color: Colors.white,
+          opacity: 0.2,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -26,
+          right: 16,
+          widthFactor: 0.5,
+          heightFactor: 0.18,
+          color: Colors.black,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(28)),
+        ),
+      ],
+    ),
+    _SectionInfo(
       title: 'Moves',
       subtitle: 'Damage, effects & contest data',
       icon: Icons.flash_on,
@@ -341,6 +382,13 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (section.title) {
       case 'Pokédex':
         destination = PokedexScreen(
+          heroTag: section.heroTag,
+          accentColor: section.color,
+          title: section.title,
+        );
+        break;
+      case 'Favoritos':
+        destination = FavoritesScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
