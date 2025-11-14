@@ -7,17 +7,19 @@ import 'graphql_config.dart';
 import 'screens/auth/auth_gate.dart';
 import 'services/auth_repository.dart';
 import 'services/favorites_repository.dart';
+import 'services/pokemon_cache_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initHiveForFlutter();
-  final clientNotifier = initGraphQLClient();
+  final clientNotifier = await initGraphQLClient();
+  final pokemonCacheService = await PokemonCacheService.init();
   final themeController = ThemeController();
   final authRepository = await AuthRepository.init();
   final authController = AuthController(repository: authRepository);
-  final favoritesRepository = await FavoritesRepository.init();
+  final favoritesRepository = await FavoritesRepository.init(pokemonCacheService);
   final favoritesController =
       FavoritesController(repository: favoritesRepository);
 

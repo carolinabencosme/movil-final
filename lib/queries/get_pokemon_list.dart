@@ -112,6 +112,8 @@ ${paginationBlock}      order_by: $orderByBlock
     ) {
       id
       name
+      height
+      weight
       pokemon_v2_pokemonsprites(limit: 1) {
         sprites
       }
@@ -130,6 +132,12 @@ ${paginationBlock}      order_by: $orderByBlock
         generation_id
         pokemon_v2_generation {
           id
+          name
+          pokemon_v2_region {
+            name
+          }
+        }
+        pokemon_v2_pokemonshape {
           name
         }
       }

@@ -1,14 +1,14 @@
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
-
-/// Inicializa el cliente de conexión con PokeAPI GraphQL
-ValueNotifier<GraphQLClient> initGraphQLClient() {
+/// Inicializa el cliente de conexión con PokeAPI GraphQL usando Hive para
+/// persistir el caché de GraphQL entre ejecuciones.
+Future<ValueNotifier<GraphQLClient>> initGraphQLClient() async {
   final HttpLink httpLink = HttpLink(
     'https://beta.pokeapi.co/graphql/v1beta', // endpoint real
   );
 
-  final InMemoryStore store = InMemoryStore();
+  final HiveStore store = await HiveStore.open();
 
   // Optimized caching policy - use cache first, then network
   final Policies defaultQueryPolicies = Policies(

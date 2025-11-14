@@ -48,6 +48,10 @@ class PokemonListItem {
     List<PokemonStat> stats = const <PokemonStat>[],
     this.generationId,
     this.generationName,
+    this.regionName,
+    this.shapeName,
+    this.height,
+    this.weight,
     this.isFavorite = false,
   })  : types = List<String>.unmodifiable(types),
         stats = List<PokemonStat>.unmodifiable(stats);
@@ -69,9 +73,21 @@ class PokemonListItem {
   
   /// ID de la generación a la que pertenece (1-9)
   final int? generationId;
-  
+
   /// Nombre de la generación (ej: "generation-i", "generation-ii")
   final String? generationName;
+
+  /// Nombre de la región asociada a la generación.
+  final String? regionName;
+
+  /// Nombre de la forma del Pokémon (shape) si está disponible.
+  final String? shapeName;
+
+  /// Altura base (en decímetros) usada para ordenamientos locales.
+  final int? height;
+
+  /// Peso base (en hectogramos) usado para ordenamientos locales.
+  final int? weight;
 
   /// Indica si el Pokémon está marcado como favorito por el usuario.
   final bool isFavorite;
@@ -139,6 +155,11 @@ class PokemonListItem {
       stats: stats,
       generationId: resolvedGenerationId,
       generationName: resolvedGenerationName,
+      regionName: generationInfo?['pokemon_v2_region']?['name'] as String?,
+      shapeName:
+          species?['pokemon_v2_pokemonshape']?['name'] as String?,
+      height: json['height'] as int?,
+      weight: json['weight'] as int?,
       isFavorite: false,
     );
   }
@@ -153,6 +174,10 @@ class PokemonListItem {
     List<PokemonStat>? stats,
     int? generationId,
     String? generationName,
+    String? regionName,
+    String? shapeName,
+    int? height,
+    int? weight,
     bool? isFavorite,
   }) {
     return PokemonListItem(
@@ -163,6 +188,10 @@ class PokemonListItem {
       stats: stats ?? this.stats,
       generationId: generationId ?? this.generationId,
       generationName: generationName ?? this.generationName,
+      regionName: regionName ?? this.regionName,
+      shapeName: shapeName ?? this.shapeName,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }
@@ -177,6 +206,10 @@ class PokemonListItem {
       'stats': stats.map((stat) => stat.toJson()).toList(),
       'generationId': generationId,
       'generationName': generationName,
+      'regionName': regionName,
+      'shapeName': shapeName,
+      'height': height,
+      'weight': weight,
       'isFavorite': isFavorite,
     };
   }
@@ -205,6 +238,12 @@ class PokemonListItem {
           json['generation_id'] as int?,
       generationName: json['generationName'] as String? ??
           json['generation_name'] as String?,
+      regionName: json['regionName'] as String? ??
+          json['region_name'] as String?,
+      shapeName: json['shapeName'] as String? ??
+          json['shape_name'] as String?,
+      height: json['height'] as int?,
+      weight: json['weight'] as int?,
       isFavorite: json['isFavorite'] as bool? ??
           json['is_favorite'] as bool? ??
           false,

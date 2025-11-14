@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,6 +17,7 @@ import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
+import '../services/pokemon_cache_service.dart';
 
 /// ===============================
 /// DETAIL SCREEN (CONTENEDOR)
@@ -25,7 +27,7 @@ import '../widgets/pokemon_artwork.dart';
 /// - Tabs con secciones (Info, Stats, Matchups, Evolución, Movimientos)
 /// - Carga de datos con GraphQL: manejo de loading, error y datos parciales
 /// - Pull-to-refresh (refetch)
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   /// Requiere `pokemonId` o `pokemonName`. Si llega `initialPokemon`, se usa como preview.
   DetailScreen({
     super.key,
@@ -34,9 +36,9 @@ class DetailScreen extends StatelessWidget {
     this.initialPokemon,
     this.heroTag,
   }) : assert(
-  pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
-  'Either pokemonId or pokemonName must be provided.',
-  );
+          pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
+          'Either pokemonId or pokemonName must be provided.',
+        );
 
   /// ID del Pokémon (National Dex)
   final int? pokemonId;
@@ -50,7 +52,58 @@ class DetailScreen extends StatelessWidget {
   /// Tag único para transición Hero del artwork
   final String? heroTag;
 
-  /// Capitaliza primera letra (para títulos bonitos)
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  bool _isOfflineMode = false;
+  bool _offlineSnackShown = false;
+  bool _hasConnection = true;
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+
+  PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeConnectivity();
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      final bool hasConnection = result != ConnectivityResult.none;
+      if (!mounted || hasConnection == _hasConnection) {
+        return;
+      }
+      setState(() {
+        _hasConnection = hasConnection;
+      });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _updateOfflineMode(!hasConnection),
+      );
+    });
+  }
+
+  Future<void> _initializeConnectivity() async {
+    final ConnectivityResult result = await _connectivity.checkConnectivity();
+    if (!mounted) return;
+    final bool hasConnection = result != ConnectivityResult.none;
+    if (hasConnection != _hasConnection) {
+      setState(() {
+        _hasConnection = hasConnection;
+      });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _updateOfflineMode(!hasConnection),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -58,53 +111,164 @@ class DetailScreen extends StatelessWidget {
     return value[0].toUpperCase() + value.substring(1);
   }
 
+  void _updateOfflineMode(bool offline) {
+    if (!mounted) return;
+    if (offline) {
+      if (!_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = true;
+        });
+      }
+      if (!_offlineSnackShown) {
+        _showSnack(
+          'Modo offline activo. Mostrando datos guardados localmente.',
+        );
+        _offlineSnackShown = true;
+      }
+    } else {
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      if (_offlineSnackShown) {
+        _showSnack('Conexión restablecida.');
+        _offlineSnackShown = false;
+      }
+    }
+  }
 
+  void _showSnack(String message) {
+    if (!mounted || message.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  PokemonListItem? _resolveOfflinePokemon(
+    FavoritesController favoritesController,
+  ) {
+    if (widget.initialPokemon != null) {
+      return favoritesController.applyFavoriteState(widget.initialPokemon!);
+    }
+    if (widget.pokemonId != null) {
+      final int id = widget.pokemonId!;
+      final PokemonListItem? cached =
+          favoritesController.getCachedPokemon(id) ??
+              _pokemonCacheService.getPokemon(id);
+      if (cached != null) {
+        return favoritesController.applyFavoriteState(cached);
+      }
+    } else if (widget.pokemonName != null) {
+      final PokemonListItem? fromService =
+          _pokemonCacheService.findByName(widget.pokemonName!);
+      if (fromService != null) {
+        return favoritesController.applyFavoriteState(fromService);
+      }
+    }
+    return null;
+  }
+
+  Widget _buildOfflineBanner(ThemeData theme) {
+    final Color backgroundColor =
+        theme.colorScheme.surfaceVariant.withOpacity(0.9);
+    final Color foregroundColor = theme.colorScheme.onSurfaceVariant;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, color: foregroundColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Modo offline activo. Algunos datos avanzados pueden no estar disponibles.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: foregroundColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final favoritesController = FavoritesScope.of(context);
 
-    // HeroTag estable incluso si entra por id o name
-    final resolvedHeroTag =
-        heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
+    final resolvedHeroTag = widget.heroTag ??
+        'pokemon-artwork-${widget.pokemonId ?? widget.pokemonName ?? 'unknown'}';
 
-    // Nombre e imagen para el “skeleton/preview” antes del GraphQL completo
-    final previewName = initialPokemon != null
-        ? _capitalize(initialPokemon!.name)
-        : (pokemonName != null ? _capitalize(pokemonName!) : null);
-    final previewImage = initialPokemon?.imageUrl ?? '';
+    final previewName = widget.initialPokemon != null
+        ? _capitalize(widget.initialPokemon!.name)
+        : (widget.pokemonName != null
+            ? _capitalize(widget.pokemonName!)
+            : null);
+    final previewImage = widget.initialPokemon?.imageUrl ?? '';
 
-    // Filtro dinámico para GraphQL (por id o por name)
-    final where = pokemonId != null
-        ? <String, dynamic>{'id': {'_eq': pokemonId}}
-        : <String, dynamic>{'name': {'_eq': pokemonName!}};
+    final where = widget.pokemonId != null
+        ? <String, dynamic>{'id': {'_eq': widget.pokemonId}}
+        : <String, dynamic>{'name': {'_eq': widget.pokemonName!}};
 
-    final PokemonListItem? cachedInitial = pokemonId != null
-        ? favoritesController.getCachedPokemon(pokemonId!)
-        : null;
-    final PokemonListItem? initialFavorite = initialPokemon != null
-        ? favoritesController.applyFavoriteState(initialPokemon!)
+    PokemonListItem? cachedInitial;
+    if (widget.pokemonId != null) {
+      cachedInitial = favoritesController.getCachedPokemon(widget.pokemonId!) ??
+          _pokemonCacheService.getPokemon(widget.pokemonId!);
+    } else if (widget.pokemonName != null) {
+      cachedInitial = _pokemonCacheService.findByName(widget.pokemonName!);
+      if (cachedInitial != null) {
+        cachedInitial =
+            favoritesController.applyFavoriteState(cachedInitial!);
+      }
+    }
+
+    final PokemonListItem? initialFavorite = widget.initialPokemon != null
+        ? favoritesController.applyFavoriteState(widget.initialPokemon!)
         : cachedInitial;
+
+    final FetchPolicy fetchPolicy =
+        _hasConnection ? FetchPolicy.cacheAndNetwork : FetchPolicy.cacheFirst;
 
     return Query(
       options: QueryOptions(
         document: gql(getPokemonDetailsQuery),
-        fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
-        errorPolicy: ErrorPolicy.all, // permite datos parciales
+        fetchPolicy: fetchPolicy,
+        errorPolicy: ErrorPolicy.all,
         variables: {
           'where': where,
-          'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
+          'languageIds': preferredLanguageIds,
         },
       ),
       builder: (result, {fetchMore, refetch}) {
         if (kDebugMode) {
           debugPrint(
-              '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}',
+          );
           debugPrint(
-              '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+            '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}',
+          );
           if (result.hasException) {
             debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
           }
+        }
+
+        final bool offlineError =
+            !_hasConnection || result.exception?.linkException != null;
+        if (offlineError || (!result.isLoading && !result.hasException)) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _updateOfflineMode(offlineError),
+          );
         }
 
         final pokemonList =
@@ -132,14 +296,23 @@ class DetailScreen extends StatelessWidget {
             imageUrl: pokemonDetail.imageUrl,
             types: List<String>.from(pokemonDetail.types),
             stats: List<PokemonStat>.from(pokemonDetail.stats),
-            generationId:
-                favoriteTarget?.generationId ?? initialPokemon?.generationId,
+            generationId: favoriteTarget?.generationId ??
+                widget.initialPokemon?.generationId,
             generationName: favoriteTarget?.generationName ??
-                initialPokemon?.generationName,
+                widget.initialPokemon?.generationName,
+            regionName: favoriteTarget?.regionName ??
+                widget.initialPokemon?.regionName,
+            shapeName: favoriteTarget?.shapeName ??
+                widget.initialPokemon?.shapeName,
+            height: pokemonDetail.characteristics.height,
+            weight: pokemonDetail.characteristics.weight,
             isFavorite: favoritesController.isFavorite(pokemonDetail.id),
           );
 
+          unawaited(_pokemonCacheService.cachePokemon(favoriteTarget));
           unawaited(favoritesController.cachePokemon(favoriteTarget));
+        } else if (offlineError) {
+          favoriteTarget = _resolveOfflinePokemon(favoritesController);
         }
 
         if (favoriteTarget != null) {
@@ -151,15 +324,23 @@ class DetailScreen extends StatelessWidget {
             ? _capitalize(favoriteTarget.name)
             : previewName ?? 'Detalles del Pokémon';
 
+        final PokemonListItem? offlinePokemon =
+            offlineError ? favoriteTarget : null;
+
         Widget body;
 
-        if (result.isLoading && data == null) {
+        if (result.isLoading && data == null && offlinePokemon == null) {
           body = LoadingDetailView(
             heroTag: resolvedHeroTag,
             imageUrl: previewImage,
             name: favoriteTarget != null
                 ? _capitalize(favoriteTarget.name)
                 : previewName,
+          );
+        } else if (offlinePokemon != null && data == null) {
+          body = _OfflineDetailView(
+            heroTag: resolvedHeroTag,
+            pokemon: offlinePokemon,
           );
         } else if (result.hasException && data == null) {
           debugPrint(
@@ -171,7 +352,8 @@ class DetailScreen extends StatelessWidget {
         } else if (data == null) {
           if (kDebugMode) {
             debugPrint(
-                '[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
+              '[Pokemon Detail] No pokemon data found. Full result: ${result.data}',
+            );
           }
           body = Center(
             child: Column(
@@ -226,6 +408,16 @@ class DetailScreen extends StatelessWidget {
           );
         }
 
+        final ThemeData theme = Theme.of(context);
+        final Widget finalBody = _isOfflineMode
+            ? Column(
+                children: [
+                  _buildOfflineBanner(theme),
+                  Expanded(child: body),
+                ],
+              )
+            : body;
+
         return Scaffold(
           appBar: AppBar(
             title: Text(appBarTitle),
@@ -234,9 +426,81 @@ class DetailScreen extends StatelessWidget {
                 _DetailFavoriteButton(pokemon: favoriteTarget),
             ],
           ),
-          body: body,
+          body: finalBody,
         );
       },
+    );
+  }
+}
+
+class _OfflineDetailView extends StatelessWidget {
+  const _OfflineDetailView({
+    required this.heroTag,
+    required this.pokemon,
+  });
+
+  final String heroTag;
+  final PokemonListItem pokemon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final String displayName =
+        pokemon.name.isEmpty ? 'Pokémon #${pokemon.id}' : pokemon.name;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          PokemonArtwork(
+            heroTag: heroTag,
+            imageUrl: pokemon.imageUrl,
+            size: 160,
+            padding: const EdgeInsets.all(12),
+            borderRadius: 32,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            displayName.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: pokemon.types
+                .map(
+                  (type) => Chip(
+                    label: Text(type.toUpperCase()),
+                    backgroundColor:
+                        theme.colorScheme.secondaryContainer.withOpacity(0.6),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Modo offline: mostrando información guardada.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'La información detallada no está disponible sin conexión. Intenta nuevamente cuando recuperes internet.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
     );
   }
 }
