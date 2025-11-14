@@ -70,6 +70,7 @@ const List<DetailTabConfig> detailTabConfigs = [
   DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
   DetailTabConfig(icon: Icons.transform_rounded, label: 'Evoluciones'),
   DetailTabConfig(icon: Icons.sports_martial_arts_rounded, label: 'Movimientos'),
+  DetailTabConfig(icon: Icons.location_on_rounded, label: 'Ubicaciones'),
 ];
 
 // Constants for evolution stage card sizing
