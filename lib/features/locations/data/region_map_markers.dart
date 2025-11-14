@@ -202,5 +202,5 @@ List<String> getAvailableRegionsWithMarkers() {
 
 /// Obtiene una posición por defecto para una región (centro del mapa)
 RegionMarker getDefaultRegionMarker(String regionName) {
-  return RegionMarker(400, 300, regionName);
+  return RegionMarker(400, 300, regionName, 'Default');
 }
