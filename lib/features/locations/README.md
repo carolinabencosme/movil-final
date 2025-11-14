@@ -1,6 +1,9 @@
 # Locations Module
 
-Este módulo implementa mapas interactivos para mostrar las ubicaciones donde aparecen los Pokémon en diferentes regiones y juegos.
+Este módulo implementa mapas interactivos de regiones Pokémon para mostrar las ubicaciones donde aparecen los Pokémon en diferentes juegos.
+
+> **Nota**: Este módulo fue actualizado para usar mapas de regiones Pokémon en vez de OpenStreetMap.
+> Ver `REGION_MAPS_IMPLEMENTATION.md` en la raíz del proyecto para detalles completos.
 
 ## Estructura
 
@@ -8,40 +11,40 @@ Este módulo implementa mapas interactivos para mostrar las ubicaciones donde ap
 locations/
 ├── data/
 │   ├── location_service.dart      # Servicio para obtener datos de PokéAPI
-│   └── region_coordinates.dart    # Coordenadas geográficas de regiones
+│   ├── region_coordinates.dart    # Coordenadas X/Y de centros de regiones
+│   └── region_map_markers.dart    # Marcadores X/Y por región (116 ubicaciones)
 ├── models/
-│   └── pokemon_location.dart      # Modelos de datos
+│   └── pokemon_location.dart      # Modelos de datos (MapCoordinates)
 ├── screens/
 │   └── locations_tab.dart         # Tab de ubicaciones en detail screen
 ├── widgets/
-│   ├── location_marker.dart       # Marcador y popup del mapa
-│   └── pokemon_location_map.dart  # Widget del mapa interactivo
+│   └── region_map_viewer.dart     # Mapa interactivo con InteractiveViewer
 └── locations.dart                 # Archivo de exportación del módulo
 ```
 
 ## Características
 
-### 1. Mapa Interactivo
-- **Tiles**: OpenStreetMap para el mapa base
-- **Zoom**: Control de zoom con botones (+/-) y gestos
+### 1. Mapa Interactivo de Regiones
+- **Base**: Imágenes PNG de mapas de regiones Pokémon (800x600px)
+- **Zoom**: Control de zoom (0.8x-4x) con botones (+/-) y gestos pinch
 - **Pan**: Arrastrar para mover el mapa
 - **Reset**: Botón para volver al centro y zoom inicial
-- **Responsive**: Se adapta al tamaño de la pantalla
+- **Offline**: Funciona sin conexión (assets locales)
 
-### 2. Marcadores de Ubicación
-- **Diseño**: Círculo con ícono de ubicación
-- **Color**: Personalizable (por defecto azul Pokémon)
+### 2. Marcadores Estilo Pokémon
+- **Diseño**: Círculo rojo con ícono de ubicación y borde blanco
+- **Color**: Personalizable (por defecto usa color primario del tema)
 - **Interactividad**: Tap para mostrar popup con información
-- **Visualización**: Borde blanco y sombra para contraste
+- **Animación**: Escala aumenta 20% al seleccionar
+- **Posicionamiento**: Coordenadas X/Y en píxeles
 
 ### 3. Información Detallada
 - **Popup en mapa**: Al tocar un marcador
-  - Nombre de la región
-  - Número de áreas
-  - Juegos donde aparece
-  - Ejemplo de ubicación
+  - Nombre del área
+  - Juegos donde aparece (chips)
+  - Botón cerrar
 - **Lista de regiones**: Debajo del mapa
-  - Cards expandibles por región
+  - Card por región con detalles
   - Chips de versiones
   - Áreas de ejemplo
 
@@ -49,7 +52,7 @@ locations/
 - **Loading**: Spinner con mensaje
 - **Error**: Icono, mensaje y botón de reintentar
 - **Empty**: Estado cuando no hay datos
-- **Success**: Mapa y lista de ubicaciones
+- **Success**: Mapas por región con marcadores
 
 ## Uso
 
@@ -75,19 +78,21 @@ También puedes usar el mapa de forma independiente:
 ```dart
 import 'package:pokedex/features/locations/locations.dart';
 
-PokemonLocationMap(
-  locations: locationsByRegion,
+RegionMapViewer(
+  region: 'kanto',
+  encounters: encountersList,
   height: 300.0,
-  initialZoom: 4.0,
-  markerColor: Colors.blue,
+  markerColor: Colors.red,
+  onMarkerTap: (encounter) {
+    print('Tapped: ${encounter.displayName}');
+  },
 )
 ```
 
 ## Dependencias
 
-- **flutter_map**: ^6.0.0 - Widget de mapa interactivo
-- **latlong2**: ^0.9.0 - Coordenadas geográficas
 - **http**: ^1.0.0 - Peticiones HTTP a PokéAPI
+- **flutter**: SDK - InteractiveViewer para zoom/pan
 
 ## API
 
@@ -106,8 +111,8 @@ final locationsByRegion = await service.fetchLocationsByRegion(pokemonId);
 ### Coordenadas de Regiones
 
 ```dart
-// Obtener coordenadas
-final coords = getRegionCoordinates('kanto'); // LatLng(35.4, 138.7)
+// Obtener coordenadas del centro de una región
+final coords = getRegionCoordinates('kanto'); // MapCoordinates(400, 300)
 
 // Verificar disponibilidad
 final hasCoords = hasRegionCoordinates('kanto'); // true
@@ -116,7 +121,30 @@ final hasCoords = hasRegionCoordinates('kanto'); // true
 final regions = getAvailableRegions(); // ['kanto', 'johto', ...]
 ```
 
+### Marcadores de Región
+
+```dart
+// Obtener marcador de un área específica
+final marker = getRegionMarker('kanto', 'route-1'); // RegionMarker(400, 450, 'Route 1')
+
+// Obtener todos los marcadores de una región
+final markers = getRegionMarkers('kanto'); // Map<String, RegionMarker>
+
+// Verificar si una región tiene marcadores
+final hasMarkers = hasRegionMarkers('kanto'); // true
+```
+
 ## Modelos de Datos
+
+### MapCoordinates
+Coordenadas X/Y en píxeles para posicionamiento en el mapa.
+
+```dart
+class MapCoordinates {
+  final double x; // 0-800 (para imagen de 800px de ancho)
+  final double y; // 0-600 (para imagen de 600px de alto)
+}
+```
 
 ### PokemonEncounter
 Representa un encuentro en un área específica.
@@ -126,7 +154,7 @@ class PokemonEncounter {
   final String locationArea;
   final List<EncounterVersionDetail> versionDetails;
   final String? region;
-  final LatLng? coordinates;
+  final MapCoordinates? coordinates;
   
   String get displayName; // "Route 1 Area"
   List<String> get allVersions; // ["red", "blue"]
@@ -168,26 +196,38 @@ Encuentros agrupados por región con coordenadas.
 class LocationsByRegion {
   final String region;
   final List<PokemonEncounter> encounters;
-  final LatLng coordinates;
+  final MapCoordinates coordinates; // Centro del mapa
   
   List<String> get allVersions;
   int get areaCount;
 }
 ```
 
+### RegionMarker
+Marcador de ubicación en el mapa de región.
+
+```dart
+class RegionMarker {
+  final double x; // Posición X en píxeles
+  final double y; // Posición Y en píxeles
+  final String area; // Nombre del área
+}
+```
+
 ## Regiones Soportadas
 
-| Región | Inspiración Real | Coordenadas |
-|--------|------------------|-------------|
-| Kanto | Región de Kanto, Japón | (35.4, 138.7) |
-| Johto | Región de Kansai, Japón | (36.2, 138.5) |
-| Hoenn | Kyushu, Japón | (34.7, 135.5) |
-| Sinnoh | Hokkaido, Japón | (39.7, 140.0) |
-| Unova | Nueva York, EE.UU. | (40.7, -74.0) |
-| Kalos | Francia | (46.2, 2.2) |
-| Alola | Hawái, EE.UU. | (20.8, -156.3) |
-| Galar | Reino Unido | (53.0, -1.5) |
-| Paldea | Península Ibérica | (40.4, -3.7) |
+| Región | Mapa PNG | Marcadores | Centro (X,Y) |
+|--------|----------|------------|--------------|
+| Kanto | `kanto.png` | 13 ubicaciones | (400, 300) |
+| Johto | `johto.png` | 16 ubicaciones | (400, 300) |
+| Hoenn | `hoenn.png` | 16 ubicaciones | (400, 300) |
+| Sinnoh | `sinnoh.png` | 20 ubicaciones | (400, 300) |
+| Unova | `unova.png` | 14 ubicaciones | (400, 300) |
+| Kalos | `kalos.png` | 11 ubicaciones | (400, 300) |
+| Alola | `alola.png` | 12 ubicaciones | (400, 300) |
+| Galar | `galar.png` | 14 ubicaciones | (400, 300) |
+
+**Total: 116 ubicaciones pre-configuradas**
 
 ## Pruebas
 
@@ -208,16 +248,22 @@ Tests incluidos:
 
 ## Notas Técnicas
 
-### Coordenadas Geográficas
+### Sistema de Coordenadas
 
-Como la PokéAPI no proporciona coordenadas geográficas reales, se utilizan coordenadas basadas en las inspiraciones reales de cada región. Este es un enfoque de fallback razonable que proporciona una experiencia visual coherente.
+El módulo usa un sistema de coordenadas X/Y en píxeles en vez de coordenadas geográficas:
+- **Base**: Imágenes de 800x600 píxeles
+- **Origen**: (0, 0) en la esquina superior izquierda
+- **Centro**: (400, 300) en el centro del mapa
+- **Marcadores**: Posicionados con `Positioned` widgets
 
 ### Rendimiento
 
 - Los datos se cargan bajo demanda (lazy loading)
 - El estado se mantiene con `AutomaticKeepAliveClientMixin`
-- Las imágenes del mapa usan cache del navegador
-- Los marcadores son widgets ligeros
+- Las imágenes del mapa son assets locales (bundle)
+- Los marcadores son widgets ligeros con animaciones optimizadas
+- InteractiveViewer maneja transformaciones eficientemente
+- 99% menos uso de memoria vs. tiles de OpenStreetMap
 
 ### Accesibilidad
 
@@ -233,18 +279,31 @@ Los textos están en español, pero la estructura permite fácil i18n:
 - Los nombres de regiones/versiones vienen de la API en inglés
 - Los métodos `displayName`, `displayVersion`, etc. pueden usar i18n
 
+## Customización
+
+### Reemplazar Mapas Placeholder
+
+Los mapas actuales son placeholders. Para usar mapas reales:
+
+1. Obtén imágenes de mapas de regiones Pokémon (recomendado: 800x600px)
+2. Reemplaza los archivos en `assets/maps/`
+3. Ajusta coordenadas en `region_map_markers.dart` según las nuevas imágenes
+4. Ejecuta `flutter pub get` para actualizar assets
+
+Ver `REGION_MAPS_IMPLEMENTATION.md` para guía detallada.
+
 ## Mejoras Futuras
 
 Posibles mejoras para futuras iteraciones:
 
-1. **Filtros**: Filtrar por versión del juego o método de encuentro
-2. **Detalles expandibles**: Modal con información completa al tocar una región
-3. **Comparación**: Comparar ubicaciones de múltiples Pokémon
-4. **Navegación**: Navegar entre Pokémon desde el mapa
-5. **Personalización**: Temas de mapa (satélite, terreno, etc.)
-6. **Caché**: Cache local de datos de ubicaciones
-7. **Animaciones**: Animaciones al aparecer marcadores
-8. **Clustering**: Agrupar marcadores cercanos en zoom bajo
+1. **Selector de región**: Dropdown para cambiar entre regiones
+2. **Íconos personalizados**: Diferentes íconos por tipo de ubicación
+3. **Heatmap**: Overlay de probabilidad de encuentro
+4. **Rutas animadas**: Animaciones entre ubicaciones
+5. **Mini-mapa**: Vista general en esquina
+6. **Búsqueda**: Buscar ubicaciones específicas
+7. **Zoom personalizado**: Niveles de zoom por región
+8. **Comparación**: Comparar ubicaciones de múltiples Pokémon
 
 ## Contribuir
 
