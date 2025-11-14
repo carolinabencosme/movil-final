@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:graphql/client.dart' show LinkException;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../controllers/favorites_controller.dart';
@@ -11,6 +13,7 @@ import '../queries/get_pokemon_types.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
+import '../services/pokemon_cache_service.dart';
 
 part 'favorites_screen.dart';
 
@@ -140,6 +143,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _hasMore = true;                // Indica si hay más resultados para cargar
   bool _filtersLoading = false;        // Indica si se están cargando los filtros
   bool _didInit = false;               // Indica si ya se inicializó
+  bool _isOfflineMode = false;         // Indica si los datos provienen de caché local
+  bool _offlineSnackShown = false;     // Controla los avisos de modo offline
+  final Connectivity _connectivity = Connectivity();
 
   /// Métricas y estado de la UI
   int _totalCount = 0;                 // Total de Pokémon que coinciden con filtros
@@ -151,6 +157,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   /// Verifica si el ordenamiento actual es el predeterminado
   bool get _isDefaultSort =>
       _sortOption == kDefaultSortOption && _isSortAscending == kDefaultSortAscending;
+
+  PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
 
   @override
   void initState() {
@@ -421,7 +429,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   /// - Cuántos cargar (30 por página)
   /// - Desde dónde cargar (offset basado en lista actual)
   /// - Qué filtros aplicar
-  /// 
+  ///
   /// [reset]: Si es true, reinicia la lista desde el inicio
   Future<void> _fetchPokemons({bool reset = false}) async {
     if (_isFetching || (!_hasMore && !reset)) {
@@ -437,19 +445,41 @@ class _PokedexScreenState extends State<PokedexScreen> {
       }
     });
 
-    final client = GraphQLProvider.of(context).value;
+    final ConnectivityResult connectivityResult =
+        await _connectivity.checkConnectivity();
+    final bool hasConnection = connectivityResult != ConnectivityResult.none;
+
     final searchValue = _debouncedSearch.toLowerCase();
     final numericId = int.tryParse(_debouncedSearch);
-    
+
     // Determina qué filtros aplicar en la query
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
     final includeGenerationFilter = _selectedGenerations.isNotEmpty;
     final includeRegionFilter = _selectedRegions.isNotEmpty;
     final includeShapeFilter = _selectedShapes.isNotEmpty;
-    
+
     // No paginar cuando se busca por ID (solo devuelve un resultado)
     final shouldPaginate = !includeIdFilter;
+
+    if (!hasConnection) {
+      final bool handledOffline = await _loadPokemonsFromCache(
+        reset: reset,
+        offset: offset,
+        shouldPaginateOverride: shouldPaginate,
+        showOfflineMessage: true,
+      );
+
+      if (!handledOffline && mounted) {
+        setState(() {
+          _isFetching = false;
+          _isInitialLoading = false;
+        });
+      }
+      return;
+    }
+
+    final client = GraphQLProvider.of(context).value;
 
     final document = gql(
       buildPokemonListQuery(
@@ -502,6 +532,16 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
       final operationException = result.exception;
       if (result.hasException && operationException != null) {
+        final bool offlineHandled = operationException.linkException != null &&
+            await _loadPokemonsFromCache(
+              reset: reset,
+              offset: offset,
+              shouldPaginateOverride: shouldPaginate,
+              showOfflineMessage: true,
+            );
+        if (offlineHandled) {
+          return;
+        }
         _handleError(operationException, reset: reset);
         return;
       }
@@ -519,6 +559,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       final FavoritesController? favoritesController =
           _favoritesController ?? FavoritesScope.maybeOf(context);
       List<PokemonListItem> resolvedResults = results;
+      await _pokemonCacheService.cachePokemons(resolvedResults);
       if (favoritesController != null && results.isNotEmpty) {
         resolvedResults =
             favoritesController.applyFavoriteStateToList(results);
@@ -546,9 +587,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
         _errorMessage = '';
       });
+      _updateOfflineMode(false);
     } catch (error) {
       if (!mounted) return;
-      _handleGenericError(error, reset: reset);
+      final bool offlineHandled = await _handleOfflineFallback(
+        reset: reset,
+        offset: offset,
+        shouldPaginate: shouldPaginate,
+        error: error,
+      );
+      if (!offlineHandled) {
+        _handleGenericError(error, reset: reset);
+      }
     } finally {
       if (!mounted) return;
       setState(() {
@@ -558,7 +608,200 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
   }
 
+  Future<bool> _handleOfflineFallback({
+    required bool reset,
+    required int offset,
+    required bool shouldPaginate,
+    required Object error,
+  }) async {
+    final bool isLinkError =
+        (error is OperationException && error.linkException != null) ||
+            error is LinkException;
+    final bool isSocketError =
+        error.toString().toLowerCase().contains('socketexception');
+    if (!isLinkError && !isSocketError) {
+      return false;
+    }
+
+    return _loadPokemonsFromCache(
+      reset: reset,
+      offset: offset,
+      shouldPaginateOverride: shouldPaginate,
+      showOfflineMessage: true,
+    );
+  }
+
+  Future<bool> _loadPokemonsFromCache({
+    required bool reset,
+    required int offset,
+    bool? shouldPaginateOverride,
+    bool showOfflineMessage = false,
+  }) async {
+    final List<PokemonListItem> cached =
+        _pokemonCacheService.getAll(sorted: false);
+    if (cached.isEmpty) {
+      _updateOfflineMode(true, showMessage: showOfflineMessage);
+      if (!mounted) {
+        return false;
+      }
+      setState(() {
+        if (reset) {
+          _pokemons = <PokemonListItem>[];
+          _hasMore = false;
+        }
+        _errorMessage =
+            'Sin conexión y sin datos guardados localmente.';
+        _isFetching = false;
+        _isInitialLoading = false;
+      });
+      return false;
+    }
+
+    final List<PokemonListItem> filtered = _applyOfflineFilters(cached);
+    final int? numericId = int.tryParse(_debouncedSearch);
+    final bool includeIdFilter =
+        numericId != null && _debouncedSearch.isNotEmpty;
+    final bool shouldPaginate =
+        shouldPaginateOverride ?? !includeIdFilter;
+
+    final FavoritesController? favoritesController =
+        _favoritesController ?? FavoritesScope.maybeOf(context);
+
+    List<PokemonListItem> page;
+    if (shouldPaginate) {
+      page = filtered.skip(offset).take(_pageSize).toList();
+    } else {
+      page = filtered;
+    }
+
+    if (favoritesController != null && page.isNotEmpty) {
+      page = favoritesController.applyFavoriteStateToList(page);
+    }
+
+    if (!mounted) {
+      return true;
+    }
+
+    setState(() {
+      if (reset || !shouldPaginate) {
+        _pokemons = page;
+      } else {
+        _pokemons = <PokemonListItem>[..._pokemons, ...page];
+      }
+      _totalCount = filtered.length;
+      final int expectedTotal =
+          shouldPaginate ? filtered.length : page.length;
+      _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
+      _errorMessage = '';
+      _isFetching = false;
+      _isInitialLoading = false;
+    });
+
+    _updateOfflineMode(true, showMessage: showOfflineMessage);
+    return true;
+  }
+
+  List<PokemonListItem> _applyOfflineFilters(List<PokemonListItem> source) {
+    Iterable<PokemonListItem> filtered = source;
+    final String trimmedSearch = _debouncedSearch.trim().toLowerCase();
+    final int? numericId = int.tryParse(_debouncedSearch.trim());
+
+    if (trimmedSearch.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final bool matchesName =
+            pokemon.name.toLowerCase().contains(trimmedSearch);
+        final bool matchesId = numericId != null && pokemon.id == numericId;
+        return matchesName || matchesId;
+      });
+    }
+
+    if (_selectedTypes.isNotEmpty) {
+      final Set<String> selectedTypesLower =
+          _selectedTypes.map((type) => type.toLowerCase()).toSet();
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final Set<String> pokemonTypes =
+            pokemon.types.map((type) => type.toLowerCase()).toSet();
+        return selectedTypesLower
+            .every((String type) => pokemonTypes.contains(type));
+      });
+    }
+
+    if (_selectedGenerations.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? generation = pokemon.generationName;
+        return generation != null &&
+            _selectedGenerations.contains(generation);
+      });
+    }
+
+    if (_selectedRegions.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? region = pokemon.regionName;
+        return region != null && _selectedRegions.contains(region);
+      });
+    }
+
+    if (_selectedShapes.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? shape = pokemon.shapeName;
+        return shape != null && _selectedShapes.contains(shape);
+      });
+    }
+
+    List<PokemonListItem> sorted = filtered.toList();
+    sorted.sort(_comparePokemonsForOffline);
+    if (!_isSortAscending) {
+      sorted = sorted.reversed.toList();
+    }
+    return sorted;
+  }
+
+  int _comparePokemonsForOffline(
+    PokemonListItem a,
+    PokemonListItem b,
+  ) {
+    switch (_sortOption) {
+      case PokemonSortOption.id:
+        return a.id.compareTo(b.id);
+      case PokemonSortOption.name:
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      case PokemonSortOption.height:
+        return (a.height ?? 0).compareTo(b.height ?? 0);
+      case PokemonSortOption.weight:
+        return (a.weight ?? 0).compareTo(b.weight ?? 0);
+    }
+    return 0;
+  }
+
+  void _updateOfflineMode(bool offline, {bool showMessage = false}) {
+    if (!mounted) return;
+    if (offline) {
+      if (!_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = true;
+        });
+      }
+      if (showMessage && !_offlineSnackShown) {
+        _showTransientMessage(
+          'Modo offline activo. Mostrando datos guardados localmente.',
+        );
+        _offlineSnackShown = true;
+      }
+    } else {
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      if (_offlineSnackShown) {
+        _showTransientMessage('Conexión restablecida.');
+        _offlineSnackShown = false;
+      }
+    }
+  }
+
   void _handleError(OperationException exception, {required bool reset}) {
+    _updateOfflineMode(false);
     final rawMessage = exception.graphqlErrors.isNotEmpty
         ? exception.graphqlErrors.first.message
         : exception.linkException?.originalException?.toString() ??
@@ -580,6 +823,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   void _handleGenericError(Object error, {required bool reset}) {
+    _updateOfflineMode(false);
     final rawMessage = error.toString();
     final friendlyMessage = rawMessage.isEmpty
         ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
@@ -766,6 +1010,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
           _buildSearchBar(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
+          if (_isOfflineMode) _buildOfflineBanner(theme),
           _buildSummary(theme),
           Expanded(child: _buildPokemonList()),
         ],
@@ -827,6 +1072,40 @@ class _PokedexScreenState extends State<PokedexScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner(ThemeData theme) {
+    final Color backgroundColor =
+        theme.colorScheme.tertiaryContainer.withOpacity(0.85);
+    final Color foregroundColor = theme.colorScheme.onTertiaryContainer;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              color: foregroundColor,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Modo offline activo. Algunos filtros pueden ser limitados.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
