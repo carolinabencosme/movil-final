@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import '../models/pokemon_model.dart';
 import 'pokemon_cache_service.dart';
 import 'pokemon_hive_adapters.dart';
+import 'package:flutter/foundation.dart';
 
 /// Repositorio que gestiona la persistencia de favoritos usando Hive.
 ///
