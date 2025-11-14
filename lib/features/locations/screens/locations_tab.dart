@@ -6,7 +6,7 @@ import '../../../widgets/detail/detail_helper_widgets.dart';
 import '../../../widgets/detail/info/info_components.dart';
 import '../data/location_service.dart';
 import '../models/pokemon_location.dart';
-import '../widgets/pokemon_location_map.dart';
+import '../widgets/region_map_viewer.dart';
 
 /// Tab de ubicaciones para el detail screen
 ///
@@ -214,38 +214,39 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Mapa interactivo
-        InfoSectionCard(
-          title: 'Mapa de regiones',
-          backgroundColor: widget.sectionBackground,
-          borderColor: widget.sectionBorder,
-          child: PokemonLocationMap(
-            locations: _locations!,
-            height: 300,
-            initialZoom: 4.0,
-            markerColor: theme.colorScheme.primary,
+        // Mostrar un mapa por cada región
+        for (final location in _locations!) ...[
+          InfoSectionCard(
+            title: 'Mapa de ${_formatRegionName(location.region)}',
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
+            child: RegionMapViewer(
+              region: location.region,
+              encounters: location.encounters,
+              height: 300,
+              markerColor: theme.colorScheme.primary,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        // Lista de ubicaciones por región
-        InfoSectionCard(
-          title: 'Detalles de ubicaciones',
-          backgroundColor: widget.sectionBackground,
-          borderColor: widget.sectionBorder,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final location in _locations!)
-                _RegionLocationCard(
-                  location: location,
-                  theme: theme,
-                ),
-            ],
+          // Detalles de ubicaciones para esta región
+          InfoSectionCard(
+            title: 'Detalles de ${_formatRegionName(location.region)}',
+            backgroundColor: widget.sectionBackground,
+            borderColor: widget.sectionBorder,
+            child: _RegionLocationCard(
+              location: location,
+              theme: theme,
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+        ],
       ],
     );
+  }
+
+  String _formatRegionName(String region) {
+    return region[0].toUpperCase() + region.substring(1);
   }
 }
 

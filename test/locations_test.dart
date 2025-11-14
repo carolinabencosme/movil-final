@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:pokedex/features/locations/data/region_coordinates.dart';
+import 'package:pokedex/features/locations/data/region_map_markers.dart';
 import 'package:pokedex/features/locations/models/pokemon_location.dart';
 
 void main() {
@@ -172,6 +172,51 @@ void main() {
     });
   });
 
+  group('RegionMapMarkers', () {
+    test('should return marker for known areas', () {
+      final marker = getRegionMarker('kanto', 'route-1');
+      expect(marker, isNotNull);
+      expect(marker?.area, equals('Route 1'));
+    });
+
+    test('should handle area name normalization', () {
+      final marker1 = getRegionMarker('kanto', 'route-1-area');
+      final marker2 = getRegionMarker('kanto', 'route-1');
+      expect(marker1, isNotNull);
+      expect(marker2, isNotNull);
+      expect(marker1?.x, equals(marker2?.x));
+      expect(marker1?.y, equals(marker2?.y));
+    });
+
+    test('should return null for unknown regions', () {
+      final marker = getRegionMarker('unknown-region', 'route-1');
+      expect(marker, isNull);
+    });
+
+    test('should return null for unknown areas', () {
+      final marker = getRegionMarker('kanto', 'unknown-area');
+      expect(marker, isNull);
+    });
+
+    test('should get all markers for a region', () {
+      final markers = getRegionMarkers('kanto');
+      expect(markers, isNotNull);
+      expect(markers, isNotEmpty);
+      expect(markers?['route-1'], isNotNull);
+    });
+
+    test('should check if region has markers', () {
+      expect(hasRegionMarkers('kanto'), isTrue);
+      expect(hasRegionMarkers('unknown-region'), isFalse);
+    });
+
+    test('should return default marker', () {
+      final marker = getDefaultRegionMarker('test-region');
+      expect(marker.x, equals(400));
+      expect(marker.y, equals(300));
+    });
+  });
+
   group('LocationsByRegion Model', () {
     test('should aggregate versions from all encounters', () {
       final encounters = [
@@ -200,7 +245,7 @@ void main() {
       final location = LocationsByRegion(
         region: 'kanto',
         encounters: encounters,
-        coordinates: const LatLng(35.4, 138.7),
+        coordinates: const MapCoordinates(400, 300),
       );
 
       expect(location.allVersions, hasLength(2));
