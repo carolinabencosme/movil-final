@@ -1,4 +1,10 @@
-import 'package:latlong2/latlong.dart';
+/// Clase simple para coordenadas X/Y en el mapa de región
+class MapCoordinates {
+  const MapCoordinates(this.x, this.y);
+
+  final double x;
+  final double y;
+}
 
 /// Modelo para un encuentro de Pokémon en una ubicación específica
 class PokemonEncounter {
@@ -18,8 +24,8 @@ class PokemonEncounter {
   /// Región inferida del área (ej: "kanto", "johto")
   final String? region;
 
-  /// Coordenadas geográficas si están disponibles
-  final LatLng? coordinates;
+  /// Coordenadas X/Y en el mapa de región si están disponibles
+  final MapCoordinates? coordinates;
 
   /// Factory para crear desde JSON de PokéAPI
   factory PokemonEncounter.fromJson(Map<String, dynamic> json) {
@@ -193,8 +199,8 @@ class LocationsByRegion {
   /// Lista de encuentros en esta región
   final List<PokemonEncounter> encounters;
 
-  /// Coordenadas de la región
-  final LatLng coordinates;
+  /// Coordenadas X/Y del centro de la región en el mapa
+  final MapCoordinates coordinates;
 
   /// Obtiene todas las versiones únicas en esta región
   List<String> get allVersions {
