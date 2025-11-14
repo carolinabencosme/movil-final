@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
@@ -122,6 +123,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   
   /// Lista de Pokémon actualmente mostrados
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
+
+  FavoritesController? _favoritesController;
   
   /// Opciones disponibles para los filtros
   List<String> _availableTypes = <String>[];
@@ -156,6 +159,19 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final FavoritesController? favoritesController =
+        FavoritesScope.maybeOf(context);
+    if (!identical(_favoritesController, favoritesController)) {
+      _favoritesController?.removeListener(_onFavoritesChanged);
+      _favoritesController = favoritesController;
+      _favoritesController?.addListener(_onFavoritesChanged);
+      if (favoritesController != null && _pokemons.isNotEmpty) {
+        setState(() {
+          _pokemons =
+              favoritesController.applyFavoriteStateToList(_pokemons);
+        });
+      }
+    }
     if (_didInit) return;
     _didInit = true;
     _fetchFilters();
@@ -168,6 +184,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _scrollController.dispose();
     _searchController.dispose();
     _debounce?.cancel();
+    _favoritesController?.removeListener(_onFavoritesChanged);
     super.dispose();
   }
 
@@ -181,6 +198,22 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       _fetchPokemons();
     }
+  }
+
+  void _onFavoritesChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    final FavoritesController? favoritesController = _favoritesController;
+    if (favoritesController == null) {
+      return;
+    }
+
+    setState(() {
+      _pokemons =
+          favoritesController.applyFavoriteStateToList(_pokemons);
+    });
   }
 
   /// Maneja cambios en el campo de búsqueda con debounce
@@ -481,14 +514,31 @@ class _PokedexScreenState extends State<PokedexScreen> {
       final count =
           (aggregateMap?['aggregate'] as Map<String, dynamic>?)?['count'] as int?;
 
+      final FavoritesController? favoritesController =
+          _favoritesController ?? FavoritesScope.maybeOf(context);
+      List<PokemonListItem> resolvedResults = results;
+      if (favoritesController != null && results.isNotEmpty) {
+        resolvedResults =
+            favoritesController.applyFavoriteStateToList(results);
+        await favoritesController.cachePokemons(resolvedResults);
+      }
+
+      List<PokemonListItem> updatedPokemons;
+      if (reset) {
+        updatedPokemons = resolvedResults;
+      } else if (shouldPaginate) {
+        updatedPokemons = <PokemonListItem>[..._pokemons, ...resolvedResults];
+      } else {
+        updatedPokemons = resolvedResults;
+      }
+
+      if (favoritesController != null && updatedPokemons.isNotEmpty) {
+        updatedPokemons =
+            favoritesController.applyFavoriteStateToList(updatedPokemons);
+      }
+
       setState(() {
-        if (reset) {
-          _pokemons = results;
-        } else {
-          _pokemons = shouldPaginate
-              ? <PokemonListItem>[..._pokemons, ...results]
-              : results;
-        }
+        _pokemons = updatedPokemons;
         _totalCount = count ?? _pokemons.length;
         final expectedTotal = _totalCount == 0 ? _pokemons.length : _totalCount;
         _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
@@ -1401,14 +1451,18 @@ class _PokemonListTile extends StatefulWidget {
 class _PokemonListTileState extends State<_PokemonListTile> {
   bool _isPressed = false;
 
-  void _handleTap(BuildContext context, String heroTag) {
+  void _handleTap(
+    BuildContext context,
+    String heroTag,
+    PokemonListItem pokemon,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DetailScreen(
-          pokemonId: widget.pokemon.id,
-          pokemonName: widget.pokemon.name,
-          initialPokemon: widget.pokemon,
+          pokemonId: pokemon.id,
+          pokemonName: pokemon.name,
+          initialPokemon: pokemon,
           heroTag: heroTag,
         ),
       ),
@@ -1424,7 +1478,8 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pokemon = widget.pokemon;
+    final favoritesController = FavoritesScope.of(context);
+    final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
     final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
@@ -1474,7 +1529,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                 setState(() => _isPressed = value);
               }
             },
-            onTap: () => _handleTap(context, heroTag),
+            onTap: () => _handleTap(context, heroTag, pokemon),
             child: Stack(
               children: [
                 Positioned(
@@ -1484,6 +1539,33 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                     Icons.catching_pokemon,
                     size: 96,
                     color: textColor.withOpacity(0.12),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.22),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      splashRadius: 22,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        pokemon.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color:
+                            pokemon.isFavorite ? Colors.redAccent : Colors.white,
+                      ),
+                      tooltip: pokemon.isFavorite
+                          ? 'Quitar de favoritos'
+                          : 'Agregar a favoritos',
+                      onPressed: () async {
+                        await favoritesController.toggleFavorite(pokemon);
+                      },
+                    ),
                   ),
                 ),
                 Padding(

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
@@ -61,6 +62,8 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesController = FavoritesScope.of(context);
+
     // HeroTag estable incluso si entra por id o name
     final resolvedHeroTag =
         heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
@@ -76,99 +79,125 @@ class DetailScreen extends StatelessWidget {
         ? <String, dynamic>{'id': {'_eq': pokemonId}}
         : <String, dynamic>{'name': {'_eq': pokemonName!}};
 
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(previewName ?? 'Detalles del Pokémon'),
-        ),
-        body: Query(
-          options: QueryOptions(
-            document: gql(getPokemonDetailsQuery),
-            fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
-            errorPolicy: ErrorPolicy.all, // permite datos parciales
-            variables: {
-              'where': where,
-              'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
-            },
-          ),
-          builder: (result, {fetchMore, refetch}) {
-          // Logs de depuración (solo en debug)
+    final PokemonListItem? cachedInitial = pokemonId != null
+        ? favoritesController.getCachedPokemon(pokemonId!)
+        : null;
+    final PokemonListItem? initialFavorite = initialPokemon != null
+        ? favoritesController.applyFavoriteState(initialPokemon!)
+        : cachedInitial;
+
+    return Query(
+      options: QueryOptions(
+        document: gql(getPokemonDetailsQuery),
+        fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
+        errorPolicy: ErrorPolicy.all, // permite datos parciales
+        variables: {
+          'where': where,
+          'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
+        },
+      ),
+      builder: (result, {fetchMore, refetch}) {
+        if (kDebugMode) {
+          debugPrint(
+              '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+          debugPrint(
+              '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+          if (result.hasException) {
+            debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
+          }
+        }
+
+        final pokemonList =
+            result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
+        final data = (pokemonList?.isNotEmpty ?? false)
+            ? pokemonList?.first as Map<String, dynamic>?
+            : null;
+
+        final List<dynamic> typeEfficacies =
+            result.data?['type_efficacy'] as List<dynamic>? ??
+                const <dynamic>[];
+
+        PokemonDetail? pokemonDetail;
+        PokemonListItem? favoriteTarget = initialFavorite;
+
+        if (data != null) {
+          pokemonDetail = PokemonDetail.fromGraphQL(
+            data,
+            typeEfficacies: typeEfficacies,
+          );
+
+          favoriteTarget = PokemonListItem(
+            id: pokemonDetail.id,
+            name: pokemonDetail.name,
+            imageUrl: pokemonDetail.imageUrl,
+            types: List<String>.from(pokemonDetail.types),
+            stats: List<PokemonStat>.from(pokemonDetail.stats),
+            generationId:
+                favoriteTarget?.generationId ?? initialPokemon?.generationId,
+            generationName: favoriteTarget?.generationName ??
+                initialPokemon?.generationName,
+            isFavorite: favoritesController.isFavorite(pokemonDetail.id),
+          );
+
+          unawaited(favoritesController.cachePokemon(favoriteTarget));
+        }
+
+        if (favoriteTarget != null) {
+          favoriteTarget =
+              favoritesController.applyFavoriteState(favoriteTarget);
+        }
+
+        final String appBarTitle = favoriteTarget != null
+            ? _capitalize(favoriteTarget.name)
+            : previewName ?? 'Detalles del Pokémon';
+
+        Widget body;
+
+        if (result.isLoading && data == null) {
+          body = LoadingDetailView(
+            heroTag: resolvedHeroTag,
+            imageUrl: previewImage,
+            name: favoriteTarget != null
+                ? _capitalize(favoriteTarget.name)
+                : previewName,
+          );
+        } else if (result.hasException && data == null) {
+          debugPrint(
+            'Error al cargar el detalle del Pokémon: ${result.exception}',
+          );
+          body = PokemonDetailErrorView(
+            onRetry: refetch,
+          );
+        } else if (data == null) {
           if (kDebugMode) {
             debugPrint(
-                '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-            debugPrint(
-                '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
-            if (result.hasException) {
-              debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
-            }
+                '[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
           }
-
-          // Tomamos el primer Pokémon que cumpla el where
-          final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
-          final data = (pokemonList?.isNotEmpty ?? false)
-              ? pokemonList?.first as Map<String, dynamic>?
-              : null;
-
-          // 1) Carga inicial sin cache → vista de loading personalizada
-          if (result.isLoading && data == null) {
-            return LoadingDetailView(
-              heroTag: resolvedHeroTag,
-              imageUrl: previewImage,
-              name: previewName,
-            );
-          }
-
-          // 2) Error sin datos → estado de error con retry
-          if (result.hasException && data == null) {
-            debugPrint(
-              'Error al cargar el detalle del Pokémon: ${result.exception}',
-            );
-            return PokemonDetailErrorView(
-              onRetry: refetch,
-            );
-          }
-
-          // 3) Sin datos (no encontró) → mensaje + botón para reintentar
-          if (data == null) {
-            if (kDebugMode) {
-              debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
-            }
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('No se encontró información para este Pokémon.'),
-                  const SizedBox(height: 16),
-                  if (refetch != null)
-                    ElevatedButton(
-                      onPressed: () async {
-                        await refetch();
-                      },
-                      child: const Text('Reintentar'),
-                    ),
-                ],
-              ),
-            );
-          }
-
-          // 4) Datos parciales con error → seguimos mostrando lo que hay
+          body = Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('No se encontró información para este Pokémon.'),
+                const SizedBox(height: 16),
+                if (refetch != null)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await refetch();
+                    },
+                    child: const Text('Reintentar'),
+                  ),
+              ],
+            ),
+          );
+        } else {
           if (result.hasException) {
             debugPrint(
               'Se recibieron datos parciales con errores: ${result.exception}',
             );
           }
 
-          // Eficacias de tipo para calcular matchups (deb/resist/inmunidad)
-          final typeEfficacies =
-              result.data?['type_efficacy'] as List<dynamic>? ?? [];
-
-          // Parse a modelo de dominio completo
-          final pokemon = PokemonDetail.fromGraphQL(
-            data,
-            typeEfficacies: typeEfficacies,
-          );
-
-          // Pull-to-refresh que llama refetch()
-          return RefreshIndicator(
+          final PokemonDetail detail = pokemonDetail!;
+          body = RefreshIndicator(
             onRefresh: () async {
               await refetch?.call();
             },
@@ -177,13 +206,11 @@ class DetailScreen extends StatelessWidget {
                 builder: (context) {
                   return Stack(
                     children: [
-                      // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
                       PokemonDetailBody(
-                        pokemon: pokemon,
+                        pokemon: detail,
                         resolvedHeroTag: resolvedHeroTag,
                         capitalize: _capitalize,
                       ),
-                      // Barra de progreso fina cuando llegan actualizaciones
                       if (result.isLoading)
                         const Positioned(
                           left: 0,
@@ -197,8 +224,45 @@ class DetailScreen extends StatelessWidget {
               ),
             ),
           );
-        },
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(appBarTitle),
+            actions: [
+              if (favoriteTarget != null)
+                _DetailFavoriteButton(pokemon: favoriteTarget),
+            ],
+          ),
+          body: body,
+        );
+      },
+    );
+  }
+}
+
+class _DetailFavoriteButton extends StatelessWidget {
+  const _DetailFavoriteButton({required this.pokemon});
+
+  final PokemonListItem pokemon;
+
+  @override
+  Widget build(BuildContext context) {
+    final favoritesController = FavoritesScope.of(context);
+    final PokemonListItem resolvedPokemon =
+        favoritesController.applyFavoriteState(pokemon);
+
+    return IconButton(
+      icon: Icon(
+        resolvedPokemon.isFavorite ? Icons.favorite : Icons.favorite_border,
       ),
+      color: resolvedPokemon.isFavorite ? Colors.redAccent : null,
+      tooltip: resolvedPokemon.isFavorite
+          ? 'Quitar de favoritos'
+          : 'Agregar a favoritos',
+      onPressed: () async {
+        await favoritesController.toggleFavorite(resolvedPokemon);
+      },
     );
   }
 }
@@ -830,11 +894,31 @@ extension DetailScreenNavigationX on BuildContext {
     if (location.startsWith('/pokedex/')) {
       final slug = location.substring('/pokedex/'.length);
       final speciesId = pendingEvolutionNavigation.remove(slug);
+      final favoritesController = FavoritesScope.maybeOf(this);
+      PokemonListItem? cachedPokemon;
+      if (favoritesController != null) {
+        if (speciesId != null) {
+          cachedPokemon = favoritesController.getCachedPokemon(speciesId);
+        }
+        if (cachedPokemon == null) {
+          for (final PokemonListItem pokemon in favoritesController.favorites) {
+            if (pokemon.name == slug) {
+              cachedPokemon = pokemon;
+              break;
+            }
+          }
+        }
+        if (cachedPokemon != null) {
+          cachedPokemon =
+              favoritesController.applyFavoriteState(cachedPokemon);
+        }
+      }
       return Navigator.of(this).push<T>(
         MaterialPageRoute<T>(
           builder: (_) => DetailScreen(
             pokemonId: speciesId,
             pokemonName: slug,
+            initialPokemon: cachedPokemon,
             heroTag: speciesId != null
                 ? 'pokemon-artwork-$speciesId'
                 : 'pokemon-artwork-$slug',
