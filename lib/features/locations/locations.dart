@@ -9,6 +9,7 @@ export 'models/pokemon_location.dart';
 // Exportar servicios
 export 'data/location_service.dart';
 export 'data/region_coordinates.dart';
+export 'data/region_map_data.dart';
 export 'data/region_map_markers.dart';
 
 // Exportar widgets

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
 import '../models/pokemon_location.dart';
 
 /// Widget que muestra un mapa de región Pokémon usando InteractiveViewer
 ///
+/// Usa mapas oficiales de los juegos Pokémon extraídos de Spriter's Resource.
 /// Permite zoom y pan sobre la imagen del mapa, con marcadores posicionados
 /// usando coordenadas X/Y relativas.
 class RegionMapViewer extends StatefulWidget {
@@ -40,6 +42,13 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   final TransformationController _transformationController =
       TransformationController();
   PokemonEncounter? _selectedEncounter;
+  RegionMapData? _mapData;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapData = getRegionMapData(widget.region);
+  }
 
   @override
   void dispose() {
@@ -47,9 +56,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     super.dispose();
   }
 
-  /// Construye el path del asset de la imagen del mapa
+  /// Obtiene el path del asset de la imagen del mapa
   String _getMapAssetPath() {
-    return 'assets/maps/${widget.region.toLowerCase()}.png';
+    return _mapData?.assetPath ?? 'assets/maps/regions/${widget.region.toLowerCase()}.png';
+  }
+
+  /// Obtiene el tamaño del mapa
+  Size _getMapSize() {
+    return _mapData?.mapSize ?? const Size(800, 600);
   }
 
   /// Construye los marcadores sobre el mapa
@@ -121,13 +135,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 // Imagen del mapa de la región
                 Image.asset(
                   _getMapAssetPath(),
-                  width: 800,
-                  height: 600,
+                  width: _getMapSize().width,
+                  height: _getMapSize().height,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
+                    final size = _getMapSize();
                     return Container(
-                      width: 800,
-                      height: 600,
+                      width: size.width,
+                      height: size.height,
                       color: theme.colorScheme.surfaceContainerHighest,
                       child: Center(
                         child: Column(
