@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../features/locations/screens/locations_tab.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
@@ -238,8 +239,8 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   @override
   void initState() {
     super.initState();
-    // 5 pestañas: Info, Stats, Matchups, Evolución, Movimientos
-    _tabController = TabController(length: 5, vsync: this);
+    // 6 pestañas: Info, Stats, Matchups, Evolución, Movimientos, Ubicaciones
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -462,6 +463,16 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
               child: PokemonMovesTab(
                 pokemon: pokemon,
                 formatLabel: _formatLabel,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('locations-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonLocationsTab(
+                pokemon: pokemon,
                 sectionBackground: sectionBackground,
                 sectionBorder: sectionBorder,
               ),
