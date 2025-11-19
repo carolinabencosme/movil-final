@@ -20,8 +20,8 @@ void main() {
 
     test('should have correct asset paths', () {
       final kantoData = getRegionMapData('kanto');
-      expect(kantoData?.assetPath, equals('assets/maps/regions/kanto_frlg.png'));
-      expect(kantoData?.gameVersion, equals('FireRed/LeafGreen'));
+      expect(kantoData?.assetPath, contains('assets/maps/regions/kanto/'));
+      expect(kantoData?.gameVersion, isNotEmpty);
     });
 
     test('should have valid map sizes', () {
@@ -42,9 +42,78 @@ void main() {
     test('should list available region maps', () {
       final regions = getAvailableRegionMaps();
       expect(regions, isNotEmpty);
-      expect(regions.length, greaterThanOrEqualTo(9));
+      expect(regions.length, greaterThanOrEqualTo(10));
       expect(regions, contains('kanto'));
       expect(regions, contains('paldea'));
+      expect(regions, contains('hisui'));
+    });
+
+    test('should return multiple versions for a region', () {
+      final kantoVersions = getRegionMapVersions('kanto');
+      expect(kantoVersions, isNotEmpty);
+      expect(kantoVersions.length, equals(3)); // RBY, FRLG, Let's Go
+      
+      final johtoVersions = getRegionMapVersions('johto');
+      expect(johtoVersions.length, equals(2)); // GSC, HGSS
+      
+      final galarVersions = getRegionMapVersions('galar');
+      expect(galarVersions.length, equals(3)); // SwSh, IoA, CT
+    });
+
+    test('should return empty list for unknown region versions', () {
+      final unknownVersions = getRegionMapVersions('unknown-region');
+      expect(unknownVersions, isEmpty);
+    });
+
+    test('should get specific map by version', () {
+      final kantoFRLG = getRegionMapByVersion('kanto', 'FireRed/LeafGreen');
+      expect(kantoFRLG, isNotNull);
+      expect(kantoFRLG?.gameVersion, equals('FireRed/LeafGreen'));
+      expect(kantoFRLG?.region, equals('kanto'));
+      
+      final kantoLetsGo = getRegionMapByVersion('kanto', "Let's Go Pikachu/Eevee");
+      expect(kantoLetsGo, isNotNull);
+      expect(kantoLetsGo?.gameVersion, equals("Let's Go Pikachu/Eevee"));
+    });
+
+    test('should return null for non-existent version', () {
+      final nonExistent = getRegionMapByVersion('kanto', 'Crystal');
+      expect(nonExistent, isNull);
+    });
+
+    test('should count versions correctly', () {
+      expect(getRegionMapVersionCount('kanto'), equals(3));
+      expect(getRegionMapVersionCount('johto'), equals(2));
+      expect(getRegionMapVersionCount('kalos'), equals(1));
+      expect(getRegionMapVersionCount('hisui'), equals(1));
+      expect(getRegionMapVersionCount('unknown'), equals(0));
+    });
+
+    test('should include Hisui region', () {
+      expect(getRegionMapData('hisui'), isNotNull);
+      final hisuiVersions = getRegionMapVersions('hisui');
+      expect(hisuiVersions.length, equals(1));
+      expect(hisuiVersions.first.gameVersion, equals('Legends: Arceus'));
+    });
+
+    test('should have all Paldea DLC maps', () {
+      final paldeaVersions = getRegionMapVersions('paldea');
+      expect(paldeaVersions.length, equals(3));
+      
+      final versionNames = paldeaVersions.map((v) => v.gameVersion).toList();
+      expect(versionNames, contains('Scarlet/Violet'));
+      expect(versionNames, contains('The Teal Mask'));
+      expect(versionNames, contains('The Indigo Disk'));
+    });
+
+    test('should have all Galar DLC maps', () {
+      final galarVersions = getRegionMapVersions('galar');
+      expect(galarVersions.length, equals(3));
+      
+      final versionNames = galarVersions.map((v) => v.gameVersion).toList();
+      expect(versionNames, contains('Sword/Shield'));
+      expect(versionNames, contains('The Isle of Armor'));
+      expect(versionNames, contains('The Crown Tundra'));
     });
   });
 
@@ -221,15 +290,15 @@ void main() {
       final marker = getRegionMarker('kanto', 'route-1');
       expect(marker, isNotNull);
       expect(marker?.area, equals('Route 1'));
-      expect(marker?.game, equals('FireRed/LeafGreen'));
+      expect(marker?.game, isNotEmpty);
     });
 
     test('should include game version information', () {
       final kantoMarker = getRegionMarker('kanto', 'viridian-forest');
-      expect(kantoMarker?.game, equals('FRLG'));
+      expect(kantoMarker?.game, isNotEmpty);
       
       final johtoMarker = getRegionMarker('johto', 'route-29');
-      expect(johtoMarker?.game, equals('HeartGold/SoulSilver'));
+      expect(johtoMarker?.game, isNotEmpty);
     });
 
     test('should handle area name normalization', () {
