@@ -535,16 +535,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                   ),
                                 ),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.notifications_none,
+                                  semanticLabel:
+                                      l10n.homeNotificationsSemanticLabel,
+                                  semanticHint: l10n.homeNotificationsSemanticHint,
                                 ),
                                 const SizedBox(width: 12),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.shopping_bag_outlined,
+                                  semanticLabel: l10n.homeStoreSemanticLabel,
+                                  semanticHint: l10n.homeStoreSemanticHint,
                                 ),
                                 const SizedBox(width: 12),
                                 _HeaderIcon(
                                   icon: Icons.settings_outlined,
+                                  semanticLabel: l10n.homeSettingsSemanticLabel,
+                                  semanticHint: l10n.homeSettingsSemanticHint,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -669,6 +676,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     // Estilos de tipografía adaptados si es hero o grid
     final bool isHero = widget.isHero;
@@ -700,138 +708,149 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
         scale: _pressed ? pressedScale : 1,
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        child: InkWell(
-          onTap: widget.onTap,
-          onTapDown: (_) => _setPressed(true),
-          onTapCancel: () => _setPressed(false),
-          onTapUp: (_) => _setPressed(false),
-          borderRadius: BorderRadius.circular(cornerRadius),
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            elevation: isHero ? 16 : 10,
-            shadowColor: widget.info.color.withOpacity(0.45),
-            margin: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(cornerRadius),
+        child: Semantics(
+          button: true,
+          enabled: true,
+          label: l10n.homeSectionCardSemanticLabel(widget.info.title),
+          hint: l10n.homeSectionCardSemanticHint(widget.info.title),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 48,
+              minWidth: 48,
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final double basePadding = isHero ? 28 : 22;
-                final double verticalPadding = isHero ? 30 : 24;
-                final double maxTextWidth =
-                    constraints.maxWidth * (isHero ? 0.68 : 0.74);
-                // Cuando la tarjeta hero está en un SliverToBoxAdapter sin altura
-                // acotada, fijamos un alto para evitar “unbounded height”.
-                final bool needsHeroHeight =
-                    !constraints.hasBoundedHeight && heroHeight != null;
-                final BoxConstraints effectiveConstraints = needsHeroHeight
-                    ? BoxConstraints(
-                        minWidth: constraints.minWidth,
-                        maxWidth: constraints.maxWidth,
-                        minHeight: constraints.minHeight,
-                        maxHeight: heroHeight!,
-                      )
-                    : constraints;
+            child: InkWell(
+              onTap: widget.onTap,
+              onTapDown: (_) => _setPressed(true),
+              onTapCancel: () => _setPressed(false),
+              onTapUp: (_) => _setPressed(false),
+              borderRadius: BorderRadius.circular(cornerRadius),
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                elevation: isHero ? 16 : 10,
+                shadowColor: widget.info.color.withOpacity(0.45),
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(cornerRadius),
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double basePadding = isHero ? 28 : 22;
+                    final double verticalPadding = isHero ? 30 : 24;
+                    final double maxTextWidth =
+                        constraints.maxWidth * (isHero ? 0.68 : 0.74);
+                    // Cuando la tarjeta hero está en un SliverToBoxAdapter sin altura
+                    // acotada, fijamos un alto para evitar “unbounded height”.
+                    final bool needsHeroHeight =
+                        !constraints.hasBoundedHeight && heroHeight != null;
+                    final BoxConstraints effectiveConstraints = needsHeroHeight
+                        ? BoxConstraints(
+                            minWidth: constraints.minWidth,
+                            maxWidth: constraints.maxWidth,
+                            minHeight: constraints.minHeight,
+                            maxHeight: heroHeight!,
+                          )
+                        : constraints;
 
-                // Grupo de gráficos decorativos (iconos o assets) en la esquina
-                final List<_SectionGraphic> graphics =
-                    widget.info.graphics.isNotEmpty
-                        ? widget.info.graphics
-                        : [
-                            _SectionGraphic.icon(
-                              icon: widget.info.icon,
-                              color: Colors.white,
-                              opacity: 0.94,
+                    // Grupo de gráficos decorativos (iconos o assets) en la esquina
+                    final List<_SectionGraphic> graphics =
+                        widget.info.graphics.isNotEmpty
+                            ? widget.info.graphics
+                            : [
+                                _SectionGraphic.icon(
+                                  icon: widget.info.icon,
+                                  color: Colors.white,
+                                  opacity: 0.94,
+                                ),
+                              ];
+                    // Stack principal de la tarjeta:
+                    // - Fondo degradado
+                    // - Acentos (shapes)
+                    // - Grupo de gráficos (íconos/assets)
+                    // - Texto (título/subtítulo) alineado abajo-izquierda
+
+                    final stack = Stack(
+                      fit: StackFit.expand,
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Fondo con gradiente en función del color de la sección
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  widget.info.color
+                                      .withOpacity(isHero ? 0.96 : 0.92),
+                                  widget.info.color
+                                      .withOpacity(isHero ? 0.8 : 0.78),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
-                          ];
-                // Stack principal de la tarjeta:
-                // - Fondo degradado
-                // - Acentos (shapes)
-                // - Grupo de gráficos (íconos/assets)
-                // - Texto (título/subtítulo) alineado abajo-izquierda
-
-                final stack = Stack(
-                  fit: StackFit.expand,
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fondo con gradiente en función del color de la sección
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.info.color
-                                  .withOpacity(isHero ? 0.96 : 0.92),
-                              widget.info.color
-                                  .withOpacity(isHero ? 0.8 : 0.78),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
                           ),
                         ),
-                      ),
-                    ),
-                    // Acentos decorativos (círculos/rectángulos redondeados)
-                    ..._buildBackgroundAccents(
-                      constraints: effectiveConstraints,
-                      fallbackRadius: cornerRadius,
-                    ),
-                    // Grupo de gráficos (íconos grandes) arriba-derecha
-                    Positioned(
-                      right: basePadding - (isHero ? 8 : 6),
-                      top: verticalPadding - (isHero ? 8 : 6),
-                      child: _buildGraphicGroup(
-                        constraints: effectiveConstraints,
-                        graphics: graphics,
-                      ),
-                    ),
-                    // Texto (título + subtítulo) limitado en ancho para no chocar con gráficos
-                    Positioned(
-                      left: basePadding,
-                      bottom: verticalPadding,
-                      right: basePadding,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: maxTextWidth,
+                        // Acentos decorativos (círculos/rectángulos redondeados)
+                        ..._buildBackgroundAccents(
+                          constraints: effectiveConstraints,
+                          fallbackRadius: cornerRadius,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.info.title,
-                              style: titleStyle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: isHero ? 12 : 10),
-                            Text(
-                              widget.info.subtitle,
-                              style: subtitleStyle,
-                              maxLines: isHero ? 3 : 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        // Grupo de gráficos (íconos grandes) arriba-derecha
+                        Positioned(
+                          right: basePadding - (isHero ? 8 : 6),
+                          top: verticalPadding - (isHero ? 8 : 6),
+                          child: _buildGraphicGroup(
+                            constraints: effectiveConstraints,
+                            graphics: graphics,
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                );
+                        // Texto (título + subtítulo) limitado en ancho para no chocar con gráficos
+                        Positioned(
+                          left: basePadding,
+                          bottom: verticalPadding,
+                          right: basePadding,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: maxTextWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.info.title,
+                                  style: titleStyle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: isHero ? 12 : 10),
+                                Text(
+                                  widget.info.subtitle,
+                                  style: subtitleStyle,
+                                  maxLines: isHero ? 3 : 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
 
-                if (needsHeroHeight) {
-                  return SizedBox(
-                    height: heroHeight,
-                    child: stack,
-                  );
-                }
+                    if (needsHeroHeight) {
+                      return SizedBox(
+                        height: heroHeight,
+                        child: stack,
+                      );
+                    }
 
-                return stack;
-              },
+                    return stack;
+                  },
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
 // La tarjeta hero viaja con un Hero para transición hacia la pantalla destino
     if (!isHero) {
@@ -959,28 +978,38 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 class _HeaderIcon extends StatelessWidget {
   const _HeaderIcon({
     required this.icon,
+    required this.semanticLabel,
+    required this.semanticHint,
     this.onTap,
   });
 
   final IconData icon;
+  final String semanticLabel;
+  final String semanticHint;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Material(
-      color: colorScheme.surfaceVariant.withOpacity(0.35),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: semanticLabel,
+      hint: semanticHint,
+      child: Material(
+        color: colorScheme.surfaceVariant.withOpacity(0.35),
         borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          height: 44,
-          width: 44,
-          child: Icon(
-            icon,
-            color: colorScheme.onSurface,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            height: 48,
+            width: 48,
+            child: Icon(
+              icon,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
       ),

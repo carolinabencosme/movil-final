@@ -191,6 +191,48 @@
   "@homeSectionLocationsSubtitle": {
     "description": "Short description shown under the locations card title."
   },
+  "homeSectionCardSemanticLabel": "Abrir la sección {sectionName}",
+  "@homeSectionCardSemanticLabel": {
+    "description": "Etiqueta semántica que anuncia la navegación a una sección de inicio",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSectionCardSemanticHint": "Toca dos veces para ir a {sectionName}",
+  "@homeSectionCardSemanticHint": {
+    "description": "Pista semántica para abrir una sección desde inicio",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNotificationsSemanticLabel": "Notificaciones",
+  "@homeNotificationsSemanticLabel": {
+    "description": "Etiqueta semántica del botón de notificaciones"
+  },
+  "homeNotificationsSemanticHint": "Abre tus notificaciones y alertas",
+  "@homeNotificationsSemanticHint": {
+    "description": "Pista semántica del botón de notificaciones"
+  },
+  "homeStoreSemanticLabel": "Tienda",
+  "@homeStoreSemanticLabel": {
+    "description": "Etiqueta semántica del botón de tienda"
+  },
+  "homeStoreSemanticHint": "Abre la tienda de la app",
+  "@homeStoreSemanticHint": {
+    "description": "Pista semántica del botón de tienda"
+  },
+  "homeSettingsSemanticLabel": "Ajustes",
+  "@homeSettingsSemanticLabel": {
+    "description": "Etiqueta semántica del botón de ajustes"
+  },
+  "homeSettingsSemanticHint": "Abre la configuración de la app",
+  "@homeSettingsSemanticHint": {
+    "description": "Pista semántica del botón de ajustes"
+  },
   "homePlaceholderMessage": "La sección de {sectionName} estará disponible pronto.",
   "@homePlaceholderMessage": {
     "description": "Message shown for sections that are not ready yet.",
@@ -218,6 +260,42 @@
   "pokedexSortNameLabel": "Nombre",
   "pokedexSortHeightLabel": "Altura",
   "pokedexSortWeightLabel": "Peso",
+  "abilityCardSemanticLabel": "Abrir la habilidad {abilityName}",
+  "@abilityCardSemanticLabel": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Etiqueta semántica que anuncia la navegación a una habilidad"
+  },
+  "abilityCardSemanticHint": "Toca dos veces para ver detalles de {abilityName}",
+  "@abilityCardSemanticHint": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Pista semántica para abrir el detalle de una habilidad"
+  },
+  "pokedexCardSemanticLabel": "Abrir detalles de {pokemonName}",
+  "@pokedexCardSemanticLabel": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Etiqueta semántica para navegar a la entrada de un Pokémon"
+  },
+  "pokedexCardSemanticHint": "Toca dos veces para ver a {pokemonName} en la Pokédex",
+  "@pokedexCardSemanticHint": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Pista semántica para navegar a la entrada de un Pokémon"
+  },
   "pokedexSearchHint": "Buscar por nombre o número",
   "pokedexFiltersTooltip": "Filtros",
   "pokedexOfflineNoCache": "Sin conexión y sin datos guardados localmente.",

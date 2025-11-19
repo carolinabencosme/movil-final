@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../models/pokemon_model.dart';
 import '../../../widgets/pokemon_artwork.dart';
@@ -262,6 +263,8 @@ class LinearEvolutionChain extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -487,13 +490,19 @@ class EvolutionCard extends StatelessWidget {
 
     // Make non-current cards tappable for navigation
     if (!isCurrent && species.name.isNotEmpty) {
-      card = InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          pendingEvolutionNavigation[species.name] = species.id;
-          Navigator.of(context).pushNamed('/pokedex/${species.name}');
-        },
-        child: card,
+      final formattedName = formatLabel(species.name);
+      card = Semantics(
+        button: true,
+        label: l10n.pokedexCardSemanticLabel(formattedName),
+        hint: l10n.pokedexCardSemanticHint(formattedName),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            pendingEvolutionNavigation[species.name] = species.id;
+            Navigator.of(context).pushNamed('/pokedex/${species.name}');
+          },
+          child: card,
+        ),
       );
     }
 
@@ -868,16 +877,23 @@ class _EvolutionStageCardState extends State<EvolutionStageCard>
 
     Widget card = buildCard();
     if (isNavigable) {
-      card = Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(borderRadiusValue),
-        child: InkWell(
+      final resolvedName = _resolveName(widget.node.slug);
+      card = Semantics(
+        button: true,
+        label: l10n.pokedexCardSemanticLabel(resolvedName),
+        hint: l10n.pokedexCardSemanticHint(resolvedName),
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(borderRadiusValue),
-          onTap: () {
-            pendingEvolutionNavigation[widget.node.slug] = widget.node.speciesId;
-            Navigator.of(context).pushNamed('/pokedex/${widget.node.slug}');
-          },
-          child: card,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(borderRadiusValue),
+            onTap: () {
+              pendingEvolutionNavigation[widget.node.slug] =
+                  widget.node.speciesId;
+              Navigator.of(context).pushNamed('/pokedex/${widget.node.slug}');
+            },
+            child: card,
+          ),
         ),
       );
     }

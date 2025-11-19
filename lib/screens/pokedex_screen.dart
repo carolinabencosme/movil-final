@@ -1762,6 +1762,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
     final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
     final heroTag = 'pokemon-artwork-${pokemon.id}';
@@ -1782,6 +1783,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
         pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
     final statBadges = pokemon.stats.take(3).toList();
 
+    final semanticLabel = l10n.pokedexCardSemanticLabel(pokemon.name);
+    final semanticHint = l10n.pokedexCardSemanticHint(pokemon.name);
+
     return AnimatedScale(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
@@ -1800,24 +1804,28 @@ class _PokemonListTileState extends State<_PokemonListTile> {
             ),
           ],
         ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(28),
-          clipBehavior: Clip.antiAlias,
-          child: InkResponse(
-            containedInkWell: true,
-            highlightShape: BoxShape.rectangle,
+        child: Semantics(
+          button: true,
+          label: semanticLabel,
+          hint: semanticHint,
+          child: Material(
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(28),
-            onHighlightChanged: (value) {
-              if (_isPressed != value) {
-                setState(() => _isPressed = value);
-              }
-            },
-            onTap: () => _handleTap(context, heroTag, pokemon),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -14,
+            clipBehavior: Clip.antiAlias,
+            child: InkResponse(
+              containedInkWell: true,
+              highlightShape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(28),
+              onHighlightChanged: (value) {
+                if (_isPressed != value) {
+                  setState(() => _isPressed = value);
+                }
+              },
+              onTap: () => _handleTap(context, heroTag, pokemon),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -14,
                   right: -14,
                   child: Icon(
                     Icons.catching_pokemon,

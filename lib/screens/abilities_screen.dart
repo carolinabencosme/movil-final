@@ -254,77 +254,80 @@ class _AbilityCard extends StatelessWidget {
       tag: heroTag,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFDF6E4),
-                  const Color(0xFFF5E6CC),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: accentColor.withOpacity(0.18),
-                  blurRadius: 12,
-                  offset: const Offset(0, 8),
+        child: Semantics(
+          button: true,
+          label: l10n.abilityCardSemanticLabel(ability.displayName),
+          hint: l10n.abilityCardSemanticHint(ability.displayName),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFDF6E4),
+                    const Color(0xFFF5E6CC),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Icon container de color de acento (consistente con AppBar).
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        color: accentColor,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Nombre localizado en negrita.
-                    Expanded(
-                      child: Text(
-                        ability.displayName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF4A3F35),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Icon container de color de acento (consistente con AppBar).
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.auto_awesome,
+                          color: accentColor,
+                          size: 28,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Descripción corta o fallback si no hay texto.
-                Text(
-                  ability.shortEffect.isEmpty
-                      ? l10n.abilitiesNoDescription
-                      : ability.shortEffect,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF6E5E55),
-                    height: 1.4,
+                      const SizedBox(width: 16),
+                      // Nombre localizado en negrita.
+                      Expanded(
+                        child: Text(
+                          ability.displayName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF4A3F35),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  // Descripción corta o fallback si no hay texto.
+                  Text(
+                    ability.shortEffect.isEmpty
+                        ? l10n.abilitiesNoDescription
+                        : ability.shortEffect,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF6B5A4C),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ),
       ),
     );

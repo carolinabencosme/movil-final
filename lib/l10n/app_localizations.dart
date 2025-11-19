@@ -97,6 +97,14 @@ abstract class AppLocalizations {
   String get homeSectionPartiesSubtitle;
   String get homeSectionLocationsTitle;
   String get homeSectionLocationsSubtitle;
+  String homeSectionCardSemanticLabel({required String sectionName});
+  String homeSectionCardSemanticHint({required String sectionName});
+  String get homeNotificationsSemanticLabel;
+  String get homeNotificationsSemanticHint;
+  String get homeStoreSemanticLabel;
+  String get homeStoreSemanticHint;
+  String get homeSettingsSemanticLabel;
+  String get homeSettingsSemanticHint;
   String homePlaceholderMessage({required String sectionName});
   String get abilitiesDefaultTitle;
   String get abilitiesSearchHint;
@@ -112,10 +120,14 @@ abstract class AppLocalizations {
   String get abilitiesPokemonEmpty;
   String get abilitiesPokemonErrorTitle;
   String get abilitiesPokemonErrorDescription;
+  String abilityCardSemanticLabel({required String abilityName});
+  String abilityCardSemanticHint({required String abilityName});
   String get pokedexSortNumberLabel;
   String get pokedexSortNameLabel;
   String get pokedexSortHeightLabel;
   String get pokedexSortWeightLabel;
+  String pokedexCardSemanticLabel({required String pokemonName});
+  String pokedexCardSemanticHint({required String pokemonName});
   String get pokedexSearchHint;
   String get pokedexFiltersTooltip;
   String get pokedexOfflineNoCache;
@@ -301,6 +313,24 @@ class AppLocalizationsEN extends AppLocalizations {
   @override
   String get homeSectionLocationsSubtitle => 'Regions, maps & encounter data';
   @override
+  String homeSectionCardSemanticLabel({required String sectionName}) =>
+      'Open the ${sectionName} section';
+  @override
+  String homeSectionCardSemanticHint({required String sectionName}) =>
+      'Double tap to navigate to ${sectionName}';
+  @override
+  String get homeNotificationsSemanticLabel => 'Notifications';
+  @override
+  String get homeNotificationsSemanticHint => 'Opens notifications and alerts';
+  @override
+  String get homeStoreSemanticLabel => 'Shop';
+  @override
+  String get homeStoreSemanticHint => 'Opens the in-app shop';
+  @override
+  String get homeSettingsSemanticLabel => 'Settings';
+  @override
+  String get homeSettingsSemanticHint => 'Opens app settings';
+  @override
   String homePlaceholderMessage({required String sectionName}) => 'The ${sectionName} section will be available soon.';
   @override
   String get abilitiesDefaultTitle => 'Abilities';
@@ -331,6 +361,12 @@ class AppLocalizationsEN extends AppLocalizations {
   @override
   String get abilitiesPokemonErrorDescription => 'Try again to see which Pokémon have this ability.';
   @override
+  String abilityCardSemanticLabel({required String abilityName}) =>
+      'Open ability ${abilityName}';
+  @override
+  String abilityCardSemanticHint({required String abilityName}) =>
+      'Double tap to see details for ${abilityName}';
+  @override
   String get pokedexSortNumberLabel => 'Number';
   @override
   String get pokedexSortNameLabel => 'Name';
@@ -338,6 +374,12 @@ class AppLocalizationsEN extends AppLocalizations {
   String get pokedexSortHeightLabel => 'Height';
   @override
   String get pokedexSortWeightLabel => 'Weight';
+  @override
+  String pokedexCardSemanticLabel({required String pokemonName}) =>
+      'Open ${pokemonName} details';
+  @override
+  String pokedexCardSemanticHint({required String pokemonName}) =>
+      'Double tap to view ${pokemonName} in the Pokédex';
   @override
   String get pokedexSearchHint => 'Search by name or number';
   @override
@@ -570,6 +612,25 @@ class AppLocalizationsES extends AppLocalizations {
   @override
   String get homeSectionLocationsSubtitle => 'Regiones, mapas y datos de encuentros';
   @override
+  String homeSectionCardSemanticLabel({required String sectionName}) =>
+      'Abrir la sección ${sectionName}';
+  @override
+  String homeSectionCardSemanticHint({required String sectionName}) =>
+      'Toca dos veces para ir a ${sectionName}';
+  @override
+  String get homeNotificationsSemanticLabel => 'Notificaciones';
+  @override
+  String get homeNotificationsSemanticHint =>
+      'Abre tus notificaciones y alertas';
+  @override
+  String get homeStoreSemanticLabel => 'Tienda';
+  @override
+  String get homeStoreSemanticHint => 'Abre la tienda de la app';
+  @override
+  String get homeSettingsSemanticLabel => 'Ajustes';
+  @override
+  String get homeSettingsSemanticHint => 'Abre la configuración de la app';
+  @override
   String homePlaceholderMessage({required String sectionName}) => 'La sección de ${sectionName} estará disponible pronto.';
   @override
   String get abilitiesDefaultTitle => 'Habilidades';
@@ -600,6 +661,12 @@ class AppLocalizationsES extends AppLocalizations {
   @override
   String get abilitiesPokemonErrorDescription => 'Intenta nuevamente para ver qué Pokémon cuentan con esta habilidad.';
   @override
+  String abilityCardSemanticLabel({required String abilityName}) =>
+      'Abrir la habilidad ${abilityName}';
+  @override
+  String abilityCardSemanticHint({required String abilityName}) =>
+      'Toca dos veces para ver detalles de ${abilityName}';
+  @override
   String get pokedexSortNumberLabel => 'Número';
   @override
   String get pokedexSortNameLabel => 'Nombre';
@@ -607,6 +674,12 @@ class AppLocalizationsES extends AppLocalizations {
   String get pokedexSortHeightLabel => 'Altura';
   @override
   String get pokedexSortWeightLabel => 'Peso';
+  @override
+  String pokedexCardSemanticLabel({required String pokemonName}) =>
+      'Abrir detalles de ${pokemonName}';
+  @override
+  String pokedexCardSemanticHint({required String pokemonName}) =>
+      'Toca dos veces para ver a ${pokemonName} en la Pokédex';
   @override
   String get pokedexSearchHint => 'Buscar por nombre o número';
   @override
