@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
@@ -1423,6 +1424,31 @@ class _PokemonListTileState extends State<_PokemonListTile> {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesController = FavoritesScope.maybeOf(context);
+    if (favoritesController == null) {
+      return _buildTile(context, isFavorite: false);
+    }
+
+    return AnimatedBuilder(
+      animation: favoritesController,
+      builder: (context, _) {
+        final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
+        return _buildTile(
+          context,
+          isFavorite: isFavorite,
+          onToggleFavorite: () {
+            favoritesController.toggleFavorite(widget.pokemon.id);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTile(
+    BuildContext context, {
+    required bool isFavorite,
+    VoidCallback? onToggleFavorite,
+  }) {
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
     final heroTag = 'pokemon-artwork-${pokemon.id}';
@@ -1486,6 +1512,33 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                     color: textColor.withOpacity(0.12),
                   ),
                 ),
+                if (onToggleFavorite != null)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: IconButton(
+                        constraints:
+                            const BoxConstraints(minHeight: 36, minWidth: 36),
+                        padding: const EdgeInsets.all(4),
+                        visualDensity: VisualDensity.compact,
+                        splashRadius: 20,
+                        iconSize: 20,
+                        color: Colors.white,
+                        tooltip: isFavorite
+                            ? 'Quitar de favoritos'
+                            : 'Marcar como favorito',
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                        ),
+                        onPressed: onToggleFavorite,
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
