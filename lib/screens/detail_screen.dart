@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../controllers/favorites_controller.dart';
 import '../features/locations/screens/locations_tab.dart';
 import '../features/share/services/card_capture_service.dart';
 import '../features/share/widgets/pokemon_share_card.dart';
@@ -199,9 +200,18 @@ class DetailScreen extends StatelessWidget {
           );
 
           // Pull-to-refresh que llama refetch()
+          final favoritesController = FavoritesScope.maybeOf(context);
+
           return Scaffold(
             appBar: AppBar(
               title: Text(_capitalize(pokemon.name)),
+              actions: [
+                if (favoritesController != null)
+                  _FavoriteToggleAction(
+                    pokemonId: pokemon.id,
+                    favoritesController: favoritesController,
+                  ),
+              ],
             ),
             body: RefreshIndicator(
               onRefresh: () async {
@@ -275,18 +285,39 @@ class PokemonDetailBody extends StatefulWidget {
 class _PokemonDetailBodyState extends State<PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late final ScrollController _primaryScrollController;
+
+  static const int _locationsTabIndex = 5;
 
   @override
   void initState() {
     super.initState();
     // 6 pestañas: Info, Stats, Matchups, Evolución, Movimientos, Ubicaciones
     _tabController = TabController(length: 6, vsync: this);
+    _primaryScrollController = ScrollController();
   }
 
   @override
   void dispose() {
+    _primaryScrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleViewMapTap() async {
+    if (_tabController.index != _locationsTabIndex) {
+      _tabController.animateTo(_locationsTabIndex);
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
+    if (_primaryScrollController.hasClients) {
+      await _primaryScrollController.animateTo(
+        _primaryScrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   /// ============ Helpers de formato ============
@@ -421,12 +452,15 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
-      child: ScrollConfiguration(
-        behavior: scrollBehavior,
-        child: NestedScrollView(
-          physics: const BouncingScrollPhysics(),
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            final overlapHandle =
+      child: PrimaryScrollController(
+        controller: _primaryScrollController,
+        child: ScrollConfiguration(
+          behavior: scrollBehavior,
+          child: NestedScrollView(
+            controller: _primaryScrollController,
+            physics: const BouncingScrollPhysics(),
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              final overlapHandle =
           NestedScrollView.sliverOverlapAbsorberHandleFor(context);
           return [
             // Absorbe el solapamiento entre header y body dentro del NestedScroll
@@ -461,6 +495,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
                 abilitySubtitle: abilitySubtitle,
                 sectionBackground: sectionBackground,
                 sectionBorder: sectionBorder,
+                onViewMap: _handleViewMapTap,
               ),
             ),
             _DetailTabScrollView(
@@ -521,6 +556,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         ),
       ),
     ),
+      ),
     );
   }
 }
@@ -866,6 +902,39 @@ class _DetailTabScrollView extends StatelessWidget {
           sliver: SliverToBoxAdapter(child: child),
         ),
       ],
+    );
+  }
+}
+
+class _FavoriteToggleAction extends StatelessWidget {
+  const _FavoriteToggleAction({
+    required this.pokemonId,
+    required this.favoritesController,
+  });
+
+  final int pokemonId;
+  final FavoritesController favoritesController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedBuilder(
+      animation: favoritesController,
+      builder: (context, _) {
+        final isFavorite = favoritesController.isFavorite(pokemonId);
+        return IconButton(
+          tooltip: isFavorite
+              ? 'Quitar de favoritos'
+              : 'Marcar como favorito',
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? theme.colorScheme.error : null,
+          ),
+          onPressed: () {
+            favoritesController.toggleFavorite(pokemonId);
+          },
+        );
+      },
     );
   }
 }

@@ -42,12 +42,39 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   final TransformationController _transformationController =
       TransformationController();
   PokemonEncounter? _selectedEncounter;
-  RegionMapData? _mapData;
+  List<RegionMapData> _availableVersions = [];
+  int _selectedVersionIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _mapData = getRegionMapData(widget.region);
+    _availableVersions = getRegionMapVersions(widget.region);
+    if (_availableVersions.isEmpty) {
+      // Fallback to default map data if no versions found
+      final defaultMap = getRegionMapData(widget.region);
+      if (defaultMap != null) {
+        _availableVersions = [defaultMap];
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(RegionMapViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.region != widget.region) {
+      setState(() {
+        _selectedVersionIndex = 0;
+        _availableVersions = getRegionMapVersions(widget.region);
+        if (_availableVersions.isEmpty) {
+          final defaultMap = getRegionMapData(widget.region);
+          if (defaultMap != null) {
+            _availableVersions = [defaultMap];
+          }
+        }
+        _transformationController.value = Matrix4.identity();
+        _selectedEncounter = null;
+      });
+    }
   }
 
   @override
@@ -56,14 +83,21 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     super.dispose();
   }
 
+  /// Obtiene el mapa actualmente seleccionado
+  RegionMapData? get _currentMapData {
+    if (_availableVersions.isEmpty) return null;
+    return _availableVersions[_selectedVersionIndex];
+  }
+
   /// Obtiene el path del asset de la imagen del mapa
   String _getMapAssetPath() {
-    return _mapData?.assetPath ?? 'assets/maps/regions/${widget.region.toLowerCase()}.png';
+    return _currentMapData?.assetPath ?? 
+           'assets/maps/regions/${widget.region.toLowerCase()}.png';
   }
 
   /// Obtiene el tamaño del mapa
   Size _getMapSize() {
-    return _mapData?.mapSize ?? const Size(800, 600);
+    return _currentMapData?.mapSize ?? const Size(800, 600);
   }
 
   /// Construye los marcadores sobre el mapa
@@ -105,24 +139,33 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: widget.height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Version selector (only show if multiple versions available)
+        if (_availableVersions.length > 1)
+          _buildVersionSelector(theme),
+        
+        // Map container
+        Container(
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: theme.colorScheme.outline.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
         children: [
           // Mapa interactivo con zoom/pan
           InteractiveViewer(
@@ -241,11 +284,112 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           ),
         ],
       ),
+        ),
+      ],
+    );
+  }
+
+  /// Construye el selector de versiones del juego
+  Widget _buildVersionSelector(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.videogame_asset,
+            size: 20,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(
+                  _availableVersions.length,
+                  (index) => Padding(
+                    padding: EdgeInsets.only(right: index < _availableVersions.length - 1 ? 8.0 : 0.0),
+                    child: _VersionChip(
+                      label: _availableVersions[index].gameVersion,
+                      isSelected: index == _selectedVersionIndex,
+                      onTap: () {
+                        setState(() {
+                          _selectedVersionIndex = index;
+                          _selectedEncounter = null; // Reset selection
+                          _transformationController.value = Matrix4.identity();
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   String _formatRegionName(String region) {
     return region[0].toUpperCase() + region.substring(1);
+  }
+}
+
+/// Chip para seleccionar versión del juego
+class _VersionChip extends StatelessWidget {
+  const _VersionChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: isSelected
+          ? theme.colorScheme.primaryContainer
+          : theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: isSelected
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurface,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
