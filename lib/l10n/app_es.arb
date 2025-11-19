@@ -2,12 +2,33 @@
   "@@locale": "es",
   "appTitle": "Pokédex GraphQL",
   "homeHeaderTitle": "ProDex",
+  "@homeHeaderTitle": {
+    "description": "Brand-like title displayed at the top of the Home screen."
+  },
   "homeQuickAccessGymLeaders": "Líderes de Gimnasio y Alto Mando",
+  "@homeQuickAccessGymLeaders": {
+    "description": "Label for the quick-access chip that opens gym leader resources."
+  },
   "homeQuickAccessNatures": "Naturalezas",
+  "@homeQuickAccessNatures": {
+    "description": "Label for the quick-access chip that opens nature guides."
+  },
   "homeQuickAccessMatchups": "Enfrentamientos de tipos",
+  "@homeQuickAccessMatchups": {
+    "description": "Label for the quick-access chip that shows type matchup information."
+  },
   "homeQuickAccessEvolutionChains": "Cadenas evolutivas",
+  "@homeQuickAccessEvolutionChains": {
+    "description": "Label for the quick-access chip that highlights evolution chain references."
+  },
   "homeQuickAccessBreeding": "Guías de crianza",
+  "@homeQuickAccessBreeding": {
+    "description": "Label for the quick-access chip that links to breeding guides."
+  },
   "homeQuickAccessBerries": "Cultivo de bayas",
+  "@homeQuickAccessBerries": {
+    "description": "Label for the quick-access chip that covers berry farming tips."
+  },
   "authLoginTitle": "Bienvenido de nuevo",
   "authLoginSubtitle": "Inicia sesión con tu correo electrónico para acceder a tu Pokédex.",
   "authEmailLabel": "Correo electrónico",
@@ -36,37 +57,124 @@
   "authUpdateInfoSubtitle": "Puedes cambiar tu correo electrónico o establecer una nueva contraseña. Los cambios se aplican inmediatamente.",
   "authNewPasswordOptionalLabel": "Nueva contraseña (opcional)",
   "settingsTitle": "Configuración",
+  "@settingsTitle": {
+    "description": "Page title for the Settings screen."
+  },
   "settingsAccountSection": "Cuenta",
+  "@settingsAccountSection": {
+    "description": "Heading shown above the account information card."
+  },
   "settingsNoEmail": "Sin correo registrado",
+  "@settingsNoEmail": {
+    "description": "Fallback text when the authenticated user does not have an email."
+  },
   "settingsEditProfile": "Editar perfil",
+  "@settingsEditProfile": {
+    "description": "Button label that opens the profile editing screen."
+  },
   "settingsSignOut": "Cerrar sesión",
+  "@settingsSignOut": {
+    "description": "Button label used to log out of the current session."
+  },
   "settingsAppearanceSection": "Apariencia",
+  "@settingsAppearanceSection": {
+    "description": "Heading shown above the appearance/theme options."
+  },
   "settingsLightModeTitle": "Modo claro",
+  "@settingsLightModeTitle": {
+    "description": "Title of the light theme option within the appearance card."
+  },
   "settingsLightModeSubtitle": "Fondos luminosos ideales para entornos bien iluminados.",
+  "@settingsLightModeSubtitle": {
+    "description": "Description that explains when to use the light theme option."
+  },
   "settingsDarkModeTitle": "Modo oscuro",
+  "@settingsDarkModeTitle": {
+    "description": "Title of the dark theme option within the appearance card."
+  },
   "settingsDarkModeSubtitle": "Atenúa la luz para reducir el cansancio visual por la noche.",
+  "@settingsDarkModeSubtitle": {
+    "description": "Description that explains when to use the dark theme option."
+  },
   "settingsInfo": "La configuración se guarda inmediatamente y afecta a toda la aplicación.",
+  "@settingsInfo": {
+    "description": "Footnote shown below the cards to clarify how settings behave."
+  },
   "settingsSaveChanges": "Guardar cambios",
+  "@settingsSaveChanges": {
+    "description": "Primary action button in the profile settings form."
+  },
   "favoritesDefaultTitle": "Favoritos",
   "favoritesEmptyTitle": "Aún no tienes Pokémon favoritos.",
   "favoritesEmptySubtitle": "Explora la Pokédex y marca con el corazón los Pokémon que quieras guardar.",
   "homeQuickAccessTitle": "Accesos rápidos",
+  "@homeQuickAccessTitle": {
+    "description": "Label for the horizontal list of quick-access chips on Home."
+  },
   "homeSectionPokedexTitle": "Pokédex",
+  "@homeSectionPokedexTitle": {
+    "description": "Title of the Pokédex feature card on the Home screen."
+  },
   "homeSectionPokedexSubtitle": "Índice nacional y pokédex regionales",
+  "@homeSectionPokedexSubtitle": {
+    "description": "Short description shown under the Pokédex card title."
+  },
   "homeSectionFavoritesTitle": "Favoritos",
+  "@homeSectionFavoritesTitle": {
+    "description": "Title of the favorites feature card on the Home screen."
+  },
   "homeSectionFavoritesSubtitle": "Tus Pokémon guardados",
+  "@homeSectionFavoritesSubtitle": {
+    "description": "Short description shown under the favorites card title."
+  },
   "homeSectionMovesTitle": "Movimientos",
+  "@homeSectionMovesTitle": {
+    "description": "Title of the moves feature card on the Home screen."
+  },
   "homeSectionMovesSubtitle": "Daño, efectos y datos de concursos",
+  "@homeSectionMovesSubtitle": {
+    "description": "Short description shown under the moves card title."
+  },
   "homeSectionTmTitle": "MT",
+  "@homeSectionTmTitle": {
+    "description": "Title of the technical machines feature card on the Home screen."
+  },
   "homeSectionTmSubtitle": "Máquinas y tutores por generación",
+  "@homeSectionTmSubtitle": {
+    "description": "Short description shown under the TM card title."
+  },
   "homeSectionAbilitiesTitle": "Habilidades",
+  "@homeSectionAbilitiesTitle": {
+    "description": "Title of the abilities feature card on the Home screen."
+  },
   "homeSectionAbilitiesSubtitle": "Efectos pasivos y activadores",
+  "@homeSectionAbilitiesSubtitle": {
+    "description": "Short description shown under the abilities card title."
+  },
   "homeSectionChecklistsTitle": "Listas de control",
+  "@homeSectionChecklistsTitle": {
+    "description": "Title of the checklist feature card on the Home screen."
+  },
   "homeSectionChecklistsSubtitle": "Sigue metas y colecciones",
+  "@homeSectionChecklistsSubtitle": {
+    "description": "Short description shown under the checklist card title."
+  },
   "homeSectionPartiesTitle": "Equipos",
+  "@homeSectionPartiesTitle": {
+    "description": "Title of the parties/teams feature card on the Home screen."
+  },
   "homeSectionPartiesSubtitle": "Arma equipos y estrategias",
+  "@homeSectionPartiesSubtitle": {
+    "description": "Short description shown under the parties card title."
+  },
   "homeSectionLocationsTitle": "Ubicaciones",
+  "@homeSectionLocationsTitle": {
+    "description": "Title of the locations feature card on the Home screen."
+  },
   "homeSectionLocationsSubtitle": "Regiones, mapas y datos de encuentros",
+  "@homeSectionLocationsSubtitle": {
+    "description": "Short description shown under the locations card title."
+  },
   "homePlaceholderMessage": "La sección de {sectionName} estará disponible pronto.",
   "@homePlaceholderMessage": {
     "description": "Message shown for sections that are not ready yet.",
