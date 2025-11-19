@@ -1,0 +1,23 @@
+{
+  "@@locale": "es",
+  "appTitle": "Pokédex GraphQL",
+  "@appTitle": {
+    "description": "Título de la aplicación mostrado en la navegación."
+  },
+  "favoritesTitle": "Favoritos",
+  "@favoritesTitle": {
+    "description": "Título de la sección de favoritos."
+  },
+  "favoritesEmptyState": "Todavía no has añadido favoritos.",
+  "@favoritesEmptyState": {
+    "description": "Mensaje de estado vacío cuando no hay elementos en favoritos."
+  },
+  "triviaTitle": "Curiosidades",
+  "@triviaTitle": {
+    "description": "Encabezado para la sección de curiosidades."
+  },
+  "triviaDescription": "Descubre datos curiosos sobre Pokémon.",
+  "@triviaDescription": {
+    "description": "Subtítulo que invita a leer el contenido de curiosidades."
+  }
+}
