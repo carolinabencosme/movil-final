@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
+import '../localization/localization_controller.dart';
 
 /// Pantalla principal (Home) que presenta accesos a secciones de la app.
 /// - Muestra una tarjeta “hero” (la primera) y un grid con el resto.
@@ -424,6 +425,33 @@ class _HomeScreenState extends State<HomeScreen> {
           opacity: animation,
           child: destination,
         ),
+      ),
+    );
+  }
+
+  void _showLanguageSelector(
+    BuildContext context,
+    LocalizationController localizationController,
+    AppLocalizations l10n,
+  ) {
+    final selectedLanguage =
+        localizationController.locale?.languageCode ?? 'system';
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => _LanguageSelectorSheet(
+        selectedLanguage: selectedLanguage,
+        onSelected: (languageCode) {
+          localizationController.updateLocale(
+            languageCode == 'system' ? null : Locale(languageCode),
+          );
+          Navigator.of(context).pop();
+        },
+        l10n: l10n,
       ),
     );
   }
@@ -926,6 +954,93 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
         ),
       );
     }).toList();
+  }
+}
+
+class _LanguageSelectorSheet extends StatelessWidget {
+  const _LanguageSelectorSheet({
+    required this.selectedLanguage,
+    required this.onSelected,
+    required this.l10n,
+  });
+
+  final String selectedLanguage;
+  final ValueChanged<String> onSelected;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final options = [
+      ('system', l10n.settingsLanguageSystem),
+      ('en', l10n.settingsLanguageEnglish),
+      ('es', l10n.settingsLanguageSpanish),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.translate,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.settingsLanguageTitle,
+                        style: textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.settingsLanguageSubtitle,
+                        style: textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ...options.map(
+              (option) => RadioListTile<String>(
+                value: option.$1,
+                groupValue: selectedLanguage,
+                onChanged: (value) {
+                  if (value != null) {
+                    onSelected(value);
+                  }
+                },
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                title: Text(
+                  option.$2,
+                  style: textTheme.titleMedium,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 /// Iconos del header (campana, bolsa, ajustes) con feedback táctil.
