@@ -191,6 +191,48 @@
   "@homeSectionLocationsSubtitle": {
     "description": "Short description shown under the locations card title."
   },
+  "homeSectionCardSemanticLabel": "Open the {sectionName} section",
+  "@homeSectionCardSemanticLabel": {
+    "description": "Semantic label announcing navigation to a home section",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSectionCardSemanticHint": "Double tap to navigate to {sectionName}",
+  "@homeSectionCardSemanticHint": {
+    "description": "Semantic hint for opening a home section",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNotificationsSemanticLabel": "Notifications",
+  "@homeNotificationsSemanticLabel": {
+    "description": "Semantic label for the notifications button"
+  },
+  "homeNotificationsSemanticHint": "Opens notifications and alerts",
+  "@homeNotificationsSemanticHint": {
+    "description": "Semantic hint for the notifications button"
+  },
+  "homeStoreSemanticLabel": "Shop",
+  "@homeStoreSemanticLabel": {
+    "description": "Semantic label for the shop button"
+  },
+  "homeStoreSemanticHint": "Opens the in-app shop",
+  "@homeStoreSemanticHint": {
+    "description": "Semantic hint for the shop button"
+  },
+  "homeSettingsSemanticLabel": "Settings",
+  "@homeSettingsSemanticLabel": {
+    "description": "Semantic label for the settings button"
+  },
+  "homeSettingsSemanticHint": "Opens app settings",
+  "@homeSettingsSemanticHint": {
+    "description": "Semantic hint for the settings button"
+  },
   "homePlaceholderMessage": "The {sectionName} section will be available soon.",
   "@homePlaceholderMessage": {
     "description": "Message shown for sections that are not ready yet.",
@@ -218,6 +260,42 @@
   "pokedexSortNameLabel": "Name",
   "pokedexSortHeightLabel": "Height",
   "pokedexSortWeightLabel": "Weight",
+  "abilityCardSemanticLabel": "Open ability {abilityName}",
+  "@abilityCardSemanticLabel": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic label announcing navigation to an ability detail"
+  },
+  "abilityCardSemanticHint": "Double tap to see details for {abilityName}",
+  "@abilityCardSemanticHint": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic hint for opening an ability"
+  },
+  "pokedexCardSemanticLabel": "Open {pokemonName} details",
+  "@pokedexCardSemanticLabel": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic label for navigating to a Pokémon entry"
+  },
+  "pokedexCardSemanticHint": "Double tap to view {pokemonName} in the Pokédex",
+  "@pokedexCardSemanticHint": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic hint for navigating to a Pokémon entry"
+  },
   "pokedexSearchHint": "Search by name or number",
   "pokedexFiltersTooltip": "Filters",
   "pokedexOfflineNoCache": "No connection and no cached data available.",
