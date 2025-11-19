@@ -459,7 +459,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final localizationController = LocalizationScope.of(context);
     // Separamos la primera sección (hero) del resto (grid)
     final List<_SectionInfo> sections = _buildSections(l10n);
     final _SectionInfo? heroSection =
@@ -535,16 +534,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _HeaderIcon(
                                   icon: Icons.shopping_bag_outlined,
                                   semanticLabel: l10n.homeShopLabel,
-                                ),
-                                const SizedBox(width: 12),
-                                _HeaderIcon(
-                                  icon: Icons.translate,
-                                  semanticLabel: l10n.homeLanguageLabel,
-                                  onTap: () => _showLanguageSelector(
-                                    context,
-                                    localizationController,
-                                    l10n,
-                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 _HeaderIcon(
