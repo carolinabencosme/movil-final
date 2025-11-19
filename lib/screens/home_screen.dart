@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
@@ -27,343 +28,353 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Cada sección define:
   /// - título, subtítulo, icono, color y heroTag
   /// - gráficos decorativos (icons/assets) y acentos de fondo (shapes)
-  final List<_SectionInfo> _sections = const [
-    _SectionInfo(
-      title: 'Pokédex',
-      subtitle: 'National index & regional dexes',
-      icon: Icons.catching_pokemon,
-      color: Color(0xFFE94256),
-      heroTag: 'section-pokedex',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.catching_pokemon,
-          scale: 0.92,
-          color: Colors.white,
-          opacity: 0.96,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.auto_awesome_motion,
-          scale: 0.42,
-          color: Colors.white,
-          opacity: 0.5,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-18, 24),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -52,
-          right: -28,
-          diameterFactor: 1.05,
-          color: Colors.white,
-          opacity: 0.2,
-        ),
-        _AccentShape.circle(
-          bottom: -48,
-          left: -18,
-          diameterFactor: 0.68,
-          color: Colors.white,
-          opacity: 0.12,
-        ),
-        _AccentShape.roundedRect(
-          bottom: 36,
-          right: -48,
-          widthFactor: 0.58,
-          heightFactor: 0.22,
-          color: Colors.black,
-          opacity: 0.18,
-          borderRadius: BorderRadius.all(Radius.circular(40)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Favoritos',
-      subtitle: 'Tus Pokémon guardados',
-      icon: Icons.favorite,
-      color: Color(0xFFFF8FAB),
-      heroTag: 'section-favorites',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.favorite,
-          scale: 0.92,
-          color: Colors.white,
-          opacity: 0.94,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.star_rounded,
-          scale: 0.42,
-          color: Colors.white,
-          opacity: 0.52,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 22),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -48,
-          right: -24,
-          diameterFactor: 0.95,
-          color: Colors.white,
-          opacity: 0.2,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -26,
-          right: 16,
-          widthFactor: 0.5,
-          heightFactor: 0.18,
-          color: Colors.black,
-          opacity: 0.12,
-          borderRadius: BorderRadius.all(Radius.circular(28)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Moves',
-      subtitle: 'Damage, effects & contest data',
-      icon: Icons.flash_on,
-      color: Color(0xFF4DA3FF),
-      heroTag: 'section-moves',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.flash_on,
-          scale: 0.88,
-          color: Colors.white,
-          opacity: 0.94,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.stacked_line_chart,
-          scale: 0.4,
-          color: Colors.white,
-          opacity: 0.48,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-12, 18),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -40,
-          right: -26,
-          diameterFactor: 0.9,
-          color: Colors.white,
-          opacity: 0.18,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -24,
-          right: 12,
-          widthFactor: 0.54,
-          heightFactor: 0.18,
-          color: Colors.white,
-          opacity: 0.12,
-          borderRadius: BorderRadius.all(Radius.circular(28)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'TM',
-      subtitle: 'Machines & tutors by generation',
-      icon: Icons.memory,
-      color: Color(0xFFF2A649),
-      heroTag: 'section-tm',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.memory,
-          scale: 0.88,
-          color: Colors.white,
-          opacity: 0.94,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.settings_input_component,
-          scale: 0.38,
-          color: Colors.white,
-          opacity: 0.48,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-10, 20),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -34,
-          right: -22,
-          diameterFactor: 0.84,
-          color: Colors.white,
-          opacity: 0.18,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -20,
-          right: 18,
-          widthFactor: 0.52,
-          heightFactor: 0.18,
-          color: Colors.black,
-          opacity: 0.1,
-          borderRadius: BorderRadius.all(Radius.circular(26)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Abilities',
-      subtitle: 'Passive effects & triggers',
-      icon: Icons.auto_fix_high,
-      color: Color(0xFF9D4EDD),
-      heroTag: 'section-abilities',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.auto_fix_high,
-          scale: 0.9,
-          color: Colors.white,
-          opacity: 0.95,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.bubble_chart,
-          scale: 0.4,
-          color: Colors.white,
-          opacity: 0.48,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 16),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -36,
-          right: -24,
-          diameterFactor: 0.92,
-          color: Colors.white,
-          opacity: 0.2,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -18,
-          right: 16,
-          widthFactor: 0.5,
-          heightFactor: 0.2,
-          color: Colors.white,
-          opacity: 0.13,
-          borderRadius: BorderRadius.all(Radius.circular(32)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Checklists',
-      subtitle: 'Track goals & collections',
-      icon: Icons.checklist_rtl,
-      color: Color(0xFF59CD90),
-      heroTag: 'section-checklists',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.check_circle_outline,
-          scale: 0.86,
-          color: Colors.white,
-          opacity: 0.92,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.fact_check,
-          scale: 0.38,
-          color: Colors.white,
-          opacity: 0.5,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-12, 18),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -32,
-          right: -20,
-          diameterFactor: 0.82,
-          color: Colors.white,
-          opacity: 0.18,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -22,
-          right: 12,
-          widthFactor: 0.5,
-          heightFactor: 0.18,
-          color: Colors.black,
-          opacity: 0.12,
-          borderRadius: BorderRadius.all(Radius.circular(24)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Parties',
-      subtitle: 'Build teams & strategies',
-      icon: Icons.groups_2,
-      color: Color(0xFFFF6F91),
-      heroTag: 'section-parties',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.groups_2,
-          scale: 0.88,
-          color: Colors.white,
-          opacity: 0.95,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.auto_graph,
-          scale: 0.38,
-          color: Colors.white,
-          opacity: 0.48,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 18),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -36,
-          right: -18,
-          diameterFactor: 0.84,
-          color: Colors.white,
-          opacity: 0.18,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -20,
-          right: 16,
-          widthFactor: 0.52,
-          heightFactor: 0.18,
-          color: Colors.white,
-          opacity: 0.12,
-          borderRadius: BorderRadius.all(Radius.circular(26)),
-        ),
-      ],
-    ),
-    _SectionInfo(
-      title: 'Locations',
-      subtitle: 'Regions, maps & encounter data',
-      icon: Icons.travel_explore,
-      color: Color(0xFF3BC9DB),
-      heroTag: 'section-locations',
-      graphics: [
-        _SectionGraphic.icon(
-          icon: Icons.travel_explore,
-          scale: 0.88,
-          color: Colors.white,
-          opacity: 0.95,
-        ),
-        _SectionGraphic.icon(
-          icon: Icons.explore,
-          scale: 0.38,
-          color: Colors.white,
-          opacity: 0.48,
-          alignment: Alignment.bottomLeft,
-          offset: Offset(-10, 20),
-        ),
-      ],
-      accents: [
-        _AccentShape.circle(
-          top: -32,
-          right: -20,
-          diameterFactor: 0.9,
-          color: Colors.white,
-          opacity: 0.18,
-        ),
-        _AccentShape.roundedRect(
-          bottom: -22,
-          right: 12,
-          widthFactor: 0.5,
-          heightFactor: 0.2,
-          color: Colors.black,
-          opacity: 0.12,
-          borderRadius: BorderRadius.all(Radius.circular(28)),
-        ),
-      ],
-    ),
-  ];
+  List<_SectionInfo> _buildSections(AppLocalizations l10n) {
+    return [
+      _SectionInfo(
+        id: 'pokedex',
+        title: l10n.homeSectionPokedexTitle,
+        subtitle: l10n.homeSectionPokedexSubtitle,
+        icon: Icons.catching_pokemon,
+        color: const Color(0xFFE94256),
+        heroTag: 'section-pokedex',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.catching_pokemon,
+            scale: 0.92,
+            color: Colors.white,
+            opacity: 0.96,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.auto_awesome_motion,
+            scale: 0.42,
+            color: Colors.white,
+            opacity: 0.5,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-18, 24),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -52,
+            right: -28,
+            diameterFactor: 1.05,
+            color: Colors.white,
+            opacity: 0.2,
+          ),
+          _AccentShape.circle(
+            bottom: -48,
+            left: -18,
+            diameterFactor: 0.68,
+            color: Colors.white,
+            opacity: 0.12,
+          ),
+          _AccentShape.roundedRect(
+            bottom: 36,
+            right: -48,
+            widthFactor: 0.58,
+            heightFactor: 0.22,
+            color: Colors.black,
+            opacity: 0.18,
+            borderRadius: BorderRadius.all(Radius.circular(40)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'favorites',
+        title: l10n.homeSectionFavoritesTitle,
+        subtitle: l10n.homeSectionFavoritesSubtitle,
+        icon: Icons.favorite,
+        color: const Color(0xFFFF8FAB),
+        heroTag: 'section-favorites',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.favorite,
+            scale: 0.92,
+            color: Colors.white,
+            opacity: 0.94,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.star_rounded,
+            scale: 0.42,
+            color: Colors.white,
+            opacity: 0.52,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-14, 22),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -48,
+            right: -24,
+            diameterFactor: 0.95,
+            color: Colors.white,
+            opacity: 0.2,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -26,
+            right: 16,
+            widthFactor: 0.5,
+            heightFactor: 0.18,
+            color: Colors.black,
+            opacity: 0.12,
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'moves',
+        title: l10n.homeSectionMovesTitle,
+        subtitle: l10n.homeSectionMovesSubtitle,
+        icon: Icons.flash_on,
+        color: const Color(0xFF4DA3FF),
+        heroTag: 'section-moves',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.flash_on,
+            scale: 0.88,
+            color: Colors.white,
+            opacity: 0.94,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.stacked_line_chart,
+            scale: 0.4,
+            color: Colors.white,
+            opacity: 0.48,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-12, 18),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -40,
+            right: -26,
+            diameterFactor: 0.9,
+            color: Colors.white,
+            opacity: 0.18,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -24,
+            right: 12,
+            widthFactor: 0.54,
+            heightFactor: 0.18,
+            color: Colors.white,
+            opacity: 0.12,
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'tm',
+        title: l10n.homeSectionTmTitle,
+        subtitle: l10n.homeSectionTmSubtitle,
+        icon: Icons.memory,
+        color: const Color(0xFFF2A649),
+        heroTag: 'section-tm',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.memory,
+            scale: 0.88,
+            color: Colors.white,
+            opacity: 0.94,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.settings_input_component,
+            scale: 0.38,
+            color: Colors.white,
+            opacity: 0.48,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-10, 20),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -34,
+            right: -22,
+            diameterFactor: 0.84,
+            color: Colors.white,
+            opacity: 0.18,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -20,
+            right: 18,
+            widthFactor: 0.52,
+            heightFactor: 0.18,
+            color: Colors.black,
+            opacity: 0.1,
+            borderRadius: BorderRadius.all(Radius.circular(26)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'abilities',
+        title: l10n.homeSectionAbilitiesTitle,
+        subtitle: l10n.homeSectionAbilitiesSubtitle,
+        icon: Icons.auto_fix_high,
+        color: const Color(0xFF9D4EDD),
+        heroTag: 'section-abilities',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.auto_fix_high,
+            scale: 0.9,
+            color: Colors.white,
+            opacity: 0.95,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.bubble_chart,
+            scale: 0.4,
+            color: Colors.white,
+            opacity: 0.48,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-14, 16),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -36,
+            right: -24,
+            diameterFactor: 0.92,
+            color: Colors.white,
+            opacity: 0.2,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -18,
+            right: 16,
+            widthFactor: 0.5,
+            heightFactor: 0.2,
+            color: Colors.white,
+            opacity: 0.13,
+            borderRadius: BorderRadius.all(Radius.circular(32)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'checklists',
+        title: l10n.homeSectionChecklistsTitle,
+        subtitle: l10n.homeSectionChecklistsSubtitle,
+        icon: Icons.checklist_rtl,
+        color: const Color(0xFF59CD90),
+        heroTag: 'section-checklists',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.check_circle_outline,
+            scale: 0.86,
+            color: Colors.white,
+            opacity: 0.92,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.fact_check,
+            scale: 0.38,
+            color: Colors.white,
+            opacity: 0.5,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-12, 18),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -32,
+            right: -20,
+            diameterFactor: 0.82,
+            color: Colors.white,
+            opacity: 0.18,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -22,
+            right: 12,
+            widthFactor: 0.5,
+            heightFactor: 0.18,
+            color: Colors.black,
+            opacity: 0.12,
+            borderRadius: BorderRadius.all(Radius.circular(24)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'parties',
+        title: l10n.homeSectionPartiesTitle,
+        subtitle: l10n.homeSectionPartiesSubtitle,
+        icon: Icons.groups_2,
+        color: const Color(0xFFFF6F91),
+        heroTag: 'section-parties',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.groups_2,
+            scale: 0.88,
+            color: Colors.white,
+            opacity: 0.95,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.auto_graph,
+            scale: 0.38,
+            color: Colors.white,
+            opacity: 0.48,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-14, 18),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -36,
+            right: -18,
+            diameterFactor: 0.84,
+            color: Colors.white,
+            opacity: 0.18,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -20,
+            right: 16,
+            widthFactor: 0.52,
+            heightFactor: 0.18,
+            color: Colors.white,
+            opacity: 0.12,
+            borderRadius: BorderRadius.all(Radius.circular(26)),
+          ),
+        ],
+      ),
+      _SectionInfo(
+        id: 'locations',
+        title: l10n.homeSectionLocationsTitle,
+        subtitle: l10n.homeSectionLocationsSubtitle,
+        icon: Icons.travel_explore,
+        color: const Color(0xFF3BC9DB),
+        heroTag: 'section-locations',
+        graphics: const [
+          _SectionGraphic.icon(
+            icon: Icons.travel_explore,
+            scale: 0.88,
+            color: Colors.white,
+            opacity: 0.95,
+          ),
+          _SectionGraphic.icon(
+            icon: Icons.explore,
+            scale: 0.38,
+            color: Colors.white,
+            opacity: 0.48,
+            alignment: Alignment.bottomLeft,
+            offset: Offset(-10, 20),
+          ),
+        ],
+        accents: const [
+          _AccentShape.circle(
+            top: -32,
+            right: -20,
+            diameterFactor: 0.9,
+            color: Colors.white,
+            opacity: 0.18,
+          ),
+          _AccentShape.roundedRect(
+            bottom: -22,
+            right: 12,
+            widthFactor: 0.5,
+            heightFactor: 0.2,
+            color: Colors.black,
+            opacity: 0.12,
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+        ],
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -379,22 +390,22 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Para secciones no implementadas, abre un placeholder genérico.
   void _openSection(_SectionInfo section) {
     Widget destination;
-    switch (section.title) {
-      case 'Pokédex':
+    switch (section.id) {
+      case 'pokedex':
         destination = PokedexScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
         );
         break;
-      case 'Favoritos':
+      case 'favorites':
         destination = FavoritesScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
         );
         break;
-      case 'Abilities':
+      case 'abilities':
         destination = AbilitiesScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
@@ -419,8 +430,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Separamos la primera sección (hero) del resto (grid)
-    final List<_SectionInfo> sections = _sections;
+    final List<_SectionInfo> sections = _buildSections(l10n);
     final _SectionInfo? heroSection =
         sections.isNotEmpty ? sections.first : null;
     final List<_SectionInfo> otherSections =
@@ -439,13 +451,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heroHeight =
         heroWidth > 0 ? math.max(280, heroWidth * 0.58) : 280;
     // Chips de acceso rápido (placeholder de navegación futura)
-    const quickAccess = [
-      'Gym Leaders & Elite 4',
-      'Natures',
-      'Type Matchups',
-      'Evolution Chains',
-      'Breeding Guides',
-      'Berry Farming',
+    final quickAccess = [
+      l10n.homeQuickAccessGym,
+      l10n.homeQuickAccessNatures,
+      l10n.homeQuickAccessTypes,
+      l10n.homeQuickAccessEvolutions,
+      l10n.homeQuickAccessBreeding,
+      l10n.homeQuickAccessBerries,
     ];
 
     return Scaffold(
@@ -474,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'ProDex',
+                                    l10n.homeTitle,
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineLarge
@@ -486,16 +498,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                   ),
                                 ),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.notifications_none,
+                                  semanticLabel: l10n.homeNotificationsLabel,
                                 ),
                                 const SizedBox(width: 12),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.shopping_bag_outlined,
+                                  semanticLabel: l10n.homeShopLabel,
                                 ),
                                 const SizedBox(width: 12),
                                 _HeaderIcon(
                                   icon: Icons.settings_outlined,
+                                  semanticLabel: l10n.homeSettingsLabel,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -784,14 +799,21 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
       ),
     );
 
-// La tarjeta hero viaja con un Hero para transición hacia la pantalla destino
-    if (!isHero) {
-      return card;
+    Widget result = card;
+    if (isHero) {
+      result = Hero(
+        tag: widget.info.heroTag,
+        child: result,
+      );
     }
 
-    return Hero(
-      tag: widget.info.heroTag,
-      child: card,
+    final semanticsLabel =
+        '${widget.info.title}. ${widget.info.subtitle}'.trim();
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: result,
     );
   }
   /// Construye un grupo de gráficos decorativos en la esquina superior derecha.
@@ -910,31 +932,38 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 class _HeaderIcon extends StatelessWidget {
   const _HeaderIcon({
     required this.icon,
+    this.semanticLabel,
     this.onTap,
   });
 
   final IconData icon;
+  final String? semanticLabel;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    return Material(
+    final iconWidget = Material(
       color: colorScheme.surfaceVariant.withOpacity(0.35),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(
-          height: 44,
-          width: 44,
+          height: 48,
+          width: 48,
           child: Icon(
             icon,
             color: colorScheme.onSurface,
           ),
         ),
       ),
+    );
+
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: iconWidget,
     );
   }
 }
@@ -1020,6 +1049,7 @@ class SectionPlaceholderScreen extends StatelessWidget {
 /// DTO interno con la definición de cada sección del Home.
 class _SectionInfo {
   const _SectionInfo({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -1029,6 +1059,7 @@ class _SectionInfo {
     this.accents = const [],
   });
 
+  final String id;
   final String title;
   final String subtitle;
   final IconData icon;

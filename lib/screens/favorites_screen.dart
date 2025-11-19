@@ -59,6 +59,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final Color accentColor = widget.accentColor ?? const Color(0xFFE94256);
     final heroTag = widget.heroTag;
     final List<PokemonListItem> favorites = _favoritesController == null
@@ -113,7 +114,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Aún no tienes Pokémon favoritos.',
+                      l10n.favoritesEmptyTitle,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -121,7 +122,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Explora la Pokédex y marca con el corazón los Pokémon que quieras guardar.',
+                      l10n.favoritesEmptyDescription,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,

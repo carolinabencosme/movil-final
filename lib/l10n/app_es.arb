@@ -1,0 +1,153 @@
+{
+  "appTitle": "Pokédex GraphQL",
+  "homeTitle": "ProDex",
+  "homeSectionPokedexTitle": "Pokédex",
+  "homeSectionPokedexSubtitle": "Índice nacional y dex regionales",
+  "homeSectionFavoritesTitle": "Favoritos",
+  "homeSectionFavoritesSubtitle": "Tus Pokémon guardados",
+  "homeSectionMovesTitle": "Movimientos",
+  "homeSectionMovesSubtitle": "Daño, efectos y datos de concursos",
+  "homeSectionTmTitle": "MT",
+  "homeSectionTmSubtitle": "Máquinas y tutores por generación",
+  "homeSectionAbilitiesTitle": "Habilidades",
+  "homeSectionAbilitiesSubtitle": "Efectos pasivos y activadores",
+  "homeSectionChecklistsTitle": "Listas",
+  "homeSectionChecklistsSubtitle": "Registra metas y colecciones",
+  "homeSectionPartiesTitle": "Equipos",
+  "homeSectionPartiesSubtitle": "Crea equipos y estrategias",
+  "homeSectionLocationsTitle": "Ubicaciones",
+  "homeSectionLocationsSubtitle": "Regiones, mapas y encuentros",
+  "homeQuickAccessGym": "Líderes y Alto Mando",
+  "homeQuickAccessNatures": "Naturalezas",
+  "homeQuickAccessTypes": "Efectividades de tipo",
+  "homeQuickAccessEvolutions": "Cadenas evolutivas",
+  "homeQuickAccessBreeding": "Guías de crianza",
+  "homeQuickAccessBerries": "Cultivo de bayas",
+  "homeNotificationsLabel": "Abrir notificaciones",
+  "homeShopLabel": "Abrir tienda",
+  "homeSettingsLabel": "Abrir configuración",
+  "settingsTitle": "Configuración",
+  "settingsAccountTitle": "Cuenta",
+  "settingsNoEmail": "Sin correo registrado",
+  "settingsEditProfile": "Editar perfil",
+  "settingsLogout": "Cerrar sesión",
+  "settingsAppearance": "Apariencia",
+  "settingsLightModeTitle": "Modo claro",
+  "settingsLightModeSubtitle": "Fondos luminosos ideales para espacios bien iluminados.",
+  "settingsDarkModeTitle": "Modo oscuro",
+  "settingsDarkModeSubtitle": "Atenúa la interfaz para reducir el cansancio visual.",
+  "settingsLanguageTitle": "Idioma",
+  "settingsLanguageSubtitle": "Elige cómo se muestran los textos en la app.",
+  "settingsLanguageSystem": "Usar idioma del sistema",
+  "settingsLanguageEnglish": "Inglés",
+  "settingsLanguageSpanish": "Español",
+  "settingsInfoNote": "Los cambios se guardan al instante y afectan a toda la app.",
+  "favoritesEmptyTitle": "Aún no tienes Pokémon favoritos.",
+  "favoritesEmptyDescription": "Explora la Pokédex y toca el corazón para guardar tus Pokémon preferidos.",
+  "pokedexLoadError": "No se pudo cargar la Pokédex. Intenta nuevamente.",
+  "pokedexOfflineSnack": "Modo offline activo. Mostrando datos guardados.",
+  "pokedexOfflineBanner": "Modo offline activo. Algunos filtros pueden ser limitados.",
+  "pokedexConnectionRestored": "Conexión restablecida.",
+  "pokedexSearchHint": "Buscar por nombre o número",
+  "pokedexFiltersTooltip": "Filtros",
+  "pokedexShowingCount": "Mostrando {count} Pokémon",
+  "@pokedexShowingCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "pokedexShowingPartial": "Mostrando {count} de {total} Pokémon",
+  "@pokedexShowingPartial": {
+    "placeholders": {
+      "count": {},
+      "total": {}
+    }
+  },
+  "pokedexSortAscending": "ascendente",
+  "pokedexSortDescending": "descendente",
+  "pokedexSortAscendingShort": "Asc",
+  "pokedexSortDescendingShort": "Desc",
+  "pokedexFiltersTitle": "Filtros",
+  "pokedexFiltersClose": "Cerrar",
+  "pokedexFilterTypesTitle": "Tipos",
+  "pokedexFilterTypesEmpty": "No hay tipos disponibles por ahora.",
+  "pokedexFilterGenerationsTitle": "Generaciones",
+  "pokedexFilterGenerationsEmpty": "No hay generaciones disponibles por ahora.",
+  "pokedexFilterRegionsTitle": "Regiones",
+  "pokedexFilterRegionsEmpty": "No hay regiones disponibles por ahora.",
+  "pokedexFilterShapesTitle": "Formas",
+  "pokedexFilterShapesEmpty": "No hay formas disponibles por ahora.",
+  "pokedexFilterSortTitle": "Ordenar por",
+  "pokedexFilterSortCriterion": "Criterio",
+  "pokedexFiltersClear": "Limpiar",
+  "pokedexFiltersCancel": "Cancelar",
+  "pokedexFiltersApply": "Aplicar",
+  "pokedexActiveSearch": "Búsqueda: {term}",
+  "@pokedexActiveSearch": {
+    "placeholders": {
+      "term": {}
+    }
+  },
+  "pokedexActiveType": "Tipo: {value}",
+  "@pokedexActiveType": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pokedexActiveGeneration": "Generación: {value}",
+  "@pokedexActiveGeneration": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pokedexActiveRegion": "Región: {value}",
+  "@pokedexActiveRegion": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pokedexActiveShape": "Forma: {value}",
+  "@pokedexActiveShape": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pokedexActiveSort": "Orden: {criterion} {direction}",
+  "@pokedexActiveSort": {
+    "placeholders": {
+      "criterion": {},
+      "direction": {}
+    }
+  },
+  "pokedexActiveFiltersSummary": "{count, plural, one {{count} filtro activo} other {{count} filtros activos}}",
+  "@pokedexActiveFiltersSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pokedexNoResults": "No se encontraron Pokémon para los filtros actuales.",
+  "pokedexSortByNumber": "Número",
+  "pokedexSortByName": "Nombre",
+  "pokedexSortByHeight": "Altura",
+  "pokedexSortByWeight": "Peso",
+  "pokedexFavoriteRemove": "Quitar de favoritos",
+  "pokedexFavoriteAdd": "Agregar a favoritos",
+  "pokemonArtworkLabel": "Arte de {name}",
+  "@pokemonArtworkLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pokemonArtworkGeneric": "Arte de Pokémon",
+  "pokemonTileLabel": "{name}, número de Pokédex {number}",
+  "@pokemonTileLabel": {
+    "placeholders": {
+      "name": {},
+      "number": {}
+    }
+  },
+  "pokemonTileTapHint": "Doble toque para ver la información detallada.",
+  "pokemonUnknownType": "desconocido"
+}
