@@ -556,6 +556,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         ),
       ),
     ),
+      ),
     );
   }
 }
