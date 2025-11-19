@@ -7,16 +7,43 @@ import 'package:flutter/material.dart';
 import '../services/favorites_repository.dart';
 
 class FavoritesController extends ChangeNotifier {
-  FavoritesController({required FavoritesRepository repository})
-      : _repository = repository,
-        _favoriteIds = repository.loadFavorites();
+  FavoritesController({
+    required FavoritesRepository repository,
+    String? currentUserEmail,
+  })  : _repository = repository,
+        _currentUserEmail = currentUserEmail,
+        _favoriteIds = repository.loadFavoritesForUser(currentUserEmail);
 
   final FavoritesRepository _repository;
+  String? _currentUserEmail;
   final Set<int> _favoriteIds;
 
   UnmodifiableSetView<int> get favoriteIds => UnmodifiableSetView(_favoriteIds);
 
   bool isFavorite(int pokemonId) => _favoriteIds.contains(pokemonId);
+
+  /// Updates the current user and loads their favorites.
+  /// Call this when a user logs in or the authentication state changes.
+  void setCurrentUser(String? userEmail) {
+    if (_currentUserEmail == userEmail) {
+      return;
+    }
+    _currentUserEmail = userEmail;
+    _favoriteIds.clear();
+    if (userEmail != null && userEmail.isNotEmpty) {
+      final userFavorites = _repository.loadFavoritesForUser(userEmail);
+      _favoriteIds.addAll(userFavorites);
+    }
+    notifyListeners();
+  }
+
+  /// Clears all favorites for the current user.
+  /// Typically called when logging out.
+  void clearFavorites() {
+    _favoriteIds.clear();
+    _currentUserEmail = null;
+    notifyListeners();
+  }
 
   Future<void> toggleFavorite(int pokemonId) async {
     final isFavorite = _favoriteIds.contains(pokemonId);
@@ -31,9 +58,10 @@ class FavoritesController extends ChangeNotifier {
 
   Future<void> _persistFavorites() async {
     final stopwatch = Stopwatch()..start();
-    await _repository.saveFavorites(_favoriteIds);
+    await _repository.saveFavoritesForUser(_currentUserEmail, _favoriteIds);
     if (kDebugMode) {
-      debugPrint('Saved ${_favoriteIds.length} favorites in '
+      debugPrint('Saved ${_favoriteIds.length} favorites for user '
+          '${_currentUserEmail ?? "unknown"} in '
           '${stopwatch.elapsedMilliseconds}ms');
     }
   }

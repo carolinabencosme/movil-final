@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'abilities_screen.dart';
+import 'favorites_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
 
@@ -73,6 +74,47 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.black,
           opacity: 0.18,
           borderRadius: BorderRadius.all(Radius.circular(40)),
+        ),
+      ],
+    ),
+    _SectionInfo(
+      title: 'Favoritos',
+      subtitle: 'Tus Pokémon favoritos guardados',
+      icon: Icons.favorite,
+      color: Color(0xFFFF6B9D),
+      heroTag: 'section-favorites',
+      graphics: [
+        _SectionGraphic.icon(
+          icon: Icons.favorite,
+          scale: 0.9,
+          color: Colors.white,
+          opacity: 0.95,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.star,
+          scale: 0.4,
+          color: Colors.white,
+          opacity: 0.5,
+          alignment: Alignment.bottomLeft,
+          offset: Offset(-14, 20),
+        ),
+      ],
+      accents: [
+        _AccentShape.circle(
+          top: -38,
+          right: -24,
+          diameterFactor: 0.92,
+          color: Colors.white,
+          opacity: 0.18,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -20,
+          right: 14,
+          widthFactor: 0.52,
+          heightFactor: 0.2,
+          color: Colors.white,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
       ],
     ),
@@ -344,6 +386,12 @@ class _HomeScreenState extends State<HomeScreen> {
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
+        );
+        break;
+      case 'Favoritos':
+        destination = FavoritesScreen(
+          heroTag: section.heroTag,
+          accentColor: section.color,
         );
         break;
       case 'Abilities':

@@ -20,8 +20,24 @@ Future<void> main() async {
   final authRepository = await AuthRepository.init();
   final authController = AuthController(repository: authRepository);
   final favoritesRepository = await FavoritesRepository.init();
-  final favoritesController =
-      FavoritesController(repository: favoritesRepository);
+  
+  // Initialize favorites controller with the current user's email
+  final favoritesController = FavoritesController(
+    repository: favoritesRepository,
+    currentUserEmail: authRepository.currentUser?.email,
+  );
+
+  // Listen to auth changes and update favorites accordingly
+  authController.addListener(() {
+    final currentUser = authRepository.currentUser;
+    if (currentUser != null) {
+      // User logged in - load their favorites
+      favoritesController.setCurrentUser(currentUser.email);
+    } else {
+      // User logged out - clear favorites
+      favoritesController.clearFavorites();
+    }
+  });
 
   runApp(
     MyApp(
