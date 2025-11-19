@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../controllers/auth_controller.dart';
+import '../localization/localization_controller.dart';
 import '../theme/theme_controller.dart';
 import 'profile_settings_screen.dart';
 
@@ -13,10 +15,14 @@ class SettingsScreen extends StatelessWidget {
     final themeController = ThemeScope.of(context);
     final themeMode = themeController.themeMode;
     final textTheme = Theme.of(context).textTheme;
+    final localizationController = LocalizationScope.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final selectedLanguage =
+        localizationController.locale?.languageCode ?? 'system';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuración'),
+        title: Text(l10n.settingsTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -31,13 +37,13 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cuenta',
+                    l10n.settingsAccountTitle,
                     style: textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    controller.currentEmail ?? 'Sin correo registrado',
+                    controller.currentEmail ?? l10n.settingsNoEmail,
                     style: textTheme.bodyLarge,
                   ),
                   if (controller.isLoading) ...[
@@ -47,23 +53,23 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(
-                        child: FilledButton.tonal(
-                          onPressed: controller.currentEmail == null
-                              ? null
-                              : () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProfileSettingsScreen(
-                                        controller: controller,
+                        Expanded(
+                          child: FilledButton.tonal(
+                            onPressed: controller.currentEmail == null
+                                ? null
+                                : () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ProfileSettingsScreen(
+                                          controller: controller,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                          child: const Text('Editar perfil'),
+                                    );
+                                  },
+                            child: Text(l10n.settingsEditProfile),
+                          ),
                         ),
-                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
@@ -77,7 +83,7 @@ class SettingsScreen extends StatelessWidget {
                                   }
                                   navigator.pop();
                                 },
-                          child: const Text('Cerrar sesión'),
+                          child: Text(l10n.settingsLogout),
                         ),
                       ),
                     ],
@@ -88,7 +94,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Apariencia',
+            l10n.settingsAppearance,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
@@ -100,9 +106,8 @@ class SettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _ThemeOptionTile(
-                  title: 'Modo claro',
-                  subtitle:
-                      'Fondos luminosos ideales para entornos bien iluminados.',
+                  title: l10n.settingsLightModeTitle,
+                  subtitle: l10n.settingsLightModeSubtitle,
                   icon: Icons.light_mode_outlined,
                   value: ThemeMode.light,
                   groupValue: themeMode,
@@ -110,9 +115,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 0),
                 _ThemeOptionTile(
-                  title: 'Modo oscuro',
-                  subtitle:
-                      'Atenúa la luz para reducir el cansancio visual por la noche.',
+                  title: l10n.settingsDarkModeTitle,
+                  subtitle: l10n.settingsDarkModeSubtitle,
                   icon: Icons.dark_mode_outlined,
                   value: ThemeMode.dark,
                   groupValue: themeMode,
@@ -122,8 +126,54 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
-            'La configuración se guarda inmediatamente y afecta a toda la aplicación.',
+            l10n.settingsLanguageTitle,
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Text(
+                    l10n.settingsLanguageSubtitle,
+                    style: textTheme.bodyMedium,
+                  ),
+                ),
+                ...[
+                  ('system', l10n.settingsLanguageSystem),
+                  ('en', l10n.settingsLanguageEnglish),
+                  ('es', l10n.settingsLanguageSpanish),
+                ].map(
+                  (option) => RadioListTile<String>(
+                    value: option.$1,
+                    groupValue: selectedLanguage,
+                    onChanged: (value) {
+                      if (value == null) return;
+                      localizationController.updateLocale(
+                        value == 'system' ? null : Locale(value),
+                      );
+                    },
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    title: Text(
+                      option.$2,
+                      style: textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.settingsInfoNote,
             style: textTheme.bodyMedium,
           ),
         ],

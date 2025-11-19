@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Widget para mostrar la imagen artwork de un Pokémon con estilo consistente
 /// 
@@ -20,6 +21,7 @@ class PokemonArtwork extends StatelessWidget {
     this.padding = const EdgeInsets.all(12),
     this.showShadow = true,
     this.heroTag,
+    this.semanticLabel,
   });
 
   /// URL de la imagen del Pokémon (vacío si no hay imagen disponible)
@@ -39,6 +41,8 @@ class PokemonArtwork extends StatelessWidget {
   
   /// Tag opcional para animación Hero, si es null no se usa Hero
   final String? heroTag;
+  /// Etiqueta de accesibilidad para lectores de pantalla
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +141,14 @@ class PokemonArtwork extends StatelessWidget {
       artwork = Hero(tag: hero, child: artwork);
     }
 
-    return artwork;
+    final semanticsText = semanticLabel ??
+        AppLocalizations.maybeOf(context)?.pokemonArtworkGeneric ??
+        'Pokémon artwork';
+
+    return Semantics(
+      image: true,
+      label: semanticsText,
+      child: artwork,
+    );
   }
 }

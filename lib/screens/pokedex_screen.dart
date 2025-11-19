@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:graphql/client.dart' show LinkException;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
@@ -25,17 +26,17 @@ enum PokemonSortOption { id, name, height, weight }
 
 /// Extensión para PokemonSortOption que proporciona etiquetas y campos de GraphQL
 extension PokemonSortOptionX on PokemonSortOption {
-  /// Etiqueta en español para mostrar al usuario
-  String get label {
+  /// Etiqueta localizada para mostrar al usuario
+  String label(AppLocalizations l10n) {
     switch (this) {
       case PokemonSortOption.id:
-        return 'Número';
+        return l10n.pokedexSortByNumber;
       case PokemonSortOption.name:
-        return 'Nombre';
+        return l10n.pokedexSortByName;
       case PokemonSortOption.height:
-        return 'Altura';
+        return l10n.pokedexSortByHeight;
       case PokemonSortOption.weight:
-        return 'Peso';
+        return l10n.pokedexSortByWeight;
     }
   }
 
@@ -159,6 +160,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _sortOption == kDefaultSortOption && _isSortAscending == kDefaultSortAscending;
 
   PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
+
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -785,7 +788,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       }
       if (showMessage && !_offlineSnackShown) {
         _showTransientMessage(
-          'Modo offline activo. Mostrando datos guardados localmente.',
+          l10n.pokedexOfflineSnack,
         );
         _offlineSnackShown = true;
       }
@@ -796,7 +799,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
         });
       }
       if (_offlineSnackShown) {
-        _showTransientMessage('Conexión restablecida.');
+        _showTransientMessage(l10n.pokedexConnectionRestored);
         _offlineSnackShown = false;
       }
     }
@@ -808,9 +811,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
         ? exception.graphqlErrors.first.message
         : exception.linkException?.originalException?.toString() ??
             exception.toString();
-    final friendlyMessage = rawMessage.isEmpty
-        ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
-        : rawMessage;
+    final friendlyMessage =
+        rawMessage.isEmpty ? l10n.pokedexLoadError : rawMessage;
     _showTransientMessage(friendlyMessage);
     setState(() {
       if (reset) {
@@ -827,9 +829,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   void _handleGenericError(Object error, {required bool reset}) {
     _updateOfflineMode(false);
     final rawMessage = error.toString();
-    final friendlyMessage = rawMessage.isEmpty
-        ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
-        : rawMessage;
+    final friendlyMessage =
+        rawMessage.isEmpty ? l10n.pokedexLoadError : rawMessage;
     _showTransientMessage(friendlyMessage);
     setState(() {
       if (reset) {
@@ -1021,6 +1022,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildSearchBar(ThemeData theme) {
+    final localization = l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -1030,7 +1032,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Buscar por nombre o número',
+                hintText: localization.pokedexSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 prefixIconColor: theme.colorScheme.primary,
                 suffixIcon: _searchTerm.isEmpty
@@ -1052,7 +1054,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
             clipBehavior: Clip.none,
             children: [
               IconButton(
-                tooltip: 'Filtros',
+                tooltip: localization.pokedexFiltersTooltip,
                 onPressed: _filtersLoading ? null : _openFiltersSheet,
                 icon: const Icon(Icons.tune),
               ),
@@ -1099,7 +1101,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Modo offline activo. Algunos filtros pueden ser limitados.',
+                l10n.pokedexOfflineBanner,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: foregroundColor,
                   fontWeight: FontWeight.w600,
@@ -1116,18 +1118,26 @@ class _PokedexScreenState extends State<PokedexScreen> {
     if (_pokemons.isEmpty && !_isFetching) {
       return const SizedBox.shrink();
     }
+    final localization = l10n;
     final countText = _totalCount == 0
-        ? 'Mostrando ${_pokemons.length} Pokémon'
-        : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
+        ? localization.pokedexShowingCount(_pokemons.length)
+        : localization.pokedexShowingPartial(_pokemons.length, _totalCount);
     final details = <String>[];
     if (_activeFiltersCount > 0) {
       details.add(
-        '$_activeFiltersCount filtro${_activeFiltersCount == 1 ? '' : 's'} activos',
+        localization.pokedexActiveFiltersSummary(_activeFiltersCount),
       );
     }
     if (!_isDefaultSort) {
-      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
-      details.add('Orden: ${_sortOption.label} $directionText');
+      final directionText = _isSortAscending
+          ? localization.pokedexSortAscending
+          : localization.pokedexSortDescending;
+      details.add(
+        localization.pokedexActiveSort(
+          _sortOption.label(localization),
+          directionText,
+        ),
+      );
     }
     final suffix = details.isNotEmpty ? ' · ${details.join(' · ')}' : '';
     final summaryText = '$countText$suffix';
@@ -1169,11 +1179,12 @@ class _PokedexScreenState extends State<PokedexScreen> {
   List<Widget> _buildActiveFilterChipWidgets(ThemeData theme) {
     final chips = <Widget>[];
     final searchValue = _debouncedSearch.trim();
+    final localization = l10n;
     if (searchValue.isNotEmpty) {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Búsqueda: $searchValue',
+          label: localization.pokedexActiveSearch(searchValue),
           onDeleted: _clearSearchFilter,
         ),
       );
@@ -1182,7 +1193,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Tipo: ${_capitalize(type)}',
+          label: localization.pokedexActiveType(_capitalize(type)),
           onDeleted: () => _removeTypeFilter(type),
         ),
       );
@@ -1191,7 +1202,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Generación: ${_formatGenerationLabel(generation)}',
+          label:
+              localization.pokedexActiveGeneration(_formatGenerationLabel(generation)),
           onDeleted: () => _removeGenerationFilter(generation),
         ),
       );
@@ -1200,7 +1212,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Región: ${_formatRegionLabel(region)}',
+          label: localization.pokedexActiveRegion(_formatRegionLabel(region)),
           onDeleted: () => _removeRegionFilter(region),
         ),
       );
@@ -1209,17 +1221,22 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Forma: ${_formatShapeLabel(shape)}',
+          label: localization.pokedexActiveShape(_formatShapeLabel(shape)),
           onDeleted: () => _removeShapeFilter(shape),
         ),
       );
     }
     if (!_isDefaultSort) {
-      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
+      final directionText = _isSortAscending
+          ? localization.pokedexSortAscending
+          : localization.pokedexSortDescending;
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Orden: ${_sortOption.label} $directionText',
+          label: localization.pokedexActiveSort(
+            _sortOption.label(localization),
+            directionText,
+          ),
           onDeleted: _resetSortSelection,
         ),
       );
@@ -1267,7 +1284,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
     if (_pokemons.isEmpty) {
       return const Center(
-        child: Text('No se encontraron Pokémon para los filtros actuales.'),
+        child: Text(l10n.pokedexNoResults),
+        child: Text(l10n.pokedexNoResults),
       );
     }
 
@@ -1387,6 +1405,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final hasSelection = _selectedTypes.isNotEmpty ||
         _selectedGenerations.isNotEmpty ||
         _selectedRegions.isNotEmpty ||
@@ -1418,7 +1437,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Filtros',
+                      l10n.pokedexFiltersTitle,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1426,7 +1445,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    tooltip: 'Cerrar',
+                    tooltip: l10n.pokedexFiltersClose,
                     onPressed: _handleCancel,
                   ),
                 ],
@@ -1445,45 +1464,41 @@ class _FiltersSheetState extends State<FiltersSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSortSection(theme),
+                        _buildSortSection(theme, l10n),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Tipos',
+                          title: l10n.pokedexFilterTypesTitle,
                           options: widget.availableTypes,
                           selectedValues: _selectedTypes,
                           labelBuilder: _capitalize,
-                          emptyMessage:
-                              'No hay tipos disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterTypesEmpty,
                           onToggle: _toggleType,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Generaciones',
+                          title: l10n.pokedexFilterGenerationsTitle,
                           options: widget.availableGenerations,
                           selectedValues: _selectedGenerations,
                           labelBuilder: _formatGenerationLabel,
-                          emptyMessage:
-                              'No hay generaciones disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterGenerationsEmpty,
                           onToggle: _toggleGeneration,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Regiones',
+                          title: l10n.pokedexFilterRegionsTitle,
                           options: widget.availableRegions,
                           selectedValues: _selectedRegions,
                           labelBuilder: _formatRegionLabel,
-                          emptyMessage:
-                              'No hay regiones disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterRegionsEmpty,
                           onToggle: _toggleRegion,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Formas',
+                          title: l10n.pokedexFilterShapesTitle,
                           options: widget.availableShapes,
                           selectedValues: _selectedShapes,
                           labelBuilder: _formatShapeLabel,
-                          emptyMessage:
-                              'No hay formas disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterShapesEmpty,
                           onToggle: _toggleShape,
                         ),
                       ],
@@ -1504,21 +1519,21 @@ class _FiltersSheetState extends State<FiltersSheet> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: hasSelection ? _handleClear : null,
-                      child: const Text('Limpiar'),
+                      child: Text(l10n.pokedexFiltersClear),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextButton(
                       onPressed: _handleCancel,
-                      child: const Text('Cancelar'),
+                      child: Text(l10n.pokedexFiltersCancel),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
                       onPressed: _handleApply,
-                      child: const Text('Aplicar'),
+                      child: Text(l10n.pokedexFiltersApply),
                     ),
                   ),
                 ],
@@ -1530,13 +1545,14 @@ class _FiltersSheetState extends State<FiltersSheet> {
     );
   }
 
-  Widget _buildSortSection(ThemeData theme) {
-    final directionLabel = _isSortAscending ? 'Ascendente' : 'Descendente';
+  Widget _buildSortSection(ThemeData theme, AppLocalizations l10n) {
+    final directionLabel =
+        _isSortAscending ? l10n.pokedexSortAscending : l10n.pokedexSortDescending;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ordenar por',
+          l10n.pokedexFilterSortTitle,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -1548,15 +1564,15 @@ class _FiltersSheetState extends State<FiltersSheet> {
             Expanded(
               child: DropdownButtonFormField<PokemonSortOption>(
                 value: _sortOption,
-                decoration: const InputDecoration(
-                  labelText: 'Criterio',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.pokedexFilterSortCriterion,
+                  border: const OutlineInputBorder(),
                 ),
                 items: PokemonSortOption.values
                     .map(
                       (option) => DropdownMenuItem<PokemonSortOption>(
                         value: option,
-                        child: Text(option.label),
+                        child: Text(option.label(l10n)),
                       ),
                     )
                     .toList(),
@@ -1578,7 +1594,9 @@ class _FiltersSheetState extends State<FiltersSheet> {
                       ? Icons.arrow_upward_rounded
                       : Icons.arrow_downward_rounded,
                 ),
-                label: Text(_isSortAscending ? 'Asc' : 'Desc'),
+                label: Text(_isSortAscending
+                    ? l10n.pokedexSortAscendingShort
+                    : l10n.pokedexSortDescendingShort),
               ),
             ),
           ],
@@ -1761,6 +1779,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localization = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
     final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
     final heroTag = 'pokemon-artwork-${pokemon.id}';
@@ -1777,9 +1796,18 @@ class _PokemonListTileState extends State<_PokemonListTile> {
       end: Alignment.bottomRight,
     );
     final textColor = Colors.white;
-    final displayTypes =
-        pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
+    final displayTypes = pokemon.types.isNotEmpty
+        ? pokemon.types
+        : <String>[localization.pokemonUnknownType];
     final statBadges = pokemon.stats.take(3).toList();
+    final formattedNumber = _formatPokemonNumber(pokemon.id);
+    final displayName =
+        pokemon.name.isEmpty ? formattedNumber : pokemon.name;
+    final tileSemanticsLabel =
+        localization.pokemonTileLabel(displayName, formattedNumber);
+    final artworkLabel = localization.pokemonArtworkLabel(
+      pokemon.name.isEmpty ? formattedNumber : pokemon.name,
+    );
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 180),
@@ -1803,20 +1831,24 @@ class _PokemonListTileState extends State<_PokemonListTile> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(28),
           clipBehavior: Clip.antiAlias,
-          child: InkResponse(
-            containedInkWell: true,
-            highlightShape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(28),
-            onHighlightChanged: (value) {
-              if (_isPressed != value) {
-                setState(() => _isPressed = value);
-              }
-            },
-            onTap: () => _handleTap(context, heroTag, pokemon),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -14,
+          child: Semantics(
+            label: tileSemanticsLabel,
+            hint: localization.pokemonTileTapHint,
+            button: true,
+            child: InkResponse(
+              containedInkWell: true,
+              highlightShape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(28),
+              onHighlightChanged: (value) {
+                if (_isPressed != value) {
+                  setState(() => _isPressed = value);
+                }
+              },
+              onTap: () => _handleTap(context, heroTag, pokemon),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -14,
                   right: -14,
                   child: Icon(
                     Icons.catching_pokemon,
@@ -1824,57 +1856,69 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                     color: textColor.withOpacity(0.12),
                   ),
                 ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.22),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      splashRadius: 22,
-                      padding: EdgeInsets.zero,
-                      icon: Icon(
-                        pokemon.isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color:
-                            pokemon.isFavorite ? Colors.redAccent : Colors.white,
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.22),
+                        shape: BoxShape.circle,
                       ),
-                      tooltip: pokemon.isFavorite
-                          ? 'Quitar de favoritos'
-                          : 'Agregar a favoritos',
-                      onPressed: () async {
-                        await favoritesController.toggleFavorite(pokemon);
-                      },
+                      child: Semantics(
+                        button: true,
+                        label: pokemon.isFavorite
+                            ? localization.pokedexFavoriteRemove
+                            : localization.pokedexFavoriteAdd,
+                        child: SizedBox(
+                          height: 48,
+                          width: 48,
+                          child: IconButton(
+                            splashRadius: 24,
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              pokemon.isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: pokemon.isFavorite
+                                  ? Colors.redAccent
+                                  : Colors.white,
+                            ),
+                            tooltip: pokemon.isFavorite
+                                ? localization.pokedexFavoriteRemove
+                                : localization.pokedexFavoriteAdd,
+                            onPressed: () async {
+                              await favoritesController.toggleFavorite(pokemon);
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                Padding(
+                  Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 16,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      PokemonArtwork(
-                        heroTag: heroTag,
-                        imageUrl: pokemon.imageUrl,
-                        size: 90,
-                        borderRadius: 24,
-                        padding: const EdgeInsets.all(10),
-                        showShadow: false,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
+                      children: [
+                        PokemonArtwork(
+                          heroTag: heroTag,
+                          imageUrl: pokemon.imageUrl,
+                          size: 90,
+                          borderRadius: 24,
+                          padding: const EdgeInsets.all(10),
+                          showShadow: false,
+                          semanticLabel: artworkLabel,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              _formatPokemonNumber(pokemon.id),
+                              formattedNumber,
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 color: textColor.withOpacity(0.88),
                                 fontWeight: FontWeight.w800,
@@ -1883,7 +1927,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              pokemon.name.toUpperCase(),
+                              pokemon.name.isEmpty
+                                  ? formattedNumber
+                                  : pokemon.name.toUpperCase(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleLarge?.copyWith(
