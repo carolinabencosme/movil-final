@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 
@@ -24,6 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void dispose() {
@@ -75,13 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Bienvenido de nuevo',
+                            l10n.authLoginTitle,
                             style: theme.textTheme.headlineSmall,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Inicia sesión con tu correo electrónico para acceder a tu Pokédex.',
+                            l10n.authLoginSubtitle,
                             style: theme.textTheme.bodyMedium,
                             textAlign: TextAlign.center,
                           ),
@@ -99,10 +102,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Correo electrónico',
-                                    hintText: 'ash.ketchum@poke.app',
-                                    prefixIcon: Icon(Icons.mail_outline),
+                                  decoration: InputDecoration(
+                                    labelText: l10n.authEmailLabel,
+                                    hintText: l10n.authEmailHint,
+                                    prefixIcon: const Icon(Icons.mail_outline),
                                   ),
                                   validator: _validateEmail,
                                 ),
@@ -112,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   textInputAction: TextInputAction.done,
                                   obscureText: _obscurePassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Contraseña',
+                                    labelText: l10n.authPasswordLabel,
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -131,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: widget.controller.isLoading
                                       ? null
                                       : _submit,
-                                  child: const Text('Iniciar sesión'),
+                                  child: Text(l10n.authLoginButton),
                                 ),
                               ],
                             ),
@@ -141,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: widget.controller.isLoading
                                 ? null
                                 : widget.onShowRegister,
-                            child: const Text('¿No tienes cuenta? Regístrate'),
+                            child: Text(l10n.authNoAccountCta),
                           ),
                         ],
                       );
@@ -172,8 +175,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final message = widget.controller.errorMessage ??
-        'No fue posible iniciar sesión. Inténtalo de nuevo.';
+    final message =
+        widget.controller.errorMessage ?? l10n.authLoginError;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -188,14 +191,14 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
     if (email.isEmpty) {
-      return 'Ingresa tu correo electrónico.';
+      return l10n.authEmailRequired;
     }
 
     final hasAt = email.contains('@');
     final segments = email.split('@');
     final hasDomain = segments.length == 2 && segments[1].contains('.');
     if (!hasAt || !hasDomain) {
-      return 'Formato de correo inválido.';
+      return l10n.authEmailInvalid;
     }
     return null;
   }
@@ -203,11 +206,11 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _validatePassword(String? value) {
     final password = value ?? '';
     if (password.isEmpty) {
-      return 'Ingresa tu contraseña.';
+      return l10n.authPasswordRequired;
     }
 
     if (password.length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres.';
+      return l10n.authPasswordLength;
     }
 
     return null;

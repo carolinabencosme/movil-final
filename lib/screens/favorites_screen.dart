@@ -5,12 +5,12 @@ class FavoritesScreen extends StatefulWidget {
     super.key,
     this.heroTag,
     this.accentColor,
-    this.title = 'Favorites',
+    this.title,
   });
 
   final String? heroTag;
   final Color? accentColor;
-  final String title;
+  final String? title;
 
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
@@ -59,8 +59,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final Color accentColor = widget.accentColor ?? const Color(0xFFE94256);
     final heroTag = widget.heroTag;
+    final title = widget.title ?? l10n.favoritesDefaultTitle;
     final List<PokemonListItem> favorites = _favoritesController == null
         ? const <PokemonListItem>[]
         : _favoritesController!.applyFavoriteStateToList(_favorites);
@@ -76,7 +78,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
-                    widget.title,
+                    title,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -85,7 +87,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ),
               )
             : Text(
-                widget.title,
+                title,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -113,7 +115,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Aún no tienes Pokémon favoritos.',
+                      l10n.favoritesEmptyTitle,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -121,7 +123,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Explora la Pokédex y marca con el corazón los Pokémon que quieras guardar.',
+                      l10n.favoritesEmptySubtitle,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
