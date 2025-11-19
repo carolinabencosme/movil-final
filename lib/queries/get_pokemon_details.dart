@@ -71,6 +71,12 @@ const String getPokemonDetailsQuery = r'''
           name
         }
 
+        pokemon_v2_pokemonegggroups {
+          pokemon_v2_egggroup {
+            name
+          }
+        }
+
         pokemon_v2_evolutionchain {
           pokemon_v2_pokemonspecies(order_by: {order: asc}) {
             id
