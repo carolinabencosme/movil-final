@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/ability_model.dart';
@@ -15,14 +16,14 @@ class AbilitiesScreen extends StatefulWidget {
     super.key,
     this.heroTag,
     this.accentColor,
-    this.title = 'Abilities',
+    this.title,
   });
   /// Tag para la transición Hero del título (opcional).
   final String? heroTag;
   /// Color de acento para AppBar y estilos de la lista (opcional).
   final Color? accentColor;
   /// Título de la pantalla.
-  final String title;
+  final String? title;
 
   @override
   State<AbilitiesScreen> createState() => _AbilitiesScreenState();
@@ -46,6 +47,8 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
     final theme = Theme.of(context);
     final accentColor = widget.accentColor ?? const Color(0xFF9C27B0);
     final heroTag = widget.heroTag;
+    final l10n = AppLocalizations.of(context)!;
+    final screenTitle = widget.title ?? l10n.abilitiesDefaultTitle;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F1E7),
@@ -59,7 +62,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
-                    widget.title,
+                    screenTitle,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -69,7 +72,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
               )
         // Sin heroTag, título simple.
             : Text(
-                widget.title,
+                screenTitle,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -81,7 +84,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Barra de búsqueda (actualiza _searchTerm en onChanged).
-            _buildSearchBar(theme),
+            _buildSearchBar(context),
             // Contenido principal: Query de GraphQL + lista de resultados.
             Expanded(
               child: Query(
@@ -99,7 +102,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
                   // Si hubo excepción y no hay datos en cache → mostrar estado de error con retry.
                   if (result.hasException && abilitiesData.isEmpty) {
                     return _AbilitiesErrorState(
-                      message: 'No se pudieron cargar las habilidades.',
+                      message: l10n.abilitiesErrorMessage,
                       onRetry: refetch,
                     );
                   }
@@ -200,7 +203,9 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
 
   /// Construye la barra de búsqueda con estilo y comportamiento.
   /// - Actualiza `_searchTerm` en cada cambio para re-filtrar la lista.
-  Widget _buildSearchBar(ThemeData theme) {
+  Widget _buildSearchBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: TextField(
@@ -209,7 +214,7 @@ class _AbilitiesScreenState extends State<AbilitiesScreen> {
           setState(() => _searchTerm = value.trim());
         },
         decoration: InputDecoration(
-          hintText: 'Buscar habilidad...',
+          hintText: l10n.abilitiesSearchHint,
           prefixIcon: const Icon(Icons.search),
           filled: true,
           fillColor: Colors.white,
@@ -243,6 +248,7 @@ class _AbilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Hero(
       tag: heroTag,
@@ -309,7 +315,7 @@ class _AbilityCard extends StatelessWidget {
                 // Descripción corta o fallback si no hay texto.
                 Text(
                   ability.shortEffect.isEmpty
-                      ? 'Sin descripción disponible.'
+                      ? l10n.abilitiesNoDescription
                       : ability.shortEffect,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF6E5E55),
@@ -340,6 +346,7 @@ class _AbilitiesErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final retry = onRetry;
     return Center(
       child: Padding(
@@ -374,7 +381,7 @@ class _AbilitiesErrorState extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: Text(l10n.commonRetry),
             ),
           ],
         ),
@@ -395,6 +402,9 @@ class _AbilitiesEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final message =
+        isSearching ? l10n.abilitiesEmptySearch : l10n.abilitiesEmptyGeneral;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -408,9 +418,7 @@ class _AbilitiesEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              isSearching
-                  ? 'No encontramos habilidades que coincidan con tu búsqueda.'
-                  : 'No hay habilidades disponibles en este momento.',
+              message,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: const Color(0xFF6E5E55),

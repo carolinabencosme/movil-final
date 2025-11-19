@@ -1,0 +1,202 @@
+{
+  "@@locale": "en",
+  "appTitle": "Pokédex GraphQL",
+  "homeHeaderTitle": "ProDex",
+  "homeQuickAccessGymLeaders": "Gym Leaders & Elite 4",
+  "homeQuickAccessNatures": "Natures",
+  "homeQuickAccessMatchups": "Type Matchups",
+  "homeQuickAccessEvolutionChains": "Evolution Chains",
+  "homeQuickAccessBreeding": "Breeding Guides",
+  "homeQuickAccessBerries": "Berry Farming",
+  "authLoginTitle": "Welcome back",
+  "authLoginSubtitle": "Sign in with your email to access your Pokédex.",
+  "authEmailLabel": "Email",
+  "authEmailHint": "ash.ketchum@poke.app",
+  "authPasswordLabel": "Password",
+  "authLoginButton": "Sign in",
+  "authNoAccountCta": "Don't have an account? Sign up",
+  "authLoginError": "We couldn't sign you in. Try again.",
+  "authEmailRequired": "Enter your email.",
+  "authEmailInvalid": "Invalid email format.",
+  "authPasswordRequired": "Enter your password.",
+  "authPasswordLength": "The password must contain at least 6 characters.",
+  "authRegisterTitle": "Create your account",
+  "authRegisterSubtitle": "Register to sync your teams and collections across all your devices.",
+  "authCreateAccountButton": "Create account",
+  "authAlreadyHaveAccountCta": "Already have an account? Sign in",
+  "authRegisterError": "We couldn't create your account. Try again later.",
+  "authSecurePasswordRequired": "Enter a secure password.",
+  "authPasswordStrongSuggestion": "Use letters and numbers for a stronger password.",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authPasswordsMismatch": "Passwords do not match.",
+  "authSnackbarNoUser": "User information is not available.",
+  "authProfileUpdated": "Profile updated successfully.",
+  "authProfileUpdateError": "We couldn't update the profile.",
+  "authUpdateInfoTitle": "Update your login information.",
+  "authUpdateInfoSubtitle": "Change your email address or set a new password. Changes apply immediately.",
+  "authNewPasswordOptionalLabel": "New password (optional)",
+  "settingsTitle": "Settings",
+  "settingsAccountSection": "Account",
+  "settingsNoEmail": "No email on record",
+  "settingsEditProfile": "Edit profile",
+  "settingsSignOut": "Sign out",
+  "settingsAppearanceSection": "Appearance",
+  "settingsLightModeTitle": "Light mode",
+  "settingsLightModeSubtitle": "Bright backgrounds for well-lit environments.",
+  "settingsDarkModeTitle": "Dark mode",
+  "settingsDarkModeSubtitle": "Dim the lights to reduce eye strain at night.",
+  "settingsInfo": "Settings save immediately and affect the entire app.",
+  "settingsSaveChanges": "Save changes",
+  "favoritesDefaultTitle": "Favorites",
+  "favoritesEmptyTitle": "You don't have favorite Pokémon yet.",
+  "favoritesEmptySubtitle": "Explore the Pokédex and tap the heart to save your favorites.",
+  "homeQuickAccessTitle": "Quick access",
+  "homeSectionPokedexTitle": "Pokédex",
+  "homeSectionPokedexSubtitle": "National index & regional dexes",
+  "homeSectionFavoritesTitle": "Favorites",
+  "homeSectionFavoritesSubtitle": "Your saved Pokémon",
+  "homeSectionMovesTitle": "Moves",
+  "homeSectionMovesSubtitle": "Damage, effects & contest data",
+  "homeSectionTmTitle": "TM",
+  "homeSectionTmSubtitle": "Machines & tutors by generation",
+  "homeSectionAbilitiesTitle": "Abilities",
+  "homeSectionAbilitiesSubtitle": "Passive effects & triggers",
+  "homeSectionChecklistsTitle": "Checklists",
+  "homeSectionChecklistsSubtitle": "Track goals & collections",
+  "homeSectionPartiesTitle": "Parties",
+  "homeSectionPartiesSubtitle": "Build teams & strategies",
+  "homeSectionLocationsTitle": "Locations",
+  "homeSectionLocationsSubtitle": "Regions, maps & encounter data",
+  "homePlaceholderMessage": "The {sectionName} section will be available soon.",
+  "@homePlaceholderMessage": {
+    "description": "Message shown for sections that are not ready yet.",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "abilitiesDefaultTitle": "Abilities",
+  "abilitiesSearchHint": "Search ability…",
+  "abilitiesErrorMessage": "We couldn’t load the abilities.",
+  "commonRetry": "Retry",
+  "abilitiesEmptySearch": "We couldn’t find abilities that match your search.",
+  "abilitiesEmptyGeneral": "No abilities are available right now.",
+  "abilitiesNoDescription": "No description available.",
+  "abilitiesNoShortDescription": "No short description available.",
+  "abilitiesFullDescriptionTitle": "Full description",
+  "abilitiesFullDescriptionFallback": "No description is available in this language.",
+  "abilitiesPokemonSectionTitle": "Pokémon with this ability",
+  "abilitiesPokemonEmpty": "We couldn’t find Pokémon associated with this ability.",
+  "abilitiesPokemonErrorTitle": "We couldn’t load the associated Pokémon.",
+  "abilitiesPokemonErrorDescription": "Try again to see which Pokémon have this ability.",
+  "pokedexSortNumberLabel": "Number",
+  "pokedexSortNameLabel": "Name",
+  "pokedexSortHeightLabel": "Height",
+  "pokedexSortWeightLabel": "Weight",
+  "pokedexSearchHint": "Search by name or number",
+  "pokedexFiltersTooltip": "Filters",
+  "pokedexOfflineNoCache": "No connection and no cached data available.",
+  "pokedexOfflineBanner": "Offline mode active. Showing cached data.",
+  "pokedexConnectionRestored": "Connection restored.",
+  "pokedexLoadError": "We couldn’t load the Pokédex. Try again.",
+  "pokedexOfflineFiltersLimited": "Offline mode active. Some filters may be limited.",
+  "pokedexShowingCountSimple": "Showing {count} Pokémon.",
+  "pokedexShowingCountWithTotal": "Showing {count} of {total} Pokémon.",
+  "pokedexActiveFilters": "{count, plural, one {{count} active filter} other {{count} active filters}}",
+  "pokedexSortDirectionAscending": "ascending",
+  "pokedexSortDirectionDescending": "descending",
+  "pokedexFilterSummarySearch": "Search: {query}",
+  "pokedexFilterSummaryType": "Type: {value}",
+  "pokedexFilterSummaryGeneration": "Generation: {value}",
+  "pokedexFilterSummaryRegion": "Region: {value}",
+  "pokedexFilterSummaryShape": "Form: {value}",
+  "pokedexFilterSummarySort": "Sort: {value}",
+  "pokedexNoResults": "No Pokémon match the current filters.",
+  "pokedexFiltersTitle": "Filters",
+  "pokedexFiltersCloseTooltip": "Close",
+  "pokedexFilterSectionTypes": "Types",
+  "pokedexFilterSectionGenerations": "Generations",
+  "pokedexFilterSectionRegions": "Regions",
+  "pokedexFilterSectionShapes": "Shapes",
+  "pokedexFilterEmptyTypes": "No types available right now.",
+  "pokedexFilterEmptyGenerations": "No generations available right now.",
+  "pokedexFilterEmptyRegions": "No regions available right now.",
+  "pokedexFilterEmptyShapes": "No shapes available right now.",
+  "pokedexFiltersClear": "Clear",
+  "commonCancel": "Cancel",
+  "commonApply": "Apply",
+  "pokedexSortSheetTitle": "Sort by",
+  "pokedexSortCriteriaLabel": "Criterion",
+  "pokedexSortDirectionLabel": "Direction",
+  "pokedexSortAscendingShort": "Asc",
+  "pokedexSortDescendingShort": "Desc",
+  "favoritesRemoveAction": "Remove from favorites",
+  "favoritesAddAction": "Add to favorites",
+  "@pokedexShowingCountSimple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexShowingCountWithTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexActiveFilters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexFilterSummarySearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryType": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryGeneration": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryRegion": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryShape": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummarySort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  }
+}

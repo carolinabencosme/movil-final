@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../controllers/auth_controller.dart';
 import '../theme/theme_controller.dart';
@@ -9,6 +10,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = AuthScope.of(context);
     final themeController = ThemeScope.of(context);
     final themeMode = themeController.themeMode;
@@ -16,7 +18,7 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuración'),
+        title: Text(l10n.settingsTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -31,13 +33,13 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cuenta',
+                    l10n.settingsAccountSection,
                     style: textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    controller.currentEmail ?? 'Sin correo registrado',
+                    controller.currentEmail ?? l10n.settingsNoEmail,
                     style: textTheme.bodyLarge,
                   ),
                   if (controller.isLoading) ...[
@@ -61,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                                     ),
                                   );
                                 },
-                          child: const Text('Editar perfil'),
+                          child: Text(l10n.settingsEditProfile),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -77,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
                                   }
                                   navigator.pop();
                                 },
-                          child: const Text('Cerrar sesión'),
+                          child: Text(l10n.settingsSignOut),
                         ),
                       ),
                     ],
@@ -88,7 +90,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Apariencia',
+            l10n.settingsAppearanceSection,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
@@ -100,9 +102,8 @@ class SettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _ThemeOptionTile(
-                  title: 'Modo claro',
-                  subtitle:
-                      'Fondos luminosos ideales para entornos bien iluminados.',
+                  title: l10n.settingsLightModeTitle,
+                  subtitle: l10n.settingsLightModeSubtitle,
                   icon: Icons.light_mode_outlined,
                   value: ThemeMode.light,
                   groupValue: themeMode,
@@ -110,9 +111,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 0),
                 _ThemeOptionTile(
-                  title: 'Modo oscuro',
-                  subtitle:
-                      'Atenúa la luz para reducir el cansancio visual por la noche.',
+                  title: l10n.settingsDarkModeTitle,
+                  subtitle: l10n.settingsDarkModeSubtitle,
                   icon: Icons.dark_mode_outlined,
                   value: ThemeMode.dark,
                   groupValue: themeMode,
@@ -123,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'La configuración se guarda inmediatamente y afecta a toda la aplicación.',
+            l10n.settingsInfo,
             style: textTheme.bodyMedium,
           ),
         ],

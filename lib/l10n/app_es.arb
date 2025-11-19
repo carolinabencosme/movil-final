@@ -1,0 +1,202 @@
+{
+  "@@locale": "es",
+  "appTitle": "Pokédex GraphQL",
+  "homeHeaderTitle": "ProDex",
+  "homeQuickAccessGymLeaders": "Líderes de Gimnasio y Alto Mando",
+  "homeQuickAccessNatures": "Naturalezas",
+  "homeQuickAccessMatchups": "Enfrentamientos de tipos",
+  "homeQuickAccessEvolutionChains": "Cadenas evolutivas",
+  "homeQuickAccessBreeding": "Guías de crianza",
+  "homeQuickAccessBerries": "Cultivo de bayas",
+  "authLoginTitle": "Bienvenido de nuevo",
+  "authLoginSubtitle": "Inicia sesión con tu correo electrónico para acceder a tu Pokédex.",
+  "authEmailLabel": "Correo electrónico",
+  "authEmailHint": "ash.ketchum@poke.app",
+  "authPasswordLabel": "Contraseña",
+  "authLoginButton": "Iniciar sesión",
+  "authNoAccountCta": "¿No tienes cuenta? Regístrate",
+  "authLoginError": "No fue posible iniciar sesión. Inténtalo de nuevo.",
+  "authEmailRequired": "Ingresa tu correo electrónico.",
+  "authEmailInvalid": "Formato de correo inválido.",
+  "authPasswordRequired": "Ingresa tu contraseña.",
+  "authPasswordLength": "La contraseña debe tener al menos 6 caracteres.",
+  "authRegisterTitle": "Crea tu cuenta",
+  "authRegisterSubtitle": "Regístrate para sincronizar tus equipos y colecciones en todos tus dispositivos.",
+  "authCreateAccountButton": "Crear cuenta",
+  "authAlreadyHaveAccountCta": "¿Ya tienes una cuenta? Inicia sesión",
+  "authRegisterError": "No pudimos crear tu cuenta. Inténtalo más tarde.",
+  "authSecurePasswordRequired": "Ingresa una contraseña segura.",
+  "authPasswordStrongSuggestion": "Usa letras y números para una contraseña más fuerte.",
+  "authConfirmPasswordLabel": "Confirmar contraseña",
+  "authPasswordsMismatch": "Las contraseñas no coinciden.",
+  "authSnackbarNoUser": "No hay información de usuario disponible.",
+  "authProfileUpdated": "Perfil actualizado correctamente.",
+  "authProfileUpdateError": "No fue posible actualizar el perfil.",
+  "authUpdateInfoTitle": "Actualiza tu información de acceso.",
+  "authUpdateInfoSubtitle": "Puedes cambiar tu correo electrónico o establecer una nueva contraseña. Los cambios se aplican inmediatamente.",
+  "authNewPasswordOptionalLabel": "Nueva contraseña (opcional)",
+  "settingsTitle": "Configuración",
+  "settingsAccountSection": "Cuenta",
+  "settingsNoEmail": "Sin correo registrado",
+  "settingsEditProfile": "Editar perfil",
+  "settingsSignOut": "Cerrar sesión",
+  "settingsAppearanceSection": "Apariencia",
+  "settingsLightModeTitle": "Modo claro",
+  "settingsLightModeSubtitle": "Fondos luminosos ideales para entornos bien iluminados.",
+  "settingsDarkModeTitle": "Modo oscuro",
+  "settingsDarkModeSubtitle": "Atenúa la luz para reducir el cansancio visual por la noche.",
+  "settingsInfo": "La configuración se guarda inmediatamente y afecta a toda la aplicación.",
+  "settingsSaveChanges": "Guardar cambios",
+  "favoritesDefaultTitle": "Favoritos",
+  "favoritesEmptyTitle": "Aún no tienes Pokémon favoritos.",
+  "favoritesEmptySubtitle": "Explora la Pokédex y marca con el corazón los Pokémon que quieras guardar.",
+  "homeQuickAccessTitle": "Accesos rápidos",
+  "homeSectionPokedexTitle": "Pokédex",
+  "homeSectionPokedexSubtitle": "Índice nacional y pokédex regionales",
+  "homeSectionFavoritesTitle": "Favoritos",
+  "homeSectionFavoritesSubtitle": "Tus Pokémon guardados",
+  "homeSectionMovesTitle": "Movimientos",
+  "homeSectionMovesSubtitle": "Daño, efectos y datos de concursos",
+  "homeSectionTmTitle": "MT",
+  "homeSectionTmSubtitle": "Máquinas y tutores por generación",
+  "homeSectionAbilitiesTitle": "Habilidades",
+  "homeSectionAbilitiesSubtitle": "Efectos pasivos y activadores",
+  "homeSectionChecklistsTitle": "Listas de control",
+  "homeSectionChecklistsSubtitle": "Sigue metas y colecciones",
+  "homeSectionPartiesTitle": "Equipos",
+  "homeSectionPartiesSubtitle": "Arma equipos y estrategias",
+  "homeSectionLocationsTitle": "Ubicaciones",
+  "homeSectionLocationsSubtitle": "Regiones, mapas y datos de encuentros",
+  "homePlaceholderMessage": "La sección de {sectionName} estará disponible pronto.",
+  "@homePlaceholderMessage": {
+    "description": "Message shown for sections that are not ready yet.",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "abilitiesDefaultTitle": "Habilidades",
+  "abilitiesSearchHint": "Buscar habilidad…",
+  "abilitiesErrorMessage": "No se pudieron cargar las habilidades.",
+  "commonRetry": "Reintentar",
+  "abilitiesEmptySearch": "No encontramos habilidades que coincidan con tu búsqueda.",
+  "abilitiesEmptyGeneral": "No hay habilidades disponibles en este momento.",
+  "abilitiesNoDescription": "Sin descripción disponible.",
+  "abilitiesNoShortDescription": "Sin descripción breve disponible.",
+  "abilitiesFullDescriptionTitle": "Descripción completa",
+  "abilitiesFullDescriptionFallback": "Sin descripción disponible en este idioma.",
+  "abilitiesPokemonSectionTitle": "Pokémon que la poseen",
+  "abilitiesPokemonEmpty": "No encontramos Pokémon asociados a esta habilidad.",
+  "abilitiesPokemonErrorTitle": "No pudimos cargar los Pokémon asociados.",
+  "abilitiesPokemonErrorDescription": "Intenta nuevamente para ver qué Pokémon cuentan con esta habilidad.",
+  "pokedexSortNumberLabel": "Número",
+  "pokedexSortNameLabel": "Nombre",
+  "pokedexSortHeightLabel": "Altura",
+  "pokedexSortWeightLabel": "Peso",
+  "pokedexSearchHint": "Buscar por nombre o número",
+  "pokedexFiltersTooltip": "Filtros",
+  "pokedexOfflineNoCache": "Sin conexión y sin datos guardados localmente.",
+  "pokedexOfflineBanner": "Modo offline activo. Mostrando datos guardados localmente.",
+  "pokedexConnectionRestored": "Conexión restablecida.",
+  "pokedexLoadError": "No se pudo cargar la Pokédex. Intenta nuevamente.",
+  "pokedexOfflineFiltersLimited": "Modo offline activo. Algunos filtros pueden ser limitados.",
+  "pokedexShowingCountSimple": "Mostrando {count} Pokémon.",
+  "pokedexShowingCountWithTotal": "Mostrando {count} de {total} Pokémon.",
+  "pokedexActiveFilters": "{count, plural, one {{count} filtro activo} other {{count} filtros activos}}",
+  "pokedexSortDirectionAscending": "ascendente",
+  "pokedexSortDirectionDescending": "descendente",
+  "pokedexFilterSummarySearch": "Búsqueda: {query}",
+  "pokedexFilterSummaryType": "Tipo: {value}",
+  "pokedexFilterSummaryGeneration": "Generación: {value}",
+  "pokedexFilterSummaryRegion": "Región: {value}",
+  "pokedexFilterSummaryShape": "Forma: {value}",
+  "pokedexFilterSummarySort": "Orden: {value}",
+  "pokedexNoResults": "No se encontraron Pokémon para los filtros actuales.",
+  "pokedexFiltersTitle": "Filtros",
+  "pokedexFiltersCloseTooltip": "Cerrar",
+  "pokedexFilterSectionTypes": "Tipos",
+  "pokedexFilterSectionGenerations": "Generaciones",
+  "pokedexFilterSectionRegions": "Regiones",
+  "pokedexFilterSectionShapes": "Formas",
+  "pokedexFilterEmptyTypes": "No hay tipos disponibles por ahora.",
+  "pokedexFilterEmptyGenerations": "No hay generaciones disponibles por ahora.",
+  "pokedexFilterEmptyRegions": "No hay regiones disponibles por ahora.",
+  "pokedexFilterEmptyShapes": "No hay formas disponibles por ahora.",
+  "pokedexFiltersClear": "Limpiar",
+  "commonCancel": "Cancelar",
+  "commonApply": "Aplicar",
+  "pokedexSortSheetTitle": "Ordenar por",
+  "pokedexSortCriteriaLabel": "Criterio",
+  "pokedexSortDirectionLabel": "Dirección",
+  "pokedexSortAscendingShort": "Asc",
+  "pokedexSortDescendingShort": "Desc",
+  "favoritesRemoveAction": "Quitar de favoritos",
+  "favoritesAddAction": "Agregar a favoritos",
+  "@pokedexShowingCountSimple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexShowingCountWithTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexActiveFilters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexFilterSummarySearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryType": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryGeneration": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryRegion": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryShape": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummarySort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  }
+}
