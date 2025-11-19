@@ -180,6 +180,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
               characteristics: characteristics,
               formatHeight: widget.formatHeight,
               formatWeight: widget.formatWeight,
+              formatLabel: widget.formatLabel,
             ),
           ),
           const SizedBox(height: 16),
