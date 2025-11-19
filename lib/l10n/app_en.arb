@@ -80,6 +80,22 @@
   "@settingsAppearanceSection": {
     "description": "Heading shown above the appearance/theme options."
   },
+  "settingsLanguageSection": "Language",
+  "@settingsLanguageSection": {
+    "description": "Heading shown above the language selection card."
+  },
+  "settingsLanguageLabel": "App language",
+  "@settingsLanguageLabel": {
+    "description": "Label for the dropdown that lets the user pick a locale."
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "Name of the English locale shown inside the dropdown."
+  },
+  "settingsLanguageSpanish": "Spanish",
+  "@settingsLanguageSpanish": {
+    "description": "Name of the Spanish locale shown inside the dropdown."
+  },
   "settingsLightModeTitle": "Light mode",
   "@settingsLightModeTitle": {
     "description": "Title of the light theme option within the appearance card."

@@ -67,6 +67,10 @@ abstract class AppLocalizations {
   String get settingsEditProfile;
   String get settingsSignOut;
   String get settingsAppearanceSection;
+  String get settingsLanguageSection;
+  String get settingsLanguageLabel;
+  String get settingsLanguageEnglish;
+  String get settingsLanguageSpanish;
   String get settingsLightModeTitle;
   String get settingsLightModeSubtitle;
   String get settingsDarkModeTitle;
@@ -236,6 +240,14 @@ class AppLocalizationsEN extends AppLocalizations {
   String get settingsSignOut => 'Sign out';
   @override
   String get settingsAppearanceSection => 'Appearance';
+  @override
+  String get settingsLanguageSection => 'Language';
+  @override
+  String get settingsLanguageLabel => 'App language';
+  @override
+  String get settingsLanguageEnglish => 'English';
+  @override
+  String get settingsLanguageSpanish => 'Spanish';
   @override
   String get settingsLightModeTitle => 'Light mode';
   @override
@@ -497,6 +509,14 @@ class AppLocalizationsES extends AppLocalizations {
   String get settingsSignOut => 'Cerrar sesión';
   @override
   String get settingsAppearanceSection => 'Apariencia';
+  @override
+  String get settingsLanguageSection => 'Idioma';
+  @override
+  String get settingsLanguageLabel => 'Idioma de la app';
+  @override
+  String get settingsLanguageEnglish => 'Inglés';
+  @override
+  String get settingsLanguageSpanish => 'Español';
   @override
   String get settingsLightModeTitle => 'Modo claro';
   @override
