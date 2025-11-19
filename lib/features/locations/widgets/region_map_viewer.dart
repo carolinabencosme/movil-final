@@ -59,6 +59,25 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   @override
+  void didUpdateWidget(RegionMapViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.region != widget.region) {
+      setState(() {
+        _selectedVersionIndex = 0;
+        _availableVersions = getRegionMapVersions(widget.region);
+        if (_availableVersions.isEmpty) {
+          final defaultMap = getRegionMapData(widget.region);
+          if (defaultMap != null) {
+            _availableVersions = [defaultMap];
+          }
+        }
+        _transformationController.value = Matrix4.identity();
+        _selectedEncounter = null;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _transformationController.dispose();
     super.dispose();
@@ -293,20 +312,22 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Wrap(
-                spacing: 8,
+              child: Row(
                 children: List.generate(
                   _availableVersions.length,
-                  (index) => _VersionChip(
-                    label: _availableVersions[index].gameVersion,
-                    isSelected: index == _selectedVersionIndex,
-                    onTap: () {
-                      setState(() {
-                        _selectedVersionIndex = index;
-                        _selectedEncounter = null; // Reset selection
-                        _transformationController.value = Matrix4.identity();
-                      });
-                    },
+                  (index) => Padding(
+                    padding: EdgeInsets.only(right: index < _availableVersions.length - 1 ? 8.0 : 0.0),
+                    child: _VersionChip(
+                      label: _availableVersions[index].gameVersion,
+                      isSelected: index == _selectedVersionIndex,
+                      onTap: () {
+                        setState(() {
+                          _selectedVersionIndex = index;
+                          _selectedEncounter = null; // Reset selection
+                          _transformationController.value = Matrix4.identity();
+                        });
+                      },
+                    ),
                   ),
                 ),
               ),

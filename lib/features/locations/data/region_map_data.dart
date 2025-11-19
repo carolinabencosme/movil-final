@@ -210,13 +210,10 @@ List<RegionMapData> getRegionMapVersions(String regionName) {
 /// Retorna null si no se encuentra la combinación.
 RegionMapData? getRegionMapByVersion(String regionName, String gameVersion) {
   final versions = getRegionMapVersions(regionName);
-  try {
-    return versions.firstWhere(
-      (map) => map.gameVersion.toLowerCase() == gameVersion.toLowerCase(),
-    );
-  } catch (e) {
-    return null;
-  }
+  final filtered = versions.where(
+    (map) => map.gameVersion.toLowerCase() == gameVersion.toLowerCase(),
+  );
+  return filtered.isEmpty ? null : filtered.first;
 }
 
 /// Verifica si una región tiene datos de mapa disponibles
