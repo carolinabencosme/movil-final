@@ -80,6 +80,22 @@
   "@settingsAppearanceSection": {
     "description": "Heading shown above the appearance/theme options."
   },
+  "settingsLanguageSection": "Idioma",
+  "@settingsLanguageSection": {
+    "description": "Encabezado que se muestra encima de la tarjeta de selección de idioma."
+  },
+  "settingsLanguageLabel": "Idioma de la app",
+  "@settingsLanguageLabel": {
+    "description": "Etiqueta para el selector que permite escoger el idioma de la interfaz."
+  },
+  "settingsLanguageEnglish": "Inglés",
+  "@settingsLanguageEnglish": {
+    "description": "Nombre del idioma inglés que se muestra en el selector."
+  },
+  "settingsLanguageSpanish": "Español",
+  "@settingsLanguageSpanish": {
+    "description": "Nombre del idioma español que se muestra en el selector."
+  },
   "settingsLightModeTitle": "Modo claro",
   "@settingsLightModeTitle": {
     "description": "Title of the light theme option within the appearance card."

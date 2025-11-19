@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../controllers/auth_controller.dart';
+import '../controllers/locale_controller.dart';
 import '../theme/theme_controller.dart';
 import 'profile_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  static const List<Locale> _languageOptions = [
+    Locale('es'),
+    Locale('en'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +21,7 @@ class SettingsScreen extends StatelessWidget {
     final themeController = ThemeScope.of(context);
     final themeMode = themeController.themeMode;
     final textTheme = Theme.of(context).textTheme;
+    final localeController = LocaleScope.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -122,6 +129,62 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          AnimatedBuilder(
+            animation: localeController,
+            builder: (context, _) {
+              final selectedLanguageCode =
+                  localeController.locale?.languageCode;
+              Locale? selectedLocale;
+              for (final locale in _languageOptions) {
+                if (locale.languageCode == selectedLanguageCode) {
+                  selectedLocale = locale;
+                  break;
+                }
+              }
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.settingsLanguageSection,
+                        style: textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<Locale>(
+                        value: selectedLocale,
+                        decoration: InputDecoration(
+                          labelText: l10n.settingsLanguageLabel,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: _languageOptions
+                            .map(
+                              (locale) => DropdownMenuItem<Locale>(
+                                value: locale,
+                                child: Text(
+                                  _languageLabel(locale, l10n),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (locale) {
+                          if (locale != null) {
+                            localeController.updateLocale(locale);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           Text(
             l10n.settingsInfo,
             style: textTheme.bodyMedium,
@@ -129,6 +192,16 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _languageLabel(Locale locale, AppLocalizations l10n) {
+    switch (locale.languageCode) {
+      case 'es':
+        return l10n.settingsLanguageSpanish;
+      case 'en':
+      default:
+        return l10n.settingsLanguageEnglish;
+    }
   }
 }
 
