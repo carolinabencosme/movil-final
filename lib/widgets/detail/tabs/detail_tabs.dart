@@ -23,6 +23,7 @@ class PokemonInfoTab extends StatefulWidget {
     required this.abilitySubtitle,
     required this.sectionBackground,
     required this.sectionBorder,
+    this.onViewMap,
   });
 
   final PokemonDetail pokemon;
@@ -33,6 +34,7 @@ class PokemonInfoTab extends StatefulWidget {
   final String? abilitySubtitle;
   final Color sectionBackground;
   final Color sectionBorder;
+  final VoidCallback? onViewMap;
 
   @override
   State<PokemonInfoTab> createState() => _PokemonInfoTabState();
@@ -153,6 +155,17 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                     ),
                   ),
                 ),
+                if (widget.onViewMap != null) ...[
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: widget.onViewMap,
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text('Ver en mapa'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
