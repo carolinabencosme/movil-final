@@ -236,14 +236,54 @@ class AppLocalizationsEs extends AppLocalizations {
       'Regiones, mapas y datos de encuentros';
 
   @override
-  String homeSectionCardSemanticLabel({required String sectionName}) {
+  String homeSectionCardSemanticLabel(String sectionName) {
     return 'Abrir la sección $sectionName';
   }
 
   @override
-  String homeSectionCardSemanticHint({required String sectionName}) {
+  String homeSectionCardSemanticHint(String sectionName) {
     return 'Toca dos veces para ir a $sectionName';
   }
+
+  @override
+  String get detailCharacteristicHeight => 'Altura';
+
+  @override
+  String get detailCharacteristicWeight => 'Peso';
+
+  @override
+  String get detailCharacteristicCategory => 'Categoría';
+
+  @override
+  String get detailCharacteristicNoCategory => 'Sin categoría';
+
+  @override
+  String get detailCharacteristicCatchRate => 'Ratio de captura';
+
+  @override
+  String get detailCharacteristicBaseExperience => 'Experiencia base';
+
+  @override
+  String get detailNoWeaknessInfo =>
+      'No hay información de debilidades disponible.';
+
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Doble debilidad: el daño recibido se multiplica por cuatro.';
+
+  @override
+  String get detailWeaknessLegendDouble =>
+      'Debilidad clásica: ataques súper efectivos.';
+
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Ventaja moderada: daño ligeramente incrementado.';
+
+  @override
+  String get detailWeaknessToggleShow => 'Ver debilidades';
+
+  @override
+  String get detailWeaknessToggleHide => 'Ocultar debilidades';
 
   @override
   String get homeNotificationsSemanticLabel => 'Notificaciones';
@@ -265,7 +305,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeSettingsSemanticHint => 'Abre la configuración de la app';
 
   @override
-  String homePlaceholderMessage({required String sectionName}) {
+  String homePlaceholderMessage(String sectionName) {
     return 'La sección de $sectionName estará disponible pronto.';
   }
 
@@ -330,22 +370,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pokedexSortWeightLabel => 'Peso';
 
   @override
-  String abilityCardSemanticLabel({required String abilityName}) {
+  String abilityCardSemanticLabel(String abilityName) {
     return 'Abrir la habilidad $abilityName';
   }
 
   @override
-  String abilityCardSemanticHint({required String abilityName}) {
+  String abilityCardSemanticHint(String abilityName) {
     return 'Toca dos veces para ver detalles de $abilityName';
   }
 
   @override
-  String pokedexCardSemanticLabel({required String pokemonName}) {
+  String pokedexCardSemanticLabel(String pokemonName) {
     return 'Abrir detalles de $pokemonName';
   }
 
   @override
-  String pokedexCardSemanticHint({required String pokemonName}) {
+  String pokedexCardSemanticHint(String pokemonName) {
     return 'Toca dos veces para ver a $pokemonName en la Pokédex';
   }
 
@@ -506,7 +546,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailTabMoves => 'Movimientos';
 
   @override
-  String get detailNoDataFound => 'No se encontró información para este Pokémon.';
+  String get detailNoDataFound =>
+      'No se encontró información para este Pokémon.';
 
   @override
   String get detailOfflineShortMessage =>
@@ -531,45 +572,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get detailLoadErrorDescription =>
       'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.';
-
-  @override
-  String get detailCharacteristicHeight => 'Altura';
-
-  @override
-  String get detailCharacteristicWeight => 'Peso';
-
-  @override
-  String get detailCharacteristicCategory => 'Categoría';
-
-  @override
-  String get detailCharacteristicNoCategory => 'Sin categoría';
-
-  @override
-  String get detailCharacteristicCatchRate => 'Ratio de captura';
-
-  @override
-  String get detailCharacteristicBaseExperience => 'Experiencia base';
-
-  @override
-  String get detailNoWeaknessInfo => 'No hay información de debilidades disponible.';
-
-  @override
-  String get detailWeaknessLegendQuadruple =>
-      'Doble debilidad: el daño recibido se multiplica por cuatro.';
-
-  @override
-  String get detailWeaknessLegendDouble =>
-      'Debilidad clásica: ataques súper efectivos.';
-
-  @override
-  String get detailWeaknessLegendModerate =>
-      'Ventaja moderada: daño ligeramente incrementado.';
-
-  @override
-  String get detailWeaknessToggleShow => 'Ver debilidades';
-
-  @override
-  String get detailWeaknessToggleHide => 'Ocultar debilidades';
 
   @override
   String get pokedexSortSheetTitle => 'Ordenar por';
