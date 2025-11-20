@@ -146,7 +146,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;               // Indica si ya se inicializó
   bool _isOfflineMode = false;         // Indica si los datos provienen de caché local
   bool _offlineSnackShown = false;     // Controla los avisos de modo offline
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   final Connectivity _connectivity = Connectivity();
 
   /// Métricas y estado de la UI
@@ -167,14 +167,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-      if (result != ConnectivityResult.none) {
-        _updateOfflineMode(false);
-        _resetAndFetch();
-      } else {
-        _updateOfflineMode(true, showMessage: true);
-      }
-    });
+        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
+          // Hay conexión si al menos uno NO es "none"
+          final hasConnection =
+          results.any((r) => r != ConnectivityResult.none);
+
+          if (hasConnection) {
+            _updateOfflineMode(false);
+            _resetAndFetch();
+          } else {
+            _updateOfflineMode(true, showMessage: true);
+          }
+        });
   }
 
   @override
