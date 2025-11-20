@@ -255,8 +255,9 @@ class _AbilityCard extends StatelessWidget {
         color: Colors.transparent,
         child: Semantics(
           button: true,
-          label: l10n.abilityCardSemanticLabel(ability.displayName),
-          hint: l10n.abilityCardSemanticHint(ability.displayName),
+          label:
+              l10n.abilityCardSemanticLabel(abilityName: ability.displayName),
+          hint: l10n.abilityCardSemanticHint(abilityName: ability.displayName),
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(24),
