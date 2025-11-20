@@ -409,7 +409,7 @@ class _DetailScreenState extends State<DetailScreen> {
               result.data?['type_efficacy'] as List<dynamic>? ?? [];
 
           // Parse a modelo de dominio completo
-          final PokemonDetail pokemon = PokemonDetail.fromGraphQL(
+          pokemonDetail = PokemonDetail.fromGraphQL(
             data,
             typeEfficacies: typeEfficacies,
           );
@@ -425,7 +425,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     children: [
                       // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
                       PokemonDetailBody(
-                        pokemon: pokemon,
+                        pokemon: pokemonDetail!,
                         resolvedHeroTag: resolvedHeroTag,
                         capitalize: _capitalize,
                       ),
@@ -464,9 +464,9 @@ class _DetailScreenState extends State<DetailScreen> {
             ],
           ),
           body: finalBody,
-          floatingActionButton: pokemon != null
+          floatingActionButton: pokemonDetail != null
               ? FloatingActionButton.extended(
-                  onPressed: () => _showShareDialog(context, pokemon!),
+                  onPressed: () => _showShareDialog(context, pokemonDetail!),
                   icon: const Icon(Icons.share),
                   label: const Text('Compartir'),
                   tooltip: 'Compartir Pokémon Card',
