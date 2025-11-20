@@ -80,26 +80,25 @@ class CardCaptureService {
   /// [imagePath] debe ser la ruta completa al archivo de imagen.
   /// [text] es un texto opcional para acompañar la imagen.
   /// 
-  /// Retorna true si se compartió exitosamente, false si falló o fue cancelado.
-  Future<bool> shareImage(
+  /// Retorna el resultado del intento de compartir la imagen.
+  Future<ShareResult> shareImage(
     String imagePath, {
     String? text,
   }) async {
     try {
       final xFile = XFile(imagePath);
-      
+
       final result = await Share.shareXFiles(
         [xFile],
         text: text,
       );
 
       debugPrint('[CardCaptureService] Resultado de compartir: ${result.status}');
-      return result.status == ShareResultStatus.success ||
-          result.status == ShareResultStatus.unavailable; // unavailable = shared
+      return result;
     } catch (e, stackTrace) {
       debugPrint('[CardCaptureService] Error al compartir imagen: $e');
       debugPrint('[CardCaptureService] StackTrace: $stackTrace');
-      return false;
+      return const ShareResult(status: ShareResultStatus.unavailable);
     }
   }
 
@@ -130,7 +129,9 @@ class CardCaptureService {
     }
 
     // 3. Compartir usando el diálogo nativo
-    final shared = await shareImage(imagePath, text: text);
+    final shareResult = await shareImage(imagePath, text: text);
+    final shared = shareResult.status == ShareResultStatus.success ||
+        shareResult.status == ShareResultStatus.unavailable; // unavailable = shared
     if (!shared) {
       debugPrint('[CardCaptureService] No se pudo compartir la imagen');
       return false;
