@@ -232,14 +232,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSectionLocationsSubtitle => 'Regions, maps & encounter data';
 
   @override
-  String homeSectionCardSemanticLabel({required String sectionName}) {
+  String homeSectionCardSemanticLabel(String sectionName) {
     return 'Open the $sectionName section';
   }
 
   @override
-  String homeSectionCardSemanticHint({required String sectionName}) {
+  String homeSectionCardSemanticHint(String sectionName) {
     return 'Double tap to navigate to $sectionName';
   }
+
+  @override
+  String get detailCharacteristicHeight => 'Height';
+
+  @override
+  String get detailCharacteristicWeight => 'Weight';
+
+  @override
+  String get detailCharacteristicCategory => 'Category';
+
+  @override
+  String get detailCharacteristicNoCategory => 'No category';
+
+  @override
+  String get detailCharacteristicCatchRate => 'Catch rate';
+
+  @override
+  String get detailCharacteristicBaseExperience => 'Base experience';
+
+  @override
+  String get detailNoWeaknessInfo => 'No weakness information available.';
+
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Double weakness: damage taken is multiplied by four.';
+
+  @override
+  String get detailWeaknessLegendDouble =>
+      'Classic weakness: super effective attacks.';
+
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Moderate advantage: slightly increased damage.';
+
+  @override
+  String get detailWeaknessToggleShow => 'Show weaknesses';
+
+  @override
+  String get detailWeaknessToggleHide => 'Hide weaknesses';
 
   @override
   String get homeNotificationsSemanticLabel => 'Notifications';
@@ -260,7 +299,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSettingsSemanticHint => 'Opens app settings';
 
   @override
-  String homePlaceholderMessage({required String sectionName}) {
+  String homePlaceholderMessage(String sectionName) {
     return 'The $sectionName section will be available soon.';
   }
 
@@ -324,22 +363,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pokedexSortWeightLabel => 'Weight';
 
   @override
-  String abilityCardSemanticLabel({required String abilityName}) {
+  String abilityCardSemanticLabel(String abilityName) {
     return 'Open ability $abilityName';
   }
 
   @override
-  String abilityCardSemanticHint({required String abilityName}) {
+  String abilityCardSemanticHint(String abilityName) {
     return 'Double tap to see details for $abilityName';
   }
 
   @override
-  String pokedexCardSemanticLabel({required String pokemonName}) {
+  String pokedexCardSemanticLabel(String pokemonName) {
     return 'Open $pokemonName details';
   }
 
   @override
-  String pokedexCardSemanticHint({required String pokemonName}) {
+  String pokedexCardSemanticHint(String pokemonName) {
     return 'Double tap to view $pokemonName in the Pokédex';
   }
 
@@ -523,45 +562,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get detailLoadErrorDescription =>
       'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
-
-  @override
-  String get detailCharacteristicHeight => 'Height';
-
-  @override
-  String get detailCharacteristicWeight => 'Weight';
-
-  @override
-  String get detailCharacteristicCategory => 'Category';
-
-  @override
-  String get detailCharacteristicNoCategory => 'No category';
-
-  @override
-  String get detailCharacteristicCatchRate => 'Catch rate';
-
-  @override
-  String get detailCharacteristicBaseExperience => 'Base experience';
-
-  @override
-  String get detailNoWeaknessInfo => 'No weakness information available.';
-
-  @override
-  String get detailWeaknessLegendQuadruple =>
-      'Double weakness: damage taken is multiplied by four.';
-
-  @override
-  String get detailWeaknessLegendDouble =>
-      'Classic weakness: super effective attacks.';
-
-  @override
-  String get detailWeaknessLegendModerate =>
-      'Moderate advantage: slightly increased damage.';
-
-  @override
-  String get detailWeaknessToggleShow => 'Show weaknesses';
-
-  @override
-  String get detailWeaknessToggleHide => 'Hide weaknesses';
 
   @override
   String get pokedexSortSheetTitle => 'Sort by';
