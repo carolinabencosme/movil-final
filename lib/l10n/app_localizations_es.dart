@@ -638,7 +638,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get detailMovesCountSemanticLabel => 'Contador de movimientos mostrados';
+  String get detailMovesCountSemanticLabel =>
+      'Contador de movimientos mostrados';
 
   @override
   String get detailNoDataFound =>

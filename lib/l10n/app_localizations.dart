@@ -872,7 +872,7 @@ abstract class AppLocalizations {
   /// **'Double tap to view {pokemonName} in the Pokédex'**
   String pokedexCardSemanticHint(String pokemonName);
 
-  /// No description provided for @pokedexSearchHint.
+  /// Hint text shown in the Pokédex search field.
   ///
   /// In en, this message translates to:
   /// **'Search by name or number'**
