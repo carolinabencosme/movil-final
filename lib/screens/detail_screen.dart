@@ -354,7 +354,6 @@ class _DetailScreenState extends State<DetailScreen> {
             offlineError ? favoriteTarget : null;
 
         Widget body;
-        PokemonDetail? pokemon;
 
         if (result.isLoading && data == null && offlinePokemon == null) {
           body = LoadingDetailView(
@@ -410,7 +409,7 @@ class _DetailScreenState extends State<DetailScreen> {
               result.data?['type_efficacy'] as List<dynamic>? ?? [];
 
           // Parse a modelo de dominio completo
-          pokemon = PokemonDetail.fromGraphQL(
+          final PokemonDetail pokemon = PokemonDetail.fromGraphQL(
             data,
             typeEfficacies: typeEfficacies,
           );
