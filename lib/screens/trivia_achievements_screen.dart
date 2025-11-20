@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/trivia_achievement.dart';
 import '../services/trivia_repository.dart';
 
@@ -13,20 +14,22 @@ class TriviaAchievementsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color highlight = accentColor ?? Theme.of(context).colorScheme.secondary;
     final TriviaRepository repository = TriviaRepositoryScope.of(context);
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logros de trivia'),
+        title: Text(l10n.triviaAchievementsTitle),
         backgroundColor: highlight,
         foregroundColor: Colors.white,
       ),
       body: AnimatedBuilder(
         animation: repository,
         builder: (_, __) {
-          final List<TriviaAchievement> achievements = repository.getAchievements();
+          final List<TriviaAchievement> achievements =
+              repository.getAchievements(l10n);
           if (achievements.isEmpty) {
-            return const Center(
-              child: Text('Aún no hay logros disponibles.'),
+            return Center(
+              child: Text(l10n.triviaAchievementsEmpty),
             );
           }
           return ListView.separated(
@@ -36,6 +39,7 @@ class TriviaAchievementsScreen extends StatelessWidget {
               return _AchievementTile(
                 achievement: achievement,
                 highlight: highlight,
+                l10n: l10n,
               );
             },
             separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -51,10 +55,12 @@ class _AchievementTile extends StatelessWidget {
   const _AchievementTile({
     required this.achievement,
     required this.highlight,
+    required this.l10n,
   });
 
   final TriviaAchievement achievement;
   final Color highlight;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +139,7 @@ class _AchievementTile extends StatelessWidget {
           Icon(Icons.lock_clock, color: theme.colorScheme.outline, size: 18),
           const SizedBox(width: 6),
           Text(
-            'Pendiente',
+            l10n.triviaAchievementsLockedLabel,
             style: theme.textTheme.labelLarge?.copyWith(
               color: theme.colorScheme.outline,
               fontWeight: FontWeight.w600,
@@ -143,14 +149,17 @@ class _AchievementTile extends StatelessWidget {
       );
     }
 
-    final DateFormat formatter = DateFormat('d MMM, HH:mm');
+    final DateFormat formatter =
+        DateFormat(l10n.triviaAchievementsDateFormat, l10n.localeName);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.emoji_events, color: highlight, size: 18),
         const SizedBox(width: 6),
         Text(
-          'Desbloqueado · ${formatter.format(achievement.unlockedAt!)}',
+          l10n.triviaAchievementsUnlockedLabel(
+            formatter.format(achievement.unlockedAt!),
+          ),
           style: theme.textTheme.labelLarge?.copyWith(
             color: highlight,
             fontWeight: FontWeight.w700,

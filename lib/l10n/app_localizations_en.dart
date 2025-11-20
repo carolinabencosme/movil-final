@@ -265,6 +265,58 @@ class AppLocalizationsEn extends AppLocalizations {
       "Review the badges you've earned during trivia sessions.";
 
   @override
+  String get triviaAchievementsTitle => 'Trivia achievements';
+
+  @override
+  String get triviaAchievementsEmpty => 'No achievements available yet.';
+
+  @override
+  String get triviaAchievementsLockedLabel => 'Locked';
+
+  @override
+  String triviaAchievementsUnlockedLabel(String date) {
+    return 'Unlocked · ${date}';
+  }
+
+  @override
+  String get triviaAchievementsDateFormat => 'd MMM, HH:mm';
+
+  @override
+  String get triviaAchievementFirstCorrectTitle => 'First correct answer';
+
+  @override
+  String get triviaAchievementFirstCorrectDescription =>
+      'Answer your first trivia question correctly.';
+
+  @override
+  String get triviaAchievementStreakThreeTitle => 'Streak x3';
+
+  @override
+  String get triviaAchievementStreakThreeDescription =>
+      'Chain three correct answers in a row.';
+
+  @override
+  String get triviaAchievementStreakFiveTitle => 'Living legend';
+
+  @override
+  String get triviaAchievementStreakFiveDescription =>
+      'Reach five correct answers in a row.';
+
+  @override
+  String get triviaAchievementTenQuestionsTitle => 'Trainer endurance';
+
+  @override
+  String get triviaAchievementTenQuestionsDescription =>
+      'Play ten questions in a single session.';
+
+  @override
+  String get triviaAchievementScoreHunterTitle => 'Point hunter';
+
+  @override
+  String get triviaAchievementScoreHunterDescription =>
+      'Reach 500 points in a single session.';
+
+  @override
   String get triviaFactSkittyTitle => 'Skitty can pair with Wailord';
 
   @override

@@ -269,6 +269,58 @@ class AppLocalizationsEs extends AppLocalizations {
       'Revisa las insignias que has ganado durante tus sesiones de trivia.';
 
   @override
+  String get triviaAchievementsTitle => 'Logros de trivia';
+
+  @override
+  String get triviaAchievementsEmpty => 'Aún no hay logros disponibles.';
+
+  @override
+  String get triviaAchievementsLockedLabel => 'Pendiente';
+
+  @override
+  String triviaAchievementsUnlockedLabel(String date) {
+    return 'Desbloqueado · ${date}';
+  }
+
+  @override
+  String get triviaAchievementsDateFormat => 'd MMM, HH:mm';
+
+  @override
+  String get triviaAchievementFirstCorrectTitle => 'Primer acierto';
+
+  @override
+  String get triviaAchievementFirstCorrectDescription =>
+      'Responde correctamente tu primera pregunta.';
+
+  @override
+  String get triviaAchievementStreakThreeTitle => 'Racha x3';
+
+  @override
+  String get triviaAchievementStreakThreeDescription =>
+      'Encadena tres respuestas correctas seguidas.';
+
+  @override
+  String get triviaAchievementStreakFiveTitle => 'Leyenda viviente';
+
+  @override
+  String get triviaAchievementStreakFiveDescription =>
+      'Llega a cinco respuestas correctas seguidas.';
+
+  @override
+  String get triviaAchievementTenQuestionsTitle => 'Aguante de entrenador';
+
+  @override
+  String get triviaAchievementTenQuestionsDescription =>
+      'Juega diez preguntas en una sesión.';
+
+  @override
+  String get triviaAchievementScoreHunterTitle => 'Cazador de puntos';
+
+  @override
+  String get triviaAchievementScoreHunterDescription =>
+      'Alcanza 500 puntos en una misma sesión.';
+
+  @override
   String get triviaFactSkittyTitle => 'Skitty puede criar con Wailord';
 
   @override

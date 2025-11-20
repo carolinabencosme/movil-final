@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 
+import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../models/trivia_achievement.dart';
 import '../models/trivia_score.dart';
 
@@ -62,7 +64,7 @@ class TriviaRepository extends ChangeNotifier {
     required int questionsPlayed,
   }) async {
     final String normalizedName = playerName.trim().isEmpty
-        ? 'Entrenador anónimo'
+        ? AppLocalizationsEn().triviaGuestPlayerName
         : playerName.trim();
 
     final TriviaScore entry = TriviaScore(
@@ -86,9 +88,11 @@ class TriviaRepository extends ChangeNotifier {
 
   /// Devuelve todos los logros disponibles, ordenando primero los desbloqueados
   /// con fecha más reciente y luego los bloqueados.
-  List<TriviaAchievement> getAchievements() {
-    final List<TriviaAchievement> achievements =
-        _achievementsBox.values.toList(growable: false);
+  List<TriviaAchievement> getAchievements(AppLocalizations localizations) {
+    final List<TriviaAchievement> achievements = _achievementsBox.values
+        .map((TriviaAchievement achievement) =>
+            _withLocalizedTexts(achievement, localizations))
+        .toList(growable: false);
     achievements.sort((TriviaAchievement a, TriviaAchievement b) {
       if (a.isUnlocked && b.isUnlocked) {
         return b.unlockedAt!.compareTo(a.unlockedAt!);
@@ -144,43 +148,84 @@ class TriviaRepository extends ChangeNotifier {
   Future<void> _seedAchievementsIfNeeded() async {
     if (_achievementsBox.isNotEmpty) return;
 
-    final List<TriviaAchievement> defaults = <TriviaAchievement>[
-      const TriviaAchievement(
-        id: 'first_correct',
-        title: 'Primer acierto',
-        description: 'Responde correctamente tu primera pregunta.',
-        iconName: 'celebration',
-      ),
-      const TriviaAchievement(
-        id: 'streak_three',
-        title: 'Racha x3',
-        description: 'Encadena tres respuestas correctas seguidas.',
-        iconName: 'bolt',
-      ),
-      const TriviaAchievement(
-        id: 'streak_five',
-        title: 'Leyenda viviente',
-        description: 'Llega a cinco respuestas correctas seguidas.',
-        iconName: 'local_fire_department',
-      ),
-      const TriviaAchievement(
-        id: 'ten_questions',
-        title: 'Aguante de entrenador',
-        description: 'Juega diez preguntas en una sesión.',
-        iconName: 'self_improvement',
-      ),
-      const TriviaAchievement(
-        id: 'score_hunter',
-        title: 'Cazador de puntos',
-        description: 'Alcanza 500 puntos en una misma sesión.',
-        iconName: 'military_tech',
-      ),
-    ];
+    final AppLocalizations fallbackLocalizations = AppLocalizationsEn();
+    final List<TriviaAchievement> defaults =
+        _buildDefaultAchievements(fallbackLocalizations);
 
     for (final TriviaAchievement achievement in defaults) {
       await _achievementsBox.put(achievement.id, achievement);
     }
   }
+}
+
+TriviaAchievement _withLocalizedTexts(
+  TriviaAchievement achievement,
+  AppLocalizations localizations,
+) {
+  switch (achievement.id) {
+    case 'first_correct':
+      return achievement.copyWith(
+        title: localizations.triviaAchievementFirstCorrectTitle,
+        description: localizations.triviaAchievementFirstCorrectDescription,
+      );
+    case 'streak_three':
+      return achievement.copyWith(
+        title: localizations.triviaAchievementStreakThreeTitle,
+        description: localizations.triviaAchievementStreakThreeDescription,
+      );
+    case 'streak_five':
+      return achievement.copyWith(
+        title: localizations.triviaAchievementStreakFiveTitle,
+        description: localizations.triviaAchievementStreakFiveDescription,
+      );
+    case 'ten_questions':
+      return achievement.copyWith(
+        title: localizations.triviaAchievementTenQuestionsTitle,
+        description: localizations.triviaAchievementTenQuestionsDescription,
+      );
+    case 'score_hunter':
+      return achievement.copyWith(
+        title: localizations.triviaAchievementScoreHunterTitle,
+        description: localizations.triviaAchievementScoreHunterDescription,
+      );
+    default:
+      return achievement;
+  }
+}
+
+List<TriviaAchievement> _buildDefaultAchievements(AppLocalizations l10n) {
+  return <TriviaAchievement>[
+    TriviaAchievement(
+      id: 'first_correct',
+      title: l10n.triviaAchievementFirstCorrectTitle,
+      description: l10n.triviaAchievementFirstCorrectDescription,
+      iconName: 'celebration',
+    ),
+    TriviaAchievement(
+      id: 'streak_three',
+      title: l10n.triviaAchievementStreakThreeTitle,
+      description: l10n.triviaAchievementStreakThreeDescription,
+      iconName: 'bolt',
+    ),
+    TriviaAchievement(
+      id: 'streak_five',
+      title: l10n.triviaAchievementStreakFiveTitle,
+      description: l10n.triviaAchievementStreakFiveDescription,
+      iconName: 'local_fire_department',
+    ),
+    TriviaAchievement(
+      id: 'ten_questions',
+      title: l10n.triviaAchievementTenQuestionsTitle,
+      description: l10n.triviaAchievementTenQuestionsDescription,
+      iconName: 'self_improvement',
+    ),
+    TriviaAchievement(
+      id: 'score_hunter',
+      title: l10n.triviaAchievementScoreHunterTitle,
+      description: l10n.triviaAchievementScoreHunterDescription,
+      iconName: 'military_tech',
+    ),
+  ];
 }
 
 class TriviaRepositoryScope extends InheritedNotifier<TriviaRepository> {
