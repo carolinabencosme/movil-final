@@ -5,6 +5,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/favorites_controller.dart';
+import 'controllers/trivia_controller.dart';
 import 'screens/detail_screen.dart';
 import 'widgets/detail/detail_constants.dart';
 import 'controllers/locale_controller.dart';
@@ -30,6 +31,11 @@ Future<void> main() async {
   final favoritesController =
       FavoritesController(repository: favoritesRepository);
   final triviaRepository = await TriviaRepository.init();
+  final triviaController = TriviaController(
+    graphQLClient: clientNotifier.value,
+    cacheService: pokemonCacheService,
+    triviaRepository: triviaRepository,
+  );
 
   runApp(
     MyApp(
@@ -38,6 +44,7 @@ Future<void> main() async {
       localeController: localeController,
       authController: authController,
       favoritesController: favoritesController,
+      triviaController: triviaController,
       triviaRepository: triviaRepository,
     ),
   );
@@ -51,6 +58,7 @@ class MyApp extends StatefulWidget {
     required this.localeController,
     required this.authController,
     required this.favoritesController,
+    required this.triviaController,
     required this.triviaRepository,
   });
 
@@ -59,6 +67,7 @@ class MyApp extends StatefulWidget {
   final LocaleController localeController;
   final AuthController authController;
   final FavoritesController favoritesController;
+  final TriviaController triviaController;
   final TriviaRepository triviaRepository;
 
   @override
@@ -72,6 +81,7 @@ class _MyAppState extends State<MyApp> {
     widget.localeController.dispose();
     widget.authController.dispose();
     widget.favoritesController.dispose();
+    widget.triviaController.dispose();
     widget.triviaRepository.dispose();
     widget.clientNotifier.dispose();
     super.dispose();
@@ -82,6 +92,7 @@ class _MyAppState extends State<MyApp> {
     final themeController = widget.themeController;
     final authController = widget.authController;
     final favoritesController = widget.favoritesController;
+    final triviaController = widget.triviaController;
 
     return ThemeScope(
       notifier: themeController,
@@ -93,28 +104,31 @@ class _MyAppState extends State<MyApp> {
             notifier: favoritesController,
             child: TriviaRepositoryScope(
               notifier: widget.triviaRepository,
-              child: AnimatedBuilder(
-                animation: Listenable.merge(
-                  [themeController, widget.localeController],
+              child: TriviaScope(
+                notifier: triviaController,
+                child: AnimatedBuilder(
+                  animation: Listenable.merge(
+                    [themeController, widget.localeController],
+                  ),
+                  builder: (context, _) {
+                    final localizations = AppLocalizations.of(context);
+                    return GraphQLProvider(
+                      client: widget.clientNotifier,
+                      child: MaterialApp(
+                        debugShowCheckedModeBanner: false,
+                        title: localizations?.appTitle ?? 'Pokédex GraphQL',
+                        themeMode: themeController.themeMode,
+                        theme: AppTheme.light,
+                        darkTheme: AppTheme.dark,
+                        locale: widget.localeController.locale,
+                        localizationsDelegates:
+                            AppLocalizations.localizationsDelegates,
+                        supportedLocales: AppLocalizations.supportedLocales,
+                        home: AuthGate(controller: authController),
+                      ),
+                    );
+                  },
                 ),
-                builder: (context, _) {
-                  final localizations = AppLocalizations.of(context);
-                  return GraphQLProvider(
-                    client: widget.clientNotifier,
-                    child: MaterialApp(
-                      debugShowCheckedModeBanner: false,
-                      title: localizations?.appTitle ?? 'Pokédex GraphQL',
-                      themeMode: themeController.themeMode,
-                      theme: AppTheme.light,
-                      darkTheme: AppTheme.dark,
-                      locale: widget.localeController.locale,
-                      localizationsDelegates:
-                          AppLocalizations.localizationsDelegates,
-                      supportedLocales: AppLocalizations.supportedLocales,
-                      home: AuthGate(controller: authController),
-                    ),
-                  );
-                },
               ),
             ),
           ),

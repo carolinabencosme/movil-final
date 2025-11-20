@@ -188,3 +188,36 @@ class TriviaController extends ChangeNotifier {
     }
   }
 }
+
+class TriviaScope extends InheritedNotifier<TriviaController> {
+  const TriviaScope({
+    super.key,
+    required TriviaController notifier,
+    required Widget child,
+  }) : super(notifier: notifier, child: child);
+
+  static TriviaController of(BuildContext context) {
+    final TriviaScope? scope =
+        context.dependOnInheritedWidgetOfExactType<TriviaScope>();
+    assert(scope != null,
+        'TriviaScope.of() called with a context that does not contain a TriviaScope.');
+    if (scope == null) {
+      throw StateError(
+        'TriviaScope.of() called with a context that does not contain a TriviaScope.',
+      );
+    }
+
+    final TriviaController? controller = scope.notifier;
+    if (controller == null) {
+      throw StateError(
+        'TriviaScope.of() called with a TriviaScope that has a null notifier.',
+      );
+    }
+
+    return controller;
+  }
+
+  static TriviaController? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<TriviaScope>()?.notifier;
+  }
+}
