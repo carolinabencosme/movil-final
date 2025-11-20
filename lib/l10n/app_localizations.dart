@@ -563,7 +563,7 @@ abstract class AppLocalizations {
   /// Title for the trivia fact about Ditto and Mew sharing stats.
   ///
   /// In en, this message translates to:
-  /// **"Ditto mirrors Mew's stats"**
+  /// **'Ditto mirrors Mew\'s stats'**
   String get triviaFactDittoTitle;
 
   /// Description for the trivia fact about Ditto sharing stats with Mew.
@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// Description for the trivia fact about Pikachu replacing Clefairy.
   ///
   /// In en, this message translates to:
-  /// **"Clefairy was once planned as the star of the series before Pikachu's popularity took over."**
+  /// **'Clefairy was once planned as the star of the series before Pikachu\'s popularity took over.'**
   String get triviaFactPikachuDescription;
 
   /// Semantic label announcing navigation to a home section
