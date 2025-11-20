@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../pokemon_artwork.dart';
@@ -144,6 +145,7 @@ class PokemonDetailErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final retry = onRetry;
@@ -161,7 +163,7 @@ class PokemonDetailErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.',
+              l10n.detailLoadErrorDescription,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -179,7 +181,7 @@ class PokemonDetailErrorView extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
+                label: Text(l10n.commonRetry),
               ),
             ],
           ],
