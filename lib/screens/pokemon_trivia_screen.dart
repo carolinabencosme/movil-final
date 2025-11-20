@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../controllers/auth_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../models/trivia_achievement.dart';
 import '../services/trivia_repository.dart';
+import 'trivia_achievements_screen.dart';
 import 'trivia_ranking_screen.dart';
 
 class PokemonTriviaScreen extends StatefulWidget {
@@ -47,8 +49,12 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   bool _isAnimating = false;
   int _questionsPlayed = 0;
   int _correctAnswers = 0;
+  int _streak = 0;
   TriviaRepository? _triviaRepository;
   AuthController? _authController;
+  final StreamController<TriviaAchievement> _achievementEvents =
+      StreamController<TriviaAchievement>.broadcast();
+  StreamSubscription<TriviaAchievement>? _achievementSubscription;
 
   int get _score => _correctAnswers * 100;
 
@@ -56,6 +62,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   void initState() {
     super.initState();
     _startTimer();
+    _achievementSubscription =
+        _achievementEvents.stream.listen(_showAchievementBanner);
   }
 
   @override
@@ -69,6 +77,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   void dispose() {
     _timer?.cancel();
     _answerController.dispose();
+    _achievementSubscription?.cancel();
+    _achievementEvents.close();
     super.dispose();
   }
 
@@ -87,10 +97,12 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   void _handleTimeout() {
     _timer?.cancel();
     _questionsPlayed += 1;
+    _streak = 0;
     _showFeedback(
       message: '¡Tiempo agotado! La respuesta era ${_currentQuestion.name}.',
       isSuccess: false,
     );
+    _evaluateAchievements(isCorrect: false);
     _advanceQuestion();
   }
 
@@ -119,6 +131,9 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
       _questionsPlayed += 1;
       if (isCorrect) {
         _correctAnswers += 1;
+        _streak += 1;
+      } else {
+        _streak = 0;
       }
     });
 
@@ -133,6 +148,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
       if (!mounted) return;
       _advanceQuestion();
     });
+
+    _evaluateAchievements(isCorrect: isCorrect);
   }
 
   void _showFeedback({required String message, required bool isSuccess}) {
@@ -200,6 +217,16 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     );
   }
 
+  void _openAchievements() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TriviaAchievementsScreen(
+          accentColor: Theme.of(context).colorScheme.secondary,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,6 +242,11 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
             onPressed: _openRanking,
             icon: const Icon(Icons.leaderboard_outlined),
             tooltip: 'Ver ranking',
+          ),
+          IconButton(
+            onPressed: _openAchievements,
+            icon: const Icon(Icons.emoji_events_outlined),
+            tooltip: 'Ver logros',
           ),
           IconButton(
             onPressed: _saveSession,
@@ -301,23 +333,37 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   Widget _buildStats(ThemeData theme) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _StatChip(
-            icon: Icons.check_circle_outline,
-            label: 'Correctas',
-            value: '$_correctAnswers',
-            color: theme.colorScheme.primary,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _StatChip(
+                icon: Icons.check_circle_outline,
+                label: 'Correctas',
+                value: '$_correctAnswers',
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatChip(
+                icon: Icons.star_border_rounded,
+                label: 'Puntuación',
+                value: '$_score pts',
+                color: theme.colorScheme.secondary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
           child: _StatChip(
-            icon: Icons.star_border_rounded,
-            label: 'Puntuación',
-            value: '$_score pts',
-            color: theme.colorScheme.secondary,
+            icon: Icons.local_fire_department_outlined,
+            label: 'Racha',
+            value: '$_streak',
+            color: theme.colorScheme.error,
           ),
         ),
       ],
@@ -390,6 +436,96 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _evaluateAchievements({required bool isCorrect}) async {
+    final TriviaRepository? repository = _triviaRepository;
+    if (repository == null) return;
+
+    Future<void> tryUnlock(String id) async {
+      final TriviaAchievement? unlocked =
+          await repository.unlockAchievement(id);
+      if (unlocked != null) {
+        _achievementEvents.add(unlocked);
+      }
+    }
+
+    if (isCorrect && _correctAnswers >= 1) {
+      await tryUnlock('first_correct');
+    }
+    if (isCorrect && _streak >= 3) {
+      await tryUnlock('streak_three');
+    }
+    if (isCorrect && _streak >= 5) {
+      await tryUnlock('streak_five');
+    }
+    if (_questionsPlayed >= 10) {
+      await tryUnlock('ten_questions');
+    }
+    if (_score >= 500) {
+      await tryUnlock('score_hunter');
+    }
+  }
+
+  void _showAchievementBanner(TriviaAchievement achievement) {
+    if (!mounted) return;
+    final theme = Theme.of(context);
+    final icon = _mapIcon(achievement.iconName);
+
+    final snackBar = SnackBar(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: theme.colorScheme.primary,
+      duration: const Duration(seconds: 3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      content: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.white,
+            foregroundColor: theme.colorScheme.primary,
+            child: Icon(icon),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '¡Logro desbloqueado! 🎉',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  achievement.title,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(snackBar);
+  }
+
+  IconData _mapIcon(String name) {
+    switch (name) {
+      case 'celebration':
+        return Icons.celebration_outlined;
+      case 'bolt':
+        return Icons.bolt;
+      case 'local_fire_department':
+        return Icons.local_fire_department_outlined;
+      case 'self_improvement':
+        return Icons.self_improvement;
+      case 'military_tech':
+        return Icons.military_tech_outlined;
+      default:
+        return Icons.emoji_events_outlined;
+    }
   }
 }
 
