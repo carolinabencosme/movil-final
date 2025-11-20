@@ -468,6 +468,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonApply => 'Apply';
 
   @override
+  String get detailOfflineModeSnack =>
+      'Offline mode active. Showing locally saved data.';
+
+  @override
+  String get detailConnectionRestored => 'Connection restored.';
+
+  @override
+  String get detailOfflineBanner =>
+      'Offline mode active. Some advanced data may not be available.';
+
+  @override
+  String get detailFallbackTitle => 'Pokémon details';
+
+  @override
+  String get detailNoDataFound =>
+      'We couldn\'t find information for this Pokémon.';
+
+  @override
+  String get detailOfflineShortMessage =>
+      'Offline mode: showing saved information.';
+
+  @override
+  String get detailOfflineLongMessage =>
+      'Detailed information isn\'t available without a connection. Try again when you\'re back online.';
+
+  @override
+  String get detailFavoriteRemoveTooltip => 'Remove from favorites';
+
+  @override
+  String get detailFavoriteAddTooltip => 'Add to favorites';
+
+  @override
+  String get detailHiddenAbilityLabel => 'Hidden ability';
+
+  @override
+  String get detailMainAbilityLabel => 'Main ability';
+
+  @override
+  String get detailLoadErrorDescription =>
+      'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
+
+  @override
   String get pokedexSortSheetTitle => 'Sort by';
 
   @override
