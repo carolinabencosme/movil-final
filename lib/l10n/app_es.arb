@@ -255,6 +255,149 @@
   "@triviaFactPikachuDescription": {
     "description": "Description for the trivia fact about Pikachu replacing Clefairy."
   },
+  "triviaQuestionPikachuPrompt": "¿Quién es este Pokémon eléctrico icónico?",
+  "@triviaQuestionPikachuPrompt": {
+    "description": "Pregunta mostrada para la silueta de Pikachu."
+  },
+  "triviaQuestionBulbasaurPrompt": "Inicia la Pokédex y posee una semilla en su espalda.",
+  "@triviaQuestionBulbasaurPrompt": {
+    "description": "Pregunta mostrada para la silueta de Bulbasaur."
+  },
+  "triviaQuestionCharizardPrompt": "Dragón que escupe fuego y pertenece a Kanto.",
+  "@triviaQuestionCharizardPrompt": {
+    "description": "Pregunta mostrada para la silueta de Charizard."
+  },
+  "triviaOptionPikachu": "Pikachu",
+  "@triviaOptionPikachu": {
+    "description": "Etiqueta localizada de Pikachu utilizada en opciones y respuestas de trivia."
+  },
+  "triviaOptionRaichu": "Raichu",
+  "@triviaOptionRaichu": {
+    "description": "Etiqueta localizada de Raichu utilizada en opciones de trivia."
+  },
+  "triviaOptionPichu": "Pichu",
+  "@triviaOptionPichu": {
+    "description": "Etiqueta localizada de Pichu utilizada en opciones de trivia."
+  },
+  "triviaOptionBulbasaur": "Bulbasaur",
+  "@triviaOptionBulbasaur": {
+    "description": "Etiqueta localizada de Bulbasaur utilizada en opciones y respuestas de trivia."
+  },
+  "triviaOptionIvysaur": "Ivysaur",
+  "@triviaOptionIvysaur": {
+    "description": "Etiqueta localizada de Ivysaur utilizada en opciones de trivia."
+  },
+  "triviaOptionOddish": "Oddish",
+  "@triviaOptionOddish": {
+    "description": "Etiqueta localizada de Oddish utilizada en opciones de trivia."
+  },
+  "triviaOptionCharizard": "Charizard",
+  "@triviaOptionCharizard": {
+    "description": "Etiqueta localizada de Charizard utilizada en opciones y respuestas de trivia."
+  },
+  "triviaOptionAerodactyl": "Aerodactyl",
+  "@triviaOptionAerodactyl": {
+    "description": "Etiqueta localizada de Aerodactyl utilizada en opciones de trivia."
+  },
+  "triviaOptionCharmeleon": "Charmeleon",
+  "@triviaOptionCharmeleon": {
+    "description": "Etiqueta localizada de Charmeleon utilizada en opciones de trivia."
+  },
+  "triviaRemainingTimeLabel": "Tiempo restante",
+  "@triviaRemainingTimeLabel": {
+    "description": "Etiqueta mostrada sobre el contador regresivo de trivia."
+  },
+  "triviaRemainingSeconds": "{seconds}s",
+  "@triviaRemainingSeconds": {
+    "description": "Muestra los segundos restantes en el temporizador de trivia.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaStatsCorrectAnswers": "Respuestas correctas",
+  "@triviaStatsCorrectAnswers": {
+    "description": "Etiqueta para el contador de respuestas correctas en trivia."
+  },
+  "triviaStatsScore": "Puntuación",
+  "@triviaStatsScore": {
+    "description": "Etiqueta para el contador de puntaje en trivia."
+  },
+  "triviaStatsStreak": "Racha",
+  "@triviaStatsStreak": {
+    "description": "Etiqueta para el contador de racha en trivia."
+  },
+  "triviaPointsAbbreviation": "pts",
+  "@triviaPointsAbbreviation": {
+    "description": "Sufijo corto para puntos en la ficha de estadísticas de trivia."
+  },
+  "triviaAnswerLabel": "Tu respuesta",
+  "@triviaAnswerLabel": {
+    "description": "Etiqueta para el campo de respuesta libre de trivia."
+  },
+  "triviaCheckButtonLabel": "Comprobar",
+  "@triviaCheckButtonLabel": {
+    "description": "Etiqueta del botón que envía una respuesta de trivia."
+  },
+  "triviaSkipTooltip": "Saltar",
+  "@triviaSkipTooltip": {
+    "description": "Tooltip para el botón que salta a la siguiente pregunta de trivia."
+  },
+  "triviaRankingTooltip": "Ver ranking",
+  "@triviaRankingTooltip": {
+    "description": "Tooltip para la acción que abre la pantalla de ranking de trivia."
+  },
+  "triviaAchievementsTooltip": "Ver logros",
+  "@triviaAchievementsTooltip": {
+    "description": "Tooltip para la acción que abre la pantalla de logros de trivia."
+  },
+  "triviaSaveSessionTooltip": "Guardar sesión",
+  "@triviaSaveSessionTooltip": {
+    "description": "Tooltip para la acción que guarda la sesión de trivia en el ranking."
+  },
+  "triviaTimeoutMessage": "¡Tiempo agotado! La respuesta era {pokemon}.",
+  "@triviaTimeoutMessage": {
+    "description": "Mensaje de snackbar cuando el temporizador termina antes de responder.",
+    "placeholders": {
+      "pokemon": {
+        "type": "String"
+      }
+    }
+  },
+  "triviaCorrectMessage": "¡Correcto! Era {pokemon}.",
+  "@triviaCorrectMessage": {
+    "description": "Mensaje de snackbar cuando la respuesta de trivia es correcta.",
+    "placeholders": {
+      "pokemon": {
+        "type": "String"
+      }
+    }
+  },
+  "triviaIncorrectMessage": "Respuesta incorrecta. Inténtalo con el siguiente.",
+  "@triviaIncorrectMessage": {
+    "description": "Mensaje de snackbar cuando la respuesta de trivia es incorrecta."
+  },
+  "triviaSaveUnavailableMessage": "No se pudo acceder al ranking en este momento.",
+  "@triviaSaveUnavailableMessage": {
+    "description": "Mensaje de snackbar cuando el repositorio de ranking no está disponible."
+  },
+  "triviaSaveNoQuestionsMessage": "Juega al menos una pregunta antes de guardar.",
+  "@triviaSaveNoQuestionsMessage": {
+    "description": "Mensaje de snackbar al intentar guardar una sesión de trivia sin haber jugado."
+  },
+  "triviaGuestPlayerName": "Invitado",
+  "@triviaGuestPlayerName": {
+    "description": "Nombre de jugador por defecto cuando no hay un usuario autenticado."
+  },
+  "triviaSessionSavedMessage": "Sesión guardada en el ranking",
+  "@triviaSessionSavedMessage": {
+    "description": "Mensaje de snackbar después de guardar la sesión de trivia."
+  },
+  "triviaAchievementUnlockedTitle": "¡Logro desbloqueado! 🎉",
+  "@triviaAchievementUnlockedTitle": {
+    "description": "Encabezado para la notificación cuando se desbloquea un logro de trivia."
+  },
   "homeSectionCardSemanticLabel": "Abrir la sección {sectionName}",
   "@homeSectionCardSemanticLabel": {
     "description": "Etiqueta semántica que anuncia la navegación a una sección de inicio",

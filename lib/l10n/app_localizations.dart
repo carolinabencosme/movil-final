@@ -620,6 +620,198 @@ abstract class AppLocalizations {
   /// **'Clefairy was once planned as the star of the series before Pikachu\'s popularity took over.'**
   String get triviaFactPikachuDescription;
 
+  /// Prompt shown for the Pikachu silhouette question.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is this iconic Electric-type Pokémon?'**
+  String get triviaQuestionPikachuPrompt;
+
+  /// Prompt shown for the Bulbasaur silhouette question.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts the Pokédex and carries a seed on its back.'**
+  String get triviaQuestionBulbasaurPrompt;
+
+  /// Prompt shown for the Charizard silhouette question.
+  ///
+  /// In en, this message translates to:
+  /// **'Fire-breathing dragon from Kanto.'**
+  String get triviaQuestionCharizardPrompt;
+
+  /// Localized label for Pikachu used in trivia options and answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Pikachu'**
+  String get triviaOptionPikachu;
+
+  /// Localized label for Raichu used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Raichu'**
+  String get triviaOptionRaichu;
+
+  /// Localized label for Pichu used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Pichu'**
+  String get triviaOptionPichu;
+
+  /// Localized label for Bulbasaur used in trivia options and answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulbasaur'**
+  String get triviaOptionBulbasaur;
+
+  /// Localized label for Ivysaur used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Ivysaur'**
+  String get triviaOptionIvysaur;
+
+  /// Localized label for Oddish used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Oddish'**
+  String get triviaOptionOddish;
+
+  /// Localized label for Charizard used in trivia options and answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Charizard'**
+  String get triviaOptionCharizard;
+
+  /// Localized label for Aerodactyl used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Aerodactyl'**
+  String get triviaOptionAerodactyl;
+
+  /// Localized label for Charmeleon used in trivia options.
+  ///
+  /// In en, this message translates to:
+  /// **'Charmeleon'**
+  String get triviaOptionCharmeleon;
+
+  /// Label shown above the trivia countdown timer.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining time'**
+  String get triviaRemainingTimeLabel;
+
+  /// Displays the remaining seconds in the trivia timer.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String triviaRemainingSeconds(int seconds);
+
+  /// Label for the trivia correct answers counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct answers'**
+  String get triviaStatsCorrectAnswers;
+
+  /// Label for the trivia score counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Score'**
+  String get triviaStatsScore;
+
+  /// Label for the trivia streak counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get triviaStatsStreak;
+
+  /// Short suffix for points on the trivia stats chip.
+  ///
+  /// In en, this message translates to:
+  /// **'pts'**
+  String get triviaPointsAbbreviation;
+
+  /// Label for the trivia free-text answer input.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer'**
+  String get triviaAnswerLabel;
+
+  /// Label for the button that submits a trivia answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get triviaCheckButtonLabel;
+
+  /// Tooltip for the button that skips to the next trivia question.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get triviaSkipTooltip;
+
+  /// Tooltip for the action that opens the trivia ranking screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View ranking'**
+  String get triviaRankingTooltip;
+
+  /// Tooltip for the action that opens the trivia achievements screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View achievements'**
+  String get triviaAchievementsTooltip;
+
+  /// Tooltip for the action that saves the trivia session to the ranking.
+  ///
+  /// In en, this message translates to:
+  /// **'Save session'**
+  String get triviaSaveSessionTooltip;
+
+  /// Snackbar message shown when the trivia timer ends before answering.
+  ///
+  /// In en, this message translates to:
+  /// **'Time is up! The answer was {pokemon}.'**
+  String triviaTimeoutMessage(String pokemon);
+
+  /// Snackbar message shown when the trivia answer is correct.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct! It was {pokemon}.'**
+  String triviaCorrectMessage(String pokemon);
+
+  /// Snackbar message shown when the trivia answer is incorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect answer. Try the next one.'**
+  String get triviaIncorrectMessage;
+
+  /// Snackbar message shown when the ranking repository is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **"Couldn't access the ranking right now."**
+  String get triviaSaveUnavailableMessage;
+
+  /// Snackbar message shown when trying to save a trivia session without playing.
+  ///
+  /// In en, this message translates to:
+  /// **'Play at least one question before saving.'**
+  String get triviaSaveNoQuestionsMessage;
+
+  /// Fallback player name used when no authenticated user is present.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get triviaGuestPlayerName;
+
+  /// Snackbar message shown after saving the trivia session.
+  ///
+  /// In en, this message translates to:
+  /// **'Session saved to the ranking'**
+  String get triviaSessionSavedMessage;
+
+  /// Heading for the snackbar shown when a trivia achievement unlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievement unlocked! 🎉'**
+  String get triviaAchievementUnlockedTitle;
+
   /// Semantic label announcing navigation to a home section
   ///
   /// In en, this message translates to:

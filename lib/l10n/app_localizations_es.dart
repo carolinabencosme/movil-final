@@ -291,6 +291,115 @@ class AppLocalizationsEs extends AppLocalizations {
       'Clefairy iba a ser la estrella de la serie antes de que la popularidad de Pikachu tomara el protagonismo.';
 
   @override
+  String get triviaQuestionPikachuPrompt =>
+      '¿Quién es este Pokémon eléctrico icónico?';
+
+  @override
+  String get triviaQuestionBulbasaurPrompt =>
+      'Inicia la Pokédex y posee una semilla en su espalda.';
+
+  @override
+  String get triviaQuestionCharizardPrompt =>
+      'Dragón que escupe fuego y pertenece a Kanto.';
+
+  @override
+  String get triviaOptionPikachu => 'Pikachu';
+
+  @override
+  String get triviaOptionRaichu => 'Raichu';
+
+  @override
+  String get triviaOptionPichu => 'Pichu';
+
+  @override
+  String get triviaOptionBulbasaur => 'Bulbasaur';
+
+  @override
+  String get triviaOptionIvysaur => 'Ivysaur';
+
+  @override
+  String get triviaOptionOddish => 'Oddish';
+
+  @override
+  String get triviaOptionCharizard => 'Charizard';
+
+  @override
+  String get triviaOptionAerodactyl => 'Aerodactyl';
+
+  @override
+  String get triviaOptionCharmeleon => 'Charmeleon';
+
+  @override
+  String get triviaRemainingTimeLabel => 'Tiempo restante';
+
+  @override
+  String triviaRemainingSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get triviaStatsCorrectAnswers => 'Respuestas correctas';
+
+  @override
+  String get triviaStatsScore => 'Puntuación';
+
+  @override
+  String get triviaStatsStreak => 'Racha';
+
+  @override
+  String get triviaPointsAbbreviation => 'pts';
+
+  @override
+  String get triviaAnswerLabel => 'Tu respuesta';
+
+  @override
+  String get triviaCheckButtonLabel => 'Comprobar';
+
+  @override
+  String get triviaSkipTooltip => 'Saltar';
+
+  @override
+  String get triviaRankingTooltip => 'Ver ranking';
+
+  @override
+  String get triviaAchievementsTooltip => 'Ver logros';
+
+  @override
+  String get triviaSaveSessionTooltip => 'Guardar sesión';
+
+  @override
+  String triviaTimeoutMessage(String pokemon) {
+    return '¡Tiempo agotado! La respuesta era $pokemon.';
+  }
+
+  @override
+  String triviaCorrectMessage(String pokemon) {
+    return '¡Correcto! Era $pokemon.';
+  }
+
+  @override
+  String get triviaIncorrectMessage =>
+      'Respuesta incorrecta. Inténtalo con el siguiente.';
+
+  @override
+  String get triviaSaveUnavailableMessage =>
+      'No se pudo acceder al ranking en este momento.';
+
+  @override
+  String get triviaSaveNoQuestionsMessage =>
+      'Juega al menos una pregunta antes de guardar.';
+
+  @override
+  String get triviaGuestPlayerName => 'Invitado';
+
+  @override
+  String get triviaSessionSavedMessage => 'Sesión guardada en el ranking';
+
+  @override
+  String get triviaAchievementUnlockedTitle =>
+      '¡Logro desbloqueado! 🎉';
+
+  @override
   String homeSectionCardSemanticLabel(String sectionName) {
     return 'Abrir la sección $sectionName';
   }
