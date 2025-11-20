@@ -407,13 +407,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offline mode active. Some filters may be limited.';
 
   @override
-  String pokedexShowingCountSimple(int count) {
-    return 'Showing $count Pokémon.';
+  String pokedexShowingCountSimple(int visible) {
+    return 'Showing $visible Pokémon.';
   }
 
   @override
-  String pokedexShowingCountWithTotal(int count, int total) {
-    return 'Showing $count of $total Pokémon.';
+  String pokedexShowingCountWithTotal(int visible, int total) {
+    return 'Showing $visible of $total Pokémon.';
   }
 
   @override
