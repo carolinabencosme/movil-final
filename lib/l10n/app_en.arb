@@ -344,9 +344,29 @@
   "@detailFallbackTitle": {
     "description": "Fallback AppBar title when the Pokémon name is not available."
   },
+  "detailTabInformation": "Information",
+  "@detailTabInformation": {
+    "description": "Label for the detail tab that shows general Pokémon information."
+  },
+  "detailTabStatistics": "Statistics",
+  "@detailTabStatistics": {
+    "description": "Label for the detail tab that displays Pokémon stats."
+  },
+  "detailTabMatchups": "Matchups",
+  "@detailTabMatchups": {
+    "description": "Label for the detail tab that explains type matchups."
+  },
+  "detailTabEvolutions": "Evolutions",
+  "@detailTabEvolutions": {
+    "description": "Label for the detail tab that shows evolution chains."
+  },
+  "detailTabMoves": "Moves",
+  "@detailTabMoves": {
+    "description": "Label for the detail tab that lists Pokémon moves."
+  },
   "detailNoDataFound": "We couldn't find information for this Pokémon.",
   "@detailNoDataFound": {
-    "description": "Message shown when the detail query returns no data." 
+    "description": "Message shown when the detail query returns no data."
   },
   "detailOfflineShortMessage": "Offline mode: showing saved information.",
   "@detailOfflineShortMessage": {

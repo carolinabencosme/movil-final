@@ -1053,6 +1053,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final topMargin = 16 - (8 * progress);
+    final tabConfigs = buildDetailTabConfigs(AppLocalizations.of(context)!);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, topMargin, 16, 8),
@@ -1097,7 +1098,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           padding: const EdgeInsets.all(6),
           labelPadding: const EdgeInsets.symmetric(horizontal: 12),
           // Usa la configuración compartida de tabs (icono + etiqueta)
-          tabs: detailTabConfigs
+          tabs: tabConfigs
               .map(
                 (config) => Tab(
               icon: Icon(config.icon, size: 20),

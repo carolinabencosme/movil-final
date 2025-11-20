@@ -491,6 +491,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailFallbackTitle => 'Detalles del Pokémon';
 
   @override
+  String get detailTabInformation => 'Información';
+
+  @override
+  String get detailTabStatistics => 'Estadísticas';
+
+  @override
+  String get detailTabMatchups => 'Enfrentamientos';
+
+  @override
+  String get detailTabEvolutions => 'Evoluciones';
+
+  @override
+  String get detailTabMoves => 'Movimientos';
+
+  @override
   String get detailNoDataFound => 'No se encontró información para este Pokémon.';
 
   @override
