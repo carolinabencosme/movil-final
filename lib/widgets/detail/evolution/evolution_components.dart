@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
+
+
 
 import '../../../models/pokemon_model.dart';
 import '../../../widgets/pokemon_artwork.dart';
@@ -263,8 +265,6 @@ class LinearEvolutionChain extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -408,6 +408,7 @@ class EvolutionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     
     final borderColor = isCurrent
         ? colorScheme.primary
@@ -739,6 +740,7 @@ class _EvolutionStageCardState extends State<EvolutionStageCard>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     final borderColor = widget.isCurrent
         ? colorScheme.primary

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:pokedex/l10n/app_localizations.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/locale_controller.dart';
 import '../theme/theme_controller.dart';

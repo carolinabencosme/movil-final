@@ -1,8 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:pokedex/l10n/app_localizations.dart';
 import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
@@ -850,7 +849,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
             ),
           ),
         ),
-      );
+      ));
 
 // La tarjeta hero viaja con un Hero para transición hacia la pantalla destino
     if (!isHero) {
@@ -1079,7 +1078,7 @@ class SectionPlaceholderScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         l10n.homePlaceholderMessage(
-                          sectionName: info.title.toLowerCase(),
+                          info.title.toLowerCase(),
                         ),
                         textAlign: TextAlign.center,
                         style: Theme.of(context)

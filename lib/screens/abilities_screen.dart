@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-
+import '../l10n/app_localizations.dart';
 import '../models/ability_model.dart';
 import '../queries/get_pokemon_abilities.dart';
 import 'ability_detail_screen.dart';
@@ -330,7 +329,7 @@ class _AbilityCard extends StatelessWidget {
             ),
         ),
       ),
-    );
+    ));
   }
 }
 
