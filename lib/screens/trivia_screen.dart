@@ -67,8 +67,8 @@ class TriviaScreen extends StatelessWidget {
             const SizedBox(height: 18),
             _ActionCard(
               color: highlightColor,
-              title: 'Jugar trivia Pokémon',
-              subtitle: 'Pon a prueba tus conocimientos con siluetas y pistas rápidas.',
+              title: l10n.triviaPlayCardTitle,
+              subtitle: l10n.triviaPlayCardSubtitle,
               icon: Icons.rocket_launch,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
@@ -79,9 +79,8 @@ class TriviaScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _ActionCard(
               color: highlightColor,
-              title: 'Ver ranking Top 10',
-              subtitle:
-                  'Consulta las mejores puntuaciones y motívate a superar el marcador.',
+              title: l10n.triviaRankingCardTitle,
+              subtitle: l10n.triviaRankingCardSubtitle,
               icon: Icons.leaderboard,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
@@ -94,9 +93,8 @@ class TriviaScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _ActionCard(
               color: highlightColor,
-              title: 'Logros desbloqueados',
-              subtitle:
-                  'Revisa las insignias que has ganado durante tus sesiones de trivia.',
+              title: l10n.triviaAchievementsCardTitle,
+              subtitle: l10n.triviaAchievementsCardSubtitle,
               icon: Icons.emoji_events_outlined,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(

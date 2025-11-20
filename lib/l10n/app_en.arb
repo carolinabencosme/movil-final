@@ -207,6 +207,30 @@
   "@triviaDescription": {
     "description": "Subtitle inviting users to read trivia content."
   },
+  "triviaPlayCardTitle": "Play Pokémon trivia",
+  "@triviaPlayCardTitle": {
+    "description": "Title for the action card that opens the trivia game."
+  },
+  "triviaPlayCardSubtitle": "Test your knowledge with silhouettes and quick clues.",
+  "@triviaPlayCardSubtitle": {
+    "description": "Subtitle encouraging users to start the trivia game."
+  },
+  "triviaRankingCardTitle": "View Top 10 ranking",
+  "@triviaRankingCardTitle": {
+    "description": "Title for the action card that opens the trivia rankings screen."
+  },
+  "triviaRankingCardSubtitle": "Check high scores and get motivated to beat the board.",
+  "@triviaRankingCardSubtitle": {
+    "description": "Subtitle inviting users to explore the top scores."
+  },
+  "triviaAchievementsCardTitle": "Unlocked achievements",
+  "@triviaAchievementsCardTitle": {
+    "description": "Title for the action card that opens the trivia achievements screen."
+  },
+  "triviaAchievementsCardSubtitle": "Review the badges you've earned during trivia sessions.",
+  "@triviaAchievementsCardSubtitle": {
+    "description": "Subtitle encouraging users to review their trivia achievements."
+  },
   "triviaFactSkittyTitle": "Skitty can pair with Wailord",
   "@triviaFactSkittyTitle": {
     "description": "Title for the trivia fact about Skitty and Wailord breeding."
