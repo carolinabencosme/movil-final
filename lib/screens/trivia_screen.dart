@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'pokemon_trivia_screen.dart';
+import 'trivia_ranking_screen.dart';
 
 class TriviaScreen extends StatelessWidget {
   const TriviaScreen({
@@ -59,6 +61,33 @@ class TriviaScreen extends StatelessWidget {
               style: textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onBackground.withOpacity(0.8),
                 height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 18),
+            _ActionCard(
+              color: highlightColor,
+              title: 'Jugar trivia Pokémon',
+              subtitle: 'Pon a prueba tus conocimientos con siluetas y pistas rápidas.',
+              icon: Icons.rocket_launch,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PokemonTriviaScreen(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              color: highlightColor,
+              title: 'Ver ranking Top 10',
+              subtitle:
+                  'Consulta las mejores puntuaciones y motívate a superar el marcador.',
+              icon: Icons.leaderboard,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TriviaRankingScreen(
+                    accentColor: highlightColor,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 18),
@@ -181,6 +210,75 @@ class TriviaScreen extends StatelessWidget {
           ),
         )
         .toList();
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final Color color;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 6,
+      shadowColor: color.withOpacity(0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Icon(icon, color: Colors.white),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.arrow_forward_ios_rounded, color: color),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

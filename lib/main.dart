@@ -13,6 +13,7 @@ import 'screens/auth/auth_gate.dart';
 import 'services/auth_repository.dart';
 import 'services/favorites_repository.dart';
 import 'services/pokemon_cache_service.dart';
+import 'services/trivia_repository.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -28,6 +29,7 @@ Future<void> main() async {
   final favoritesRepository = await FavoritesRepository.init(pokemonCacheService);
   final favoritesController =
       FavoritesController(repository: favoritesRepository);
+  final triviaRepository = await TriviaRepository.init();
 
   runApp(
     MyApp(
@@ -36,6 +38,7 @@ Future<void> main() async {
       localeController: localeController,
       authController: authController,
       favoritesController: favoritesController,
+      triviaRepository: triviaRepository,
     ),
   );
 }
@@ -48,6 +51,7 @@ class MyApp extends StatefulWidget {
     required this.localeController,
     required this.authController,
     required this.favoritesController,
+    required this.triviaRepository,
   });
 
   final ValueNotifier<GraphQLClient> clientNotifier;
@@ -55,6 +59,7 @@ class MyApp extends StatefulWidget {
   final LocaleController localeController;
   final AuthController authController;
   final FavoritesController favoritesController;
+  final TriviaRepository triviaRepository;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -67,6 +72,7 @@ class _MyAppState extends State<MyApp> {
     widget.localeController.dispose();
     widget.authController.dispose();
     widget.favoritesController.dispose();
+    widget.triviaRepository.dispose();
     widget.clientNotifier.dispose();
     super.dispose();
   }
@@ -85,28 +91,31 @@ class _MyAppState extends State<MyApp> {
           notifier: authController,
           child: FavoritesScope(
             notifier: favoritesController,
-            child: AnimatedBuilder(
-              animation: Listenable.merge(
-                [themeController, widget.localeController],
+            child: TriviaRepositoryScope(
+              notifier: widget.triviaRepository,
+              child: AnimatedBuilder(
+                animation: Listenable.merge(
+                  [themeController, widget.localeController],
+                ),
+                builder: (context, _) {
+                  final localizations = AppLocalizations.of(context);
+                  return GraphQLProvider(
+                    client: widget.clientNotifier,
+                    child: MaterialApp(
+                      debugShowCheckedModeBanner: false,
+                      title: localizations?.appTitle ?? 'Pokédex GraphQL',
+                      themeMode: themeController.themeMode,
+                      theme: AppTheme.light,
+                      darkTheme: AppTheme.dark,
+                      locale: widget.localeController.locale,
+                      localizationsDelegates:
+                          AppLocalizations.localizationsDelegates,
+                      supportedLocales: AppLocalizations.supportedLocales,
+                      home: AuthGate(controller: authController),
+                    ),
+                  );
+                },
               ),
-              builder: (context, _) {
-                final localizations = AppLocalizations.of(context);
-                return GraphQLProvider(
-                  client: widget.clientNotifier,
-                  child: MaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    title: localizations?.appTitle ?? 'Pokédex GraphQL',
-                    themeMode: themeController.themeMode,
-                    theme: AppTheme.light,
-                    darkTheme: AppTheme.dark,
-                    locale: widget.localeController.locale,
-                    localizationsDelegates:
-                        AppLocalizations.localizationsDelegates,
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    home: AuthGate(controller: authController),
-                  ),
-                );
-              },
             ),
           ),
         ),
