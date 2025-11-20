@@ -143,6 +143,14 @@
   "@homeSectionFavoritesSubtitle": {
     "description": "Short description shown under the favorites card title."
   },
+  "homeSectionTriviaTitle": "Trivia",
+  "@homeSectionTriviaTitle": {
+    "description": "Title of the trivia feature card on the Home screen."
+  },
+  "homeSectionTriviaSubtitle": "Fun facts & lore highlights",
+  "@homeSectionTriviaSubtitle": {
+    "description": "Short description shown under the trivia card title."
+  },
   "homeSectionMovesTitle": "Moves",
   "@homeSectionMovesTitle": {
     "description": "Title of the moves feature card on the Home screen."
@@ -190,6 +198,38 @@
   "homeSectionLocationsSubtitle": "Regions, maps & encounter data",
   "@homeSectionLocationsSubtitle": {
     "description": "Short description shown under the locations card title."
+  },
+  "triviaTitle": "Trivia",
+  "@triviaTitle": {
+    "description": "Heading for the trivia section."
+  },
+  "triviaDescription": "Discover fun facts about Pokémon.",
+  "@triviaDescription": {
+    "description": "Subtitle inviting users to read trivia content."
+  },
+  "triviaFactSkittyTitle": "Skitty can pair with Wailord",
+  "@triviaFactSkittyTitle": {
+    "description": "Title for the trivia fact about Skitty and Wailord breeding."
+  },
+  "triviaFactSkittyDescription": "Egg groups ignore size, so tiny Skitty and massive Wailord are compatible parents.",
+  "@triviaFactSkittyDescription": {
+    "description": "Description for the trivia fact about Skitty breeding with Wailord."
+  },
+  "triviaFactDittoTitle": "Ditto mirrors Mew's stats",
+  "@triviaFactDittoTitle": {
+    "description": "Title for the trivia fact about Ditto and Mew sharing stats."
+  },
+  "triviaFactDittoDescription": "Both share identical base stats and weight in early games, inspiring fan theories.",
+  "@triviaFactDittoDescription": {
+    "description": "Description for the trivia fact about Ditto sharing stats with Mew."
+  },
+  "triviaFactPikachuTitle": "Pikachu replaced Clefairy as mascot",
+  "@triviaFactPikachuTitle": {
+    "description": "Title for the trivia fact about Pikachu becoming the series mascot."
+  },
+  "triviaFactPikachuDescription": "Clefairy was once planned as the star of the series before Pikachu's popularity took over.",
+  "@triviaFactPikachuDescription": {
+    "description": "Description for the trivia fact about Pikachu replacing Clefairy."
   },
   "homeSectionCardSemanticLabel": "Open the {sectionName} section",
   "@homeSectionCardSemanticLabel": {
