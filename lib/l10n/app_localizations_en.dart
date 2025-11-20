@@ -581,6 +581,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailTabMoves => 'Moves';
 
   @override
+  String get detailMovesTitle => 'Moves';
+
+  @override
+  String get detailMovesFilterButtonLabel => 'Filters';
+
+  @override
+  String get detailMovesResetButtonLabel => 'Reset filters';
+
+  @override
+  String detailMovesCountText(int visibleMoves, int totalMoves) {
+    return 'Showing $visibleMoves of $totalMoves moves';
+  }
+
+  @override
+  String get detailMovesCountSemanticLabel => 'Visible moves counter';
+
+  @override
   String get detailNoDataFound =>
       'We couldn\'t find information for this Pokémon.';
 

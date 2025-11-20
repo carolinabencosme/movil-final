@@ -475,6 +475,34 @@
   "@detailTabMoves": {
     "description": "Etiqueta de la pestaña de detalle que lista los movimientos del Pokémon."
   },
+  "detailMovesTitle": "Movimientos",
+  "@detailMovesTitle": {
+    "description": "Título de la sección de movimientos en la pantalla de detalles del Pokémon."
+  },
+  "detailMovesFilterButtonLabel": "Filtros",
+  "@detailMovesFilterButtonLabel": {
+    "description": "Etiqueta del botón que abre la hoja de filtros de movimientos en detalles."
+  },
+  "detailMovesResetButtonLabel": "Restablecer filtros",
+  "@detailMovesResetButtonLabel": {
+    "description": "Etiqueta del botón que limpia los filtros de movimientos en detalles."
+  },
+  "detailMovesCountText": "Mostrando {visibleMoves} de {totalMoves} movimientos",
+  "@detailMovesCountText": {
+    "description": "Texto que muestra cuántos movimientos son visibles después de filtrar.",
+    "placeholders": {
+      "visibleMoves": {
+        "type": "int"
+      },
+      "totalMoves": {
+        "type": "int"
+      }
+    }
+  },
+  "detailMovesCountSemanticLabel": "Contador de movimientos mostrados",
+  "@detailMovesCountSemanticLabel": {
+    "description": "Etiqueta semántica que describe el contador de movimientos para accesibilidad."
+  },
   "detailNoDataFound": "No se encontró información para este Pokémon.",
   "@detailNoDataFound": {
     "description": "Mensaje mostrado cuando la consulta de detalle no devuelve datos."

@@ -472,12 +472,13 @@ class _PokemonMovesTabState extends State<PokemonMovesTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final padding = responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: InfoSectionCard(
-        title: 'Movimientos',
+        title: l10n.detailMovesTitle,
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
         child: Column(
@@ -489,14 +490,14 @@ class _PokemonMovesTabState extends State<PokemonMovesTab>
                   child: FilledButton.icon(
                     onPressed: _openFilterSheet,
                     icon: const Icon(Icons.filter_alt_outlined),
-                    label: const Text('Filtros'),
+                    label: Text(l10n.detailMovesFilterButtonLabel),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _filters.isDefault ? null : _resetFilters,
-                    child: const Text('Reset filtros'),
+                    child: Text(l10n.detailMovesResetButtonLabel),
                   ),
                 ),
               ],
@@ -505,9 +506,9 @@ class _PokemonMovesTabState extends State<PokemonMovesTab>
             if (_hasCounts)
               Semantics(
                 liveRegion: true,
-                label: 'Contador de movimientos mostrados',
+                label: l10n.detailMovesCountSemanticLabel,
                 child: Text(
-                  'Mostrando $_visibleMoves de $_totalMoves movimientos',
+                  l10n.detailMovesCountText(_visibleMoves, _totalMoves),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context)
                             .colorScheme

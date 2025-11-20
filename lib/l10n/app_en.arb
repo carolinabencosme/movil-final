@@ -475,6 +475,34 @@
   "@detailTabMoves": {
     "description": "Label for the detail tab that lists Pokémon moves."
   },
+  "detailMovesTitle": "Moves",
+  "@detailMovesTitle": {
+    "description": "Section title for the moves tab on the Pokémon detail screen."
+  },
+  "detailMovesFilterButtonLabel": "Filters",
+  "@detailMovesFilterButtonLabel": {
+    "description": "Label for the button that opens the moves filter sheet on the detail screen."
+  },
+  "detailMovesResetButtonLabel": "Reset filters",
+  "@detailMovesResetButtonLabel": {
+    "description": "Label for the button that clears move filters on the detail screen."
+  },
+  "detailMovesCountText": "Showing {visibleMoves} of {totalMoves} moves",
+  "@detailMovesCountText": {
+    "description": "Text showing how many moves are visible after filtering.",
+    "placeholders": {
+      "visibleMoves": {
+        "type": "int"
+      },
+      "totalMoves": {
+        "type": "int"
+      }
+    }
+  },
+  "detailMovesCountSemanticLabel": "Visible moves counter",
+  "@detailMovesCountSemanticLabel": {
+    "description": "Semantic label describing the moves count text for accessibility."
+  },
   "detailNoDataFound": "We couldn't find information for this Pokémon.",
   "@detailNoDataFound": {
     "description": "Message shown when the detail query returns no data."
