@@ -344,9 +344,29 @@
   "@detailFallbackTitle": {
     "description": "Título de AppBar cuando el nombre del Pokémon no está disponible."
   },
+  "detailTabInformation": "Información",
+  "@detailTabInformation": {
+    "description": "Etiqueta de la pestaña de detalle que muestra información general del Pokémon."
+  },
+  "detailTabStatistics": "Estadísticas",
+  "@detailTabStatistics": {
+    "description": "Etiqueta de la pestaña de detalle que muestra las estadísticas del Pokémon."
+  },
+  "detailTabMatchups": "Enfrentamientos",
+  "@detailTabMatchups": {
+    "description": "Etiqueta de la pestaña de detalle que explica las ventajas y desventajas de tipos."
+  },
+  "detailTabEvolutions": "Evoluciones",
+  "@detailTabEvolutions": {
+    "description": "Etiqueta de la pestaña de detalle que muestra las cadenas evolutivas."
+  },
+  "detailTabMoves": "Movimientos",
+  "@detailTabMoves": {
+    "description": "Etiqueta de la pestaña de detalle que lista los movimientos del Pokémon."
+  },
   "detailNoDataFound": "No se encontró información para este Pokémon.",
   "@detailNoDataFound": {
-    "description": "Mensaje mostrado cuando la consulta de detalle no devuelve datos." 
+    "description": "Mensaje mostrado cuando la consulta de detalle no devuelve datos."
   },
   "detailOfflineShortMessage": "Modo offline: mostrando información guardada.",
   "@detailOfflineShortMessage": {

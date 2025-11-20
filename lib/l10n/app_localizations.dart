@@ -821,6 +821,11 @@ abstract class AppLocalizations {
   String get detailConnectionRestored;
   String get detailOfflineBanner;
   String get detailFallbackTitle;
+  String get detailTabInformation;
+  String get detailTabStatistics;
+  String get detailTabMatchups;
+  String get detailTabEvolutions;
+  String get detailTabMoves;
   String get detailNoDataFound;
   String get detailOfflineShortMessage;
   String get detailOfflineLongMessage;
@@ -1159,6 +1164,16 @@ class AppLocalizationsEN extends AppLocalizations {
   @override
   String get detailFallbackTitle => 'Pokémon details';
   @override
+  String get detailTabInformation => 'Information';
+  @override
+  String get detailTabStatistics => 'Statistics';
+  @override
+  String get detailTabMatchups => 'Matchups';
+  @override
+  String get detailTabEvolutions => 'Evolutions';
+  @override
+  String get detailTabMoves => 'Moves';
+  @override
   String get detailNoDataFound => 'We couldn\'t find information for this Pokémon.';
   @override
   String get detailOfflineShortMessage => 'Offline mode: showing saved information.';
@@ -1482,6 +1497,16 @@ class AppLocalizationsES extends AppLocalizations {
   String get detailOfflineBanner => 'Modo offline activo. Algunos datos avanzados pueden no estar disponibles.';
   @override
   String get detailFallbackTitle => 'Detalles del Pokémon';
+  @override
+  String get detailTabInformation => 'Información';
+  @override
+  String get detailTabStatistics => 'Estadísticas';
+  @override
+  String get detailTabMatchups => 'Enfrentamientos';
+  @override
+  String get detailTabEvolutions => 'Evoluciones';
+  @override
+  String get detailTabMoves => 'Movimientos';
   @override
   String get detailNoDataFound => 'No se encontró información para este Pokémon.';
   @override

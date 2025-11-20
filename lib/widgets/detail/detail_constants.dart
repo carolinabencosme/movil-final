@@ -1,5 +1,6 @@
 import 'dart:ui' show clampDouble;
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
 /// Emojis de tipos para representación visual de los tipos de Pokémon
 /// 
@@ -63,14 +64,29 @@ class DetailTabConfig {
   final String label;
 }
 
-/// Tab configurations
-const List<DetailTabConfig> detailTabConfigs = [
-  DetailTabConfig(icon: Icons.info_outline_rounded, label: 'Información'),
-  DetailTabConfig(icon: Icons.bar_chart_rounded, label: 'Estadísticas'),
-  DetailTabConfig(icon: Icons.auto_awesome_motion_rounded, label: 'Matchups'),
-  DetailTabConfig(icon: Icons.transform_rounded, label: 'Evoluciones'),
-  DetailTabConfig(icon: Icons.sports_martial_arts_rounded, label: 'Movimientos'),
-];
+/// Tab configurations with localized labels
+List<DetailTabConfig> buildDetailTabConfigs(AppLocalizations l10n) => [
+      DetailTabConfig(
+        icon: Icons.info_outline_rounded,
+        label: l10n.detailTabInformation,
+      ),
+      DetailTabConfig(
+        icon: Icons.bar_chart_rounded,
+        label: l10n.detailTabStatistics,
+      ),
+      DetailTabConfig(
+        icon: Icons.auto_awesome_motion_rounded,
+        label: l10n.detailTabMatchups,
+      ),
+      DetailTabConfig(
+        icon: Icons.transform_rounded,
+        label: l10n.detailTabEvolutions,
+      ),
+      DetailTabConfig(
+        icon: Icons.sports_martial_arts_rounded,
+        label: l10n.detailTabMoves,
+      ),
+    ];
 
 // Constants for evolution stage card sizing
 const double evolutionCardImageSizeNormal = 110.0;
