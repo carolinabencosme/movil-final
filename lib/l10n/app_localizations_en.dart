@@ -525,6 +525,45 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
 
   @override
+  String get detailCharacteristicHeight => 'Height';
+
+  @override
+  String get detailCharacteristicWeight => 'Weight';
+
+  @override
+  String get detailCharacteristicCategory => 'Category';
+
+  @override
+  String get detailCharacteristicNoCategory => 'No category';
+
+  @override
+  String get detailCharacteristicCatchRate => 'Catch rate';
+
+  @override
+  String get detailCharacteristicBaseExperience => 'Base experience';
+
+  @override
+  String get detailNoWeaknessInfo => 'No weakness information available.';
+
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Double weakness: damage taken is multiplied by four.';
+
+  @override
+  String get detailWeaknessLegendDouble =>
+      'Classic weakness: super effective attacks.';
+
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Moderate advantage: slightly increased damage.';
+
+  @override
+  String get detailWeaknessToggleShow => 'Show weaknesses';
+
+  @override
+  String get detailWeaknessToggleHide => 'Hide weaknesses';
+
+  @override
   String get pokedexSortSheetTitle => 'Sort by';
 
   @override

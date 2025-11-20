@@ -209,6 +209,54 @@
       }
     }
   },
+  "detailCharacteristicHeight": "Altura",
+  "@detailCharacteristicHeight": {
+    "description": "Etiqueta para la característica de altura del Pokémon."
+  },
+  "detailCharacteristicWeight": "Peso",
+  "@detailCharacteristicWeight": {
+    "description": "Etiqueta para la característica de peso del Pokémon."
+  },
+  "detailCharacteristicCategory": "Categoría",
+  "@detailCharacteristicCategory": {
+    "description": "Etiqueta para la característica de categoría del Pokémon."
+  },
+  "detailCharacteristicNoCategory": "Sin categoría",
+  "@detailCharacteristicNoCategory": {
+    "description": "Texto de respaldo cuando no hay información de categoría disponible."
+  },
+  "detailCharacteristicCatchRate": "Ratio de captura",
+  "@detailCharacteristicCatchRate": {
+    "description": "Etiqueta para la característica de ratio de captura del Pokémon."
+  },
+  "detailCharacteristicBaseExperience": "Experiencia base",
+  "@detailCharacteristicBaseExperience": {
+    "description": "Etiqueta para la característica de experiencia base del Pokémon."
+  },
+  "detailNoWeaknessInfo": "No hay información de debilidades disponible.",
+  "@detailNoWeaknessInfo": {
+    "description": "Mensaje que se muestra cuando faltan datos de debilidades."
+  },
+  "detailWeaknessLegendQuadruple": "Doble debilidad: el daño recibido se multiplica por cuatro.",
+  "@detailWeaknessLegendQuadruple": {
+    "description": "Descripción para la entrada de debilidad 4x."
+  },
+  "detailWeaknessLegendDouble": "Debilidad clásica: ataques súper efectivos.",
+  "@detailWeaknessLegendDouble": {
+    "description": "Descripción para la entrada de debilidad 2x."
+  },
+  "detailWeaknessLegendModerate": "Ventaja moderada: daño ligeramente incrementado.",
+  "@detailWeaknessLegendModerate": {
+    "description": "Descripción para la entrada de debilidad 1.5x."
+  },
+  "detailWeaknessToggleShow": "Ver debilidades",
+  "@detailWeaknessToggleShow": {
+    "description": "Texto del botón para expandir y mostrar debilidades."
+  },
+  "detailWeaknessToggleHide": "Ocultar debilidades",
+  "@detailWeaknessToggleHide": {
+    "description": "Texto del botón para contraer las debilidades."
+  },
   "homeNotificationsSemanticLabel": "Notificaciones",
   "@homeNotificationsSemanticLabel": {
     "description": "Etiqueta semántica del botón de notificaciones"

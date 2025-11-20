@@ -533,6 +533,45 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.';
 
   @override
+  String get detailCharacteristicHeight => 'Altura';
+
+  @override
+  String get detailCharacteristicWeight => 'Peso';
+
+  @override
+  String get detailCharacteristicCategory => 'Categoría';
+
+  @override
+  String get detailCharacteristicNoCategory => 'Sin categoría';
+
+  @override
+  String get detailCharacteristicCatchRate => 'Ratio de captura';
+
+  @override
+  String get detailCharacteristicBaseExperience => 'Experiencia base';
+
+  @override
+  String get detailNoWeaknessInfo => 'No hay información de debilidades disponible.';
+
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Doble debilidad: el daño recibido se multiplica por cuatro.';
+
+  @override
+  String get detailWeaknessLegendDouble =>
+      'Debilidad clásica: ataques súper efectivos.';
+
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Ventaja moderada: daño ligeramente incrementado.';
+
+  @override
+  String get detailWeaknessToggleShow => 'Ver debilidades';
+
+  @override
+  String get detailWeaknessToggleHide => 'Ocultar debilidades';
+
+  @override
   String get pokedexSortSheetTitle => 'Ordenar por';
 
   @override
