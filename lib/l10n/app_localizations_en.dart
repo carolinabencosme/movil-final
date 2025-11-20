@@ -584,7 +584,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailMovesTitle => 'Moves';
 
   @override
+  String get detailMovesFilterSheetTitle => 'Filter moves';
+
+  @override
+  String get detailMovesFilterMethodTitle => 'Learning method';
+
+  @override
+  String get detailMovesFilterMethodAll => 'All methods';
+
+  @override
+  String get detailMovesFilterMethodUnknown => 'Unknown';
+
+  @override
   String get detailMovesFilterButtonLabel => 'Filters';
+
+  @override
+  String get detailMovesFilterVersionTitle => 'Game version';
+
+  @override
+  String get detailMovesFilterVersionLabel => 'Version';
+
+  @override
+  String get detailMovesFilterAllVersions => 'All versions';
+
+  @override
+  String get detailMovesFilterOnlyWithLevel => 'Only moves with level';
 
   @override
   String get detailMovesResetButtonLabel => 'Reset filters';

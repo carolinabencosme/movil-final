@@ -597,7 +597,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailMovesTitle => 'Movimientos';
 
   @override
+  String get detailMovesFilterSheetTitle => 'Filtrar movimientos';
+
+  @override
+  String get detailMovesFilterMethodTitle => 'Método de aprendizaje';
+
+  @override
+  String get detailMovesFilterMethodAll => 'Todos los métodos';
+
+  @override
+  String get detailMovesFilterMethodUnknown => 'Desconocido';
+
+  @override
   String get detailMovesFilterButtonLabel => 'Filtros';
+
+  @override
+  String get detailMovesFilterVersionTitle => 'Versión del juego';
+
+  @override
+  String get detailMovesFilterVersionLabel => 'Versión';
+
+  @override
+  String get detailMovesFilterAllVersions => 'Todas las versiones';
+
+  @override
+  String get detailMovesFilterOnlyWithLevel => 'Solo movimientos con nivel';
 
   @override
   String get detailMovesResetButtonLabel => 'Restablecer filtros';

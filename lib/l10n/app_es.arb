@@ -479,9 +479,41 @@
   "@detailMovesTitle": {
     "description": "Título de la sección de movimientos en la pantalla de detalles del Pokémon."
   },
+  "detailMovesFilterSheetTitle": "Filtrar movimientos",
+  "@detailMovesFilterSheetTitle": {
+    "description": "Título mostrado en la parte superior de la hoja de filtros de movimientos."
+  },
+  "detailMovesFilterMethodTitle": "Método de aprendizaje",
+  "@detailMovesFilterMethodTitle": {
+    "description": "Etiqueta de la sección para filtrar movimientos por método de aprendizaje."
+  },
+  "detailMovesFilterMethodAll": "Todos los métodos",
+  "@detailMovesFilterMethodAll": {
+    "description": "Etiqueta del chip que limpia el filtro de método de aprendizaje."
+  },
+  "detailMovesFilterMethodUnknown": "Desconocido",
+  "@detailMovesFilterMethodUnknown": {
+    "description": "Etiqueta mostrada cuando se desconoce el método de aprendizaje del movimiento."
+  },
   "detailMovesFilterButtonLabel": "Filtros",
   "@detailMovesFilterButtonLabel": {
     "description": "Etiqueta del botón que abre la hoja de filtros de movimientos en detalles."
+  },
+  "detailMovesFilterVersionTitle": "Versión del juego",
+  "@detailMovesFilterVersionTitle": {
+    "description": "Etiqueta de la sección para filtrar movimientos por versión del juego."
+  },
+  "detailMovesFilterVersionLabel": "Versión",
+  "@detailMovesFilterVersionLabel": {
+    "description": "Etiqueta del campo desplegable de grupo de versiones en la hoja de filtros."
+  },
+  "detailMovesFilterAllVersions": "Todas las versiones",
+  "@detailMovesFilterAllVersions": {
+    "description": "Opción del desplegable que limpia el filtro de grupo de versiones."
+  },
+  "detailMovesFilterOnlyWithLevel": "Solo movimientos con nivel",
+  "@detailMovesFilterOnlyWithLevel": {
+    "description": "Etiqueta del interruptor para mostrar solo movimientos que incluyen un nivel requerido."
   },
   "detailMovesResetButtonLabel": "Restablecer filtros",
   "@detailMovesResetButtonLabel": {

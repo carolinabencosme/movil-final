@@ -1124,11 +1124,59 @@ abstract class AppLocalizations {
   /// **'Moves'**
   String get detailMovesTitle;
 
+  /// Title displayed at the top of the moves filter bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter moves'**
+  String get detailMovesFilterSheetTitle;
+
+  /// Section label for filtering moves by learning method.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning method'**
+  String get detailMovesFilterMethodTitle;
+
+  /// Choice chip label that clears the learning method filter.
+  ///
+  /// In en, this message translates to:
+  /// **'All methods'**
+  String get detailMovesFilterMethodAll;
+
+  /// Label shown when the move learning method is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get detailMovesFilterMethodUnknown;
+
   /// Label for the button that opens the moves filter sheet on the detail screen.
   ///
   /// In en, this message translates to:
   /// **'Filters'**
   String get detailMovesFilterButtonLabel;
+
+  /// Section label for filtering moves by game version.
+  ///
+  /// In en, this message translates to:
+  /// **'Game version'**
+  String get detailMovesFilterVersionTitle;
+
+  /// Input label for the version group dropdown inside the moves filter sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get detailMovesFilterVersionLabel;
+
+  /// Dropdown option that clears the version group filter.
+  ///
+  /// In en, this message translates to:
+  /// **'All versions'**
+  String get detailMovesFilterAllVersions;
+
+  /// Toggle label to show only moves that include a required level.
+  ///
+  /// In en, this message translates to:
+  /// **'Only moves with level'**
+  String get detailMovesFilterOnlyWithLevel;
 
   /// Label for the button that clears move filters on the detail screen.
   ///

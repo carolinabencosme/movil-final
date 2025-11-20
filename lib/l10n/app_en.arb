@@ -479,9 +479,41 @@
   "@detailMovesTitle": {
     "description": "Section title for the moves tab on the Pokémon detail screen."
   },
+  "detailMovesFilterSheetTitle": "Filter moves",
+  "@detailMovesFilterSheetTitle": {
+    "description": "Title displayed at the top of the moves filter bottom sheet."
+  },
+  "detailMovesFilterMethodTitle": "Learning method",
+  "@detailMovesFilterMethodTitle": {
+    "description": "Section label for filtering moves by learning method."
+  },
+  "detailMovesFilterMethodAll": "All methods",
+  "@detailMovesFilterMethodAll": {
+    "description": "Choice chip label that clears the learning method filter."
+  },
+  "detailMovesFilterMethodUnknown": "Unknown",
+  "@detailMovesFilterMethodUnknown": {
+    "description": "Label shown when the move learning method is unknown."
+  },
   "detailMovesFilterButtonLabel": "Filters",
   "@detailMovesFilterButtonLabel": {
     "description": "Label for the button that opens the moves filter sheet on the detail screen."
+  },
+  "detailMovesFilterVersionTitle": "Game version",
+  "@detailMovesFilterVersionTitle": {
+    "description": "Section label for filtering moves by game version."
+  },
+  "detailMovesFilterVersionLabel": "Version",
+  "@detailMovesFilterVersionLabel": {
+    "description": "Input label for the version group dropdown inside the moves filter sheet."
+  },
+  "detailMovesFilterAllVersions": "All versions",
+  "@detailMovesFilterAllVersions": {
+    "description": "Dropdown option that clears the version group filter."
+  },
+  "detailMovesFilterOnlyWithLevel": "Only moves with level",
+  "@detailMovesFilterOnlyWithLevel": {
+    "description": "Toggle label to show only moves that include a required level."
   },
   "detailMovesResetButtonLabel": "Reset filters",
   "@detailMovesResetButtonLabel": {

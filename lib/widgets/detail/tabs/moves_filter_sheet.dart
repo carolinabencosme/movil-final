@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
 import '../../../models/move_filters.dart';
 
@@ -39,9 +40,9 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
     _onlyWithLevel = widget.filters.onlyWithLevel;
   }
 
-  String _formatMethod(String method) {
+  String _formatMethod(AppLocalizations l10n, String method) {
     if (method.toLowerCase() == 'unknown') {
-      return 'Desconocido';
+      return l10n.detailMovesFilterMethodUnknown;
     }
     return widget.formatLabel(method);
   }
@@ -69,6 +70,7 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final methods = widget.availableMethods;
     final versionGroups = widget.availableVersionGroups;
 
@@ -86,14 +88,14 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Filtrar movimientos',
+                l10n.detailMovesFilterSheetTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                'Método de aprendizaje',
+                l10n.detailMovesFilterMethodTitle,
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -105,7 +107,7 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('Todos'),
+                    label: Text(l10n.detailMovesFilterMethodAll),
                     selected: _selectedMethod == null,
                     onSelected: (selected) {
                       if (!selected) return;
@@ -116,7 +118,7 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
                   ),
                   ...methods.map(
                     (method) => ChoiceChip(
-                      label: Text(_formatMethod(method)),
+                      label: Text(_formatMethod(l10n, method)),
                       selected: _selectedMethod == method,
                       onSelected: (selected) {
                         setState(() {
@@ -130,7 +132,7 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
               const SizedBox(height: 20),
               if (versionGroups.isNotEmpty) ...[
                 Text(
-                  'Versión del juego',
+                  l10n.detailMovesFilterVersionTitle,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -146,12 +148,12 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
                     ),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    labelText: 'Versión',
+                    labelText: l10n.detailMovesFilterVersionLabel,
                   ),
                   items: [
-                    const DropdownMenuItem<String?>(
+                    DropdownMenuItem<String?>(
                       value: null,
-                      child: Text('Todas las versiones'),
+                      child: Text(l10n.detailMovesFilterAllVersions),
                     ),
                     ...versionGroups.map(
                       (version) => DropdownMenuItem<String?>(
@@ -170,7 +172,7 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
               ],
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Solo movimientos con nivel'),
+                title: Text(l10n.detailMovesFilterOnlyWithLevel),
                 value: _onlyWithLevel,
                 onChanged: (value) {
                   setState(() {
@@ -184,14 +186,14 @@ class _MovesFilterSheetState extends State<MovesFilterSheet> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _handleReset,
-                      child: const Text('Reset'),
+                      child: Text(l10n.detailMovesResetButtonLabel),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
                       onPressed: _handleApply,
-                      child: const Text('Aplicar'),
+                      child: Text(l10n.commonApply),
                     ),
                   ),
                 ],
