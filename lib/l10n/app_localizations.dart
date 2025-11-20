@@ -1118,6 +1118,36 @@ abstract class AppLocalizations {
   /// **'Moves'**
   String get detailTabMoves;
 
+  /// Section title for the moves tab on the Pokémon detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves'**
+  String get detailMovesTitle;
+
+  /// Label for the button that opens the moves filter sheet on the detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get detailMovesFilterButtonLabel;
+
+  /// Label for the button that clears move filters on the detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get detailMovesResetButtonLabel;
+
+  /// Text showing how many moves are visible after filtering.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {visibleMoves} of {totalMoves} moves'**
+  String detailMovesCountText(int visibleMoves, int totalMoves);
+
+  /// Semantic label describing the moves count text for accessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible moves counter'**
+  String get detailMovesCountSemanticLabel;
+
   /// Message shown when the detail query returns no data.
   ///
   /// In en, this message translates to:
