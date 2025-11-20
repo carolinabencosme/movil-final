@@ -1774,7 +1774,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
           context,
           isFavorite: isFavorite,
           onToggleFavorite: () {
-            favoritesController.toggleFavorite(widget.pokemon.id);
+            favoritesController.toggleFavorite(widget.pokemon);
           },
         );
       },

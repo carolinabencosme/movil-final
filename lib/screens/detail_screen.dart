@@ -230,61 +230,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // HeroTag estable incluso si entra por id o name
-    final resolvedHeroTag =
-        heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
-
-    // Nombre e imagen para el “skeleton/preview” antes del GraphQL completo
-    final previewName = initialPokemon != null
-        ? _capitalize(initialPokemon!.name)
-        : (pokemonName != null ? _capitalize(pokemonName!) : null);
-    final previewImage = initialPokemon?.imageUrl ?? '';
-
-    // Filtro dinámico para GraphQL (por id o por name)
-    final where = pokemonId != null
-        ? <String, dynamic>{'id': {'_eq': pokemonId}}
-        : <String, dynamic>{'name': {'_eq': pokemonName!}};
-
-    return Query(
-      options: QueryOptions(
-        document: gql(getPokemonDetailsQuery),
-        fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
-        errorPolicy: ErrorPolicy.all, // permite datos parciales
-        variables: {
-          'where': where,
-          'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
-        },
-      ),
-      builder: (result, {fetchMore, refetch}) {
-          // Logs de depuración (solo en debug)
-          if (kDebugMode) {
-            debugPrint(
-                '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
-            debugPrint(
-                '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
-            if (result.hasException) {
-              debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
-            }
-          }
-
-          // Tomamos el primer Pokémon que cumpla el where
-          final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
-          final data = (pokemonList?.isNotEmpty ?? false)
-              ? pokemonList?.first as Map<String, dynamic>?
-              : null;
-
-          // 1) Carga inicial sin cache → vista de loading personalizada
-          if (result.isLoading && data == null) {
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(previewName ?? 'Detalles del Pokémon'),
-              ),
-              body: LoadingDetailView(
-                heroTag: resolvedHeroTag,
-                imageUrl: previewImage,
-                name: previewName,
-              ),
-            );
     final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
 
@@ -344,46 +289,6 @@ class _DetailScreenState extends State<DetailScreen> {
           }
         }
 
-          // 2) Error sin datos → estado de error con retry
-          if (result.hasException && data == null) {
-            debugPrint(
-              'Error al cargar el detalle del Pokémon: ${result.exception}',
-            );
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(previewName ?? 'Detalles del Pokémon'),
-              ),
-              body: PokemonDetailErrorView(
-                onRetry: refetch,
-              ),
-            );
-          }
-
-          // 3) Sin datos (no encontró) → mensaje + botón para reintentar
-          if (data == null) {
-            if (kDebugMode) {
-              debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
-            }
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(previewName ?? 'Detalles del Pokémon'),
-              ),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('No se encontró información para este Pokémon.'),
-                    const SizedBox(height: 16),
-                    if (refetch != null)
-                      ElevatedButton(
-                        onPressed: () async {
-                          await refetch();
-                        },
-                        child: const Text('Reintentar'),
-                      ),
-                  ],
-                ),
-              ),
         final bool offlineError =
             !_hasConnection || result.exception?.linkException != null;
         if (offlineError || (!result.isLoading && !result.hasException)) {
@@ -449,6 +354,7 @@ class _DetailScreenState extends State<DetailScreen> {
             offlineError ? favoriteTarget : null;
 
         Widget body;
+        PokemonDetail? pokemon;
 
         if (result.isLoading && data == null && offlinePokemon == null) {
           body = LoadingDetailView(
@@ -504,63 +410,40 @@ class _DetailScreenState extends State<DetailScreen> {
               result.data?['type_efficacy'] as List<dynamic>? ?? [];
 
           // Parse a modelo de dominio completo
-          final pokemon = PokemonDetail.fromGraphQL(
+          pokemon = PokemonDetail.fromGraphQL(
             data,
             typeEfficacies: typeEfficacies,
           );
 
-          // Pull-to-refresh que llama refetch()
-          final favoritesController = FavoritesScope.maybeOf(context);
-
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(_capitalize(pokemon.name)),
-              actions: [
-                if (favoritesController != null)
-                  _FavoriteToggleAction(
-                    pokemonId: pokemon.id,
-                    favoritesController: favoritesController,
-                  ),
-              ],
-            ),
-            body: RefreshIndicator(
-              onRefresh: () async {
-                await refetch?.call();
-              },
-              child: SafeArea(
-                child: Builder(
-                  builder: (context) {
-                    return Stack(
-                      children: [
-                        // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
-                        PokemonDetailBody(
-                          pokemon: pokemon,
-                          resolvedHeroTag: resolvedHeroTag,
-                          capitalize: _capitalize,
+          body = RefreshIndicator(
+            onRefresh: () async {
+              await refetch?.call();
+            },
+            child: SafeArea(
+              child: Builder(
+                builder: (context) {
+                  return Stack(
+                    children: [
+                      // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
+                      PokemonDetailBody(
+                        pokemon: pokemon,
+                        resolvedHeroTag: resolvedHeroTag,
+                        capitalize: _capitalize,
+                      ),
+                      // Barra de progreso fina cuando llegan actualizaciones
+                      if (result.isLoading)
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: LinearProgressIndicator(minHeight: 2),
                         ),
-                        // Barra de progreso fina cuando llegan actualizaciones
-                        if (result.isLoading)
-                          const Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            child: LinearProgressIndicator(minHeight: 2),
-                          ),
-                      ],
-                    );
-                  },
-                ),
+                    ],
+                  );
+                },
               ),
             ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _showShareDialog(context, pokemon),
-              icon: const Icon(Icons.share),
-              label: const Text('Compartir'),
-              tooltip: 'Compartir Pokémon Card',
-            ),
           );
-        },
-      );
         }
 
         final ThemeData theme = Theme.of(context);
@@ -582,6 +465,14 @@ class _DetailScreenState extends State<DetailScreen> {
             ],
           ),
           body: finalBody,
+          floatingActionButton: pokemon != null
+              ? FloatingActionButton.extended(
+                  onPressed: () => _showShareDialog(context, pokemon!),
+                  icon: const Icon(Icons.share),
+                  label: const Text('Compartir'),
+                  tooltip: 'Compartir Pokémon Card',
+                )
+              : null,
         );
       },
     );
@@ -1360,6 +1251,7 @@ class _FavoriteToggleAction extends StatelessWidget {
       animation: favoritesController,
       builder: (context, _) {
         final isFavorite = favoritesController.isFavorite(pokemonId);
+        final cachedPokemon = favoritesController.getCachedPokemon(pokemonId);
         return IconButton(
           tooltip: isFavorite
               ? 'Quitar de favoritos'
@@ -1368,9 +1260,11 @@ class _FavoriteToggleAction extends StatelessWidget {
             isFavorite ? Icons.favorite : Icons.favorite_border,
             color: isFavorite ? theme.colorScheme.error : null,
           ),
-          onPressed: () {
-            favoritesController.toggleFavorite(pokemonId);
-          },
+          onPressed: cachedPokemon != null
+              ? () {
+                  favoritesController.toggleFavorite(cachedPokemon);
+                }
+              : null,
         );
       },
     );
