@@ -160,6 +160,18 @@ abstract class AppLocalizations {
   String get pokedexFiltersClear;
   String get commonCancel;
   String get commonApply;
+  String get detailOfflineModeSnack;
+  String get detailConnectionRestored;
+  String get detailOfflineBanner;
+  String get detailFallbackTitle;
+  String get detailNoDataFound;
+  String get detailOfflineShortMessage;
+  String get detailOfflineLongMessage;
+  String get detailFavoriteRemoveTooltip;
+  String get detailFavoriteAddTooltip;
+  String get detailHiddenAbilityLabel;
+  String get detailMainAbilityLabel;
+  String get detailLoadErrorDescription;
   String get pokedexSortSheetTitle;
   String get pokedexSortCriteriaLabel;
   String get pokedexSortDirectionLabel;
@@ -451,6 +463,30 @@ class AppLocalizationsEN extends AppLocalizations {
   String get commonCancel => 'Cancel';
   @override
   String get commonApply => 'Apply';
+  @override
+  String get detailOfflineModeSnack => 'Offline mode active. Showing locally saved data.';
+  @override
+  String get detailConnectionRestored => 'Connection restored.';
+  @override
+  String get detailOfflineBanner => 'Offline mode active. Some advanced data may not be available.';
+  @override
+  String get detailFallbackTitle => 'Pokémon details';
+  @override
+  String get detailNoDataFound => 'We couldn\'t find information for this Pokémon.';
+  @override
+  String get detailOfflineShortMessage => 'Offline mode: showing saved information.';
+  @override
+  String get detailOfflineLongMessage => 'Detailed information isn\'t available without a connection. Try again when you\'re back online.';
+  @override
+  String get detailFavoriteRemoveTooltip => 'Remove from favorites';
+  @override
+  String get detailFavoriteAddTooltip => 'Add to favorites';
+  @override
+  String get detailHiddenAbilityLabel => 'Hidden ability';
+  @override
+  String get detailMainAbilityLabel => 'Main ability';
+  @override
+  String get detailLoadErrorDescription => 'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
   @override
   String get pokedexSortSheetTitle => 'Sort by';
   @override
@@ -751,6 +787,30 @@ class AppLocalizationsES extends AppLocalizations {
   String get commonCancel => 'Cancelar';
   @override
   String get commonApply => 'Aplicar';
+  @override
+  String get detailOfflineModeSnack => 'Modo offline activo. Mostrando datos guardados localmente.';
+  @override
+  String get detailConnectionRestored => 'Conexión restablecida.';
+  @override
+  String get detailOfflineBanner => 'Modo offline activo. Algunos datos avanzados pueden no estar disponibles.';
+  @override
+  String get detailFallbackTitle => 'Detalles del Pokémon';
+  @override
+  String get detailNoDataFound => 'No se encontró información para este Pokémon.';
+  @override
+  String get detailOfflineShortMessage => 'Modo offline: mostrando información guardada.';
+  @override
+  String get detailOfflineLongMessage => 'La información detallada no está disponible sin conexión. Intenta nuevamente cuando recuperes internet.';
+  @override
+  String get detailFavoriteRemoveTooltip => 'Quitar de favoritos';
+  @override
+  String get detailFavoriteAddTooltip => 'Agregar a favoritos';
+  @override
+  String get detailHiddenAbilityLabel => 'Habilidad oculta';
+  @override
+  String get detailMainAbilityLabel => 'Habilidad principal';
+  @override
+  String get detailLoadErrorDescription => 'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.';
   @override
   String get pokedexSortSheetTitle => 'Ordenar por';
   @override

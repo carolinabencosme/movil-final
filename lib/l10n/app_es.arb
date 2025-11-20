@@ -328,6 +328,54 @@
   "pokedexFiltersClear": "Limpiar",
   "commonCancel": "Cancelar",
   "commonApply": "Aplicar",
+  "detailOfflineModeSnack": "Modo offline activo. Mostrando datos guardados localmente.",
+  "@detailOfflineModeSnack": {
+    "description": "Mensaje del SnackBar cuando el detalle entra en modo offline."
+  },
+  "detailConnectionRestored": "Conexión restablecida.",
+  "@detailConnectionRestored": {
+    "description": "Mensaje del SnackBar cuando vuelve la conectividad en el detalle."
+  },
+  "detailOfflineBanner": "Modo offline activo. Algunos datos avanzados pueden no estar disponibles.",
+  "@detailOfflineBanner": {
+    "description": "Texto del banner superior en el detalle cuando no hay conexión."
+  },
+  "detailFallbackTitle": "Detalles del Pokémon",
+  "@detailFallbackTitle": {
+    "description": "Título de AppBar cuando el nombre del Pokémon no está disponible."
+  },
+  "detailNoDataFound": "No se encontró información para este Pokémon.",
+  "@detailNoDataFound": {
+    "description": "Mensaje mostrado cuando la consulta de detalle no devuelve datos." 
+  },
+  "detailOfflineShortMessage": "Modo offline: mostrando información guardada.",
+  "@detailOfflineShortMessage": {
+    "description": "Mensaje corto en la vista offline indicando que se usan datos cacheados."
+  },
+  "detailOfflineLongMessage": "La información detallada no está disponible sin conexión. Intenta nuevamente cuando recuperes internet.",
+  "@detailOfflineLongMessage": {
+    "description": "Explicación extendida en la vista offline sobre la falta de datos." 
+  },
+  "detailFavoriteRemoveTooltip": "Quitar de favoritos",
+  "@detailFavoriteRemoveTooltip": {
+    "description": "Tooltip del botón de favoritos cuando ya está marcado."
+  },
+  "detailFavoriteAddTooltip": "Agregar a favoritos",
+  "@detailFavoriteAddTooltip": {
+    "description": "Tooltip del botón de favoritos cuando aún no está marcado."
+  },
+  "detailHiddenAbilityLabel": "Habilidad oculta",
+  "@detailHiddenAbilityLabel": {
+    "description": "Etiqueta para la habilidad oculta del Pokémon en el encabezado."
+  },
+  "detailMainAbilityLabel": "Habilidad principal",
+  "@detailMainAbilityLabel": {
+    "description": "Etiqueta para la habilidad principal del Pokémon en el encabezado."
+  },
+  "detailLoadErrorDescription": "No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.",
+  "@detailLoadErrorDescription": {
+    "description": "Mensaje de error mostrado cuando el detalle no se puede cargar." 
+  },
   "pokedexSortSheetTitle": "Ordenar por",
   "pokedexSortCriteriaLabel": "Criterio",
   "pokedexSortDirectionLabel": "Dirección",
