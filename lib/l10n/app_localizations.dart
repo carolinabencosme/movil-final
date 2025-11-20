@@ -524,18 +524,6 @@ abstract class AppLocalizations {
   /// **'Regions, maps & encounter data'**
   String get homeSectionLocationsSubtitle;
 
-  /// Semantic label announcing navigation to a home section
-  ///
-  /// In en, this message translates to:
-  /// **'Open the {sectionName} section'**
-  String homeSectionCardSemanticLabel(String sectionName);
-
-  /// Semantic hint for opening a home section
-  ///
-  /// In en, this message translates to:
-  /// **'Double tap to navigate to {sectionName}'**
-  String homeSectionCardSemanticHint(String sectionName);
-
   /// Semantic label for the notifications button
   ///
   /// In en, this message translates to:
@@ -572,11 +560,6 @@ abstract class AppLocalizations {
   /// **'Opens app settings'**
   String get homeSettingsSemanticHint;
 
-  /// Message shown for sections that are not ready yet.
-  ///
-  /// In en, this message translates to:
-  /// **'The {sectionName} section will be available soon.'**
-  String homePlaceholderMessage(String sectionName);
 
   /// No description provided for @abilitiesDefaultTitle.
   ///
@@ -686,30 +669,6 @@ abstract class AppLocalizations {
   /// **'Weight'**
   String get pokedexSortWeightLabel;
 
-  /// Semantic label announcing navigation to an ability detail
-  ///
-  /// In en, this message translates to:
-  /// **'Open ability {abilityName}'**
-  String abilityCardSemanticLabel(String abilityName);
-
-  /// Semantic hint for opening an ability
-  ///
-  /// In en, this message translates to:
-  /// **'Double tap to see details for {abilityName}'**
-  String abilityCardSemanticHint(String abilityName);
-
-  /// Semantic label for navigating to a Pokémon entry
-  ///
-  /// In en, this message translates to:
-  /// **'Open {pokemonName} details'**
-  String pokedexCardSemanticLabel(String pokemonName);
-
-  /// Semantic hint for navigating to a Pokémon entry
-  ///
-  /// In en, this message translates to:
-  /// **'Double tap to view {pokemonName} in the Pokédex'**
-  String pokedexCardSemanticHint(String pokemonName);
-
   /// No description provided for @pokedexSearchHint.
   ///
   /// In en, this message translates to:
@@ -752,18 +711,6 @@ abstract class AppLocalizations {
   /// **'Offline mode active. Some filters may be limited.'**
   String get pokedexOfflineFiltersLimited;
 
-  /// No description provided for @pokedexShowingCountSimple.
-  ///
-  /// In en, this message translates to:
-  /// **'Showing {count} Pokémon.'**
-  String pokedexShowingCountSimple(int count);
-
-  /// No description provided for @pokedexShowingCountWithTotal.
-  ///
-  /// In en, this message translates to:
-  /// **'Showing {count} of {total} Pokémon.'**
-  String pokedexShowingCountWithTotal(int count, int total);
-
   /// No description provided for @pokedexActiveFilters.
   ///
   /// In en, this message translates to:
@@ -781,42 +728,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'descending'**
   String get pokedexSortDirectionDescending;
-
-  /// No description provided for @pokedexFilterSummarySearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search: {query}'**
-  String pokedexFilterSummarySearch(String query);
-
-  /// No description provided for @pokedexFilterSummaryType.
-  ///
-  /// In en, this message translates to:
-  /// **'Type: {value}'**
-  String pokedexFilterSummaryType(String value);
-
-  /// No description provided for @pokedexFilterSummaryGeneration.
-  ///
-  /// In en, this message translates to:
-  /// **'Generation: {value}'**
-  String pokedexFilterSummaryGeneration(String value);
-
-  /// No description provided for @pokedexFilterSummaryRegion.
-  ///
-  /// In en, this message translates to:
-  /// **'Region: {value}'**
-  String pokedexFilterSummaryRegion(String value);
-
-  /// No description provided for @pokedexFilterSummaryShape.
-  ///
-  /// In en, this message translates to:
-  /// **'Form: {value}'**
-  String pokedexFilterSummaryShape(String value);
-
-  /// No description provided for @pokedexFilterSummarySort.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort: {value}'**
-  String pokedexFilterSummarySort(String value);
 
   /// No description provided for @pokedexNoResults.
   ///
