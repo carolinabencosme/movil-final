@@ -998,6 +998,18 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get pokedexFiltersCloseTooltip;
 
+  /// No description provided for @pokedexFiltersCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get pokedexFiltersCancel;
+
+  /// No description provided for @pokedexFiltersApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get pokedexFiltersApply;
+
   /// No description provided for @pokedexFilterSectionTypes.
   ///
   /// In en, this message translates to:
@@ -1261,6 +1273,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Direction'**
   String get pokedexSortDirectionLabel;
+
+  /// No description provided for @pokedexSortAscendingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get pokedexSortAscendingLabel;
+
+  /// No description provided for @pokedexSortDescendingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get pokedexSortDescendingLabel;
 
   /// No description provided for @pokedexSortAscendingShort.
   ///

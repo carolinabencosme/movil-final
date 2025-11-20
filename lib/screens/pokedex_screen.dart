@@ -26,17 +26,17 @@ enum PokemonSortOption { id, name, height, weight }
 
 /// Extensión para PokemonSortOption que proporciona etiquetas y campos de GraphQL
 extension PokemonSortOptionX on PokemonSortOption {
-  /// Etiqueta en español para mostrar al usuario
-  String get label {
+  /// Etiqueta localizada para mostrar al usuario
+  String label(AppLocalizations l10n) {
     switch (this) {
       case PokemonSortOption.id:
-        return 'Número';
+        return l10n.pokedexSortNumberLabel;
       case PokemonSortOption.name:
-        return 'Nombre';
+        return l10n.pokedexSortNameLabel;
       case PokemonSortOption.height:
-        return 'Altura';
+        return l10n.pokedexSortHeightLabel;
       case PokemonSortOption.weight:
-        return 'Peso';
+        return l10n.pokedexSortWeightLabel;
     }
   }
 
@@ -997,6 +997,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final accentColor = widget.accentColor;
     final heroTag = widget.heroTag;
 
@@ -1069,7 +1070,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
             clipBehavior: Clip.none,
             children: [
               IconButton(
-                tooltip: 'Filtros',
+                tooltip: localizations.pokedexFiltersTooltip,
                 onPressed: _filtersLoading ? null : _openFiltersSheet,
                 icon: const Icon(Icons.tune),
               ),
@@ -1148,9 +1149,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
       final directionText = _isSortAscending
           ? localizations.pokedexSortDirectionAscending
           : localizations.pokedexSortDirectionDescending;
+      final sortLabel = '${_sortOption.label(localizations)} $directionText';
       details.add(
         localizations.pokedexFilterSummarySort(
-          '${_sortOption.label} $directionText',
+          sortLabel,
         ),
       );
     }
@@ -1192,13 +1194,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   List<Widget> _buildActiveFilterChipWidgets(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     final chips = <Widget>[];
     final searchValue = _debouncedSearch.trim();
     if (searchValue.isNotEmpty) {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Búsqueda: $searchValue',
+          label: l10n.pokedexFilterSummarySearch(searchValue),
           onDeleted: _clearSearchFilter,
         ),
       );
@@ -1207,7 +1210,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Tipo: ${_capitalize(type)}',
+          label: l10n.pokedexFilterSummaryType(_capitalize(type)),
           onDeleted: () => _removeTypeFilter(type),
         ),
       );
@@ -1216,7 +1219,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Generación: ${_formatGenerationLabel(generation)}',
+          label: l10n
+              .pokedexFilterSummaryGeneration(_formatGenerationLabel(generation)),
           onDeleted: () => _removeGenerationFilter(generation),
         ),
       );
@@ -1225,7 +1229,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Región: ${_formatRegionLabel(region)}',
+          label: l10n.pokedexFilterSummaryRegion(_formatRegionLabel(region)),
           onDeleted: () => _removeRegionFilter(region),
         ),
       );
@@ -1234,17 +1238,19 @@ class _PokedexScreenState extends State<PokedexScreen> {
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Forma: ${_formatShapeLabel(shape)}',
+          label: l10n.pokedexFilterSummaryShape(_formatShapeLabel(shape)),
           onDeleted: () => _removeShapeFilter(shape),
         ),
       );
     }
     if (!_isDefaultSort) {
-      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
+      final directionText =
+          _isSortAscending ? l10n.pokedexSortDirectionAscending : l10n.pokedexSortDirectionDescending;
       chips.add(
         _buildActiveChip(
           theme: theme,
-          label: 'Orden: ${_sortOption.label} $directionText',
+          label: l10n
+              .pokedexFilterSummarySort('${_sortOption.label(l10n)} $directionText'),
           onDeleted: _resetSortSelection,
         ),
       );
@@ -1279,6 +1285,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildPokemonList() {
+    final localizations = AppLocalizations.of(context)!;
     if (_isInitialLoading && _pokemons.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -1291,8 +1298,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
 
     if (_pokemons.isEmpty) {
-      return const Center(
-        child: Text('No se encontraron Pokémon para los filtros actuales.'),
+      return Center(
+        child: Text(localizations.pokedexNoResults),
       );
     }
 
@@ -1443,7 +1450,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Filtros',
+                      l10n.pokedexFiltersTitle,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1451,7 +1458,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    tooltip: 'Cerrar',
+                    tooltip: l10n.pokedexFiltersCloseTooltip,
                     onPressed: _handleCancel,
                   ),
                 ],
@@ -1470,45 +1477,41 @@ class _FiltersSheetState extends State<FiltersSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSortSection(theme),
+                        _buildSortSection(theme, l10n),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Tipos',
+                          title: l10n.pokedexFilterSectionTypes,
                           options: widget.availableTypes,
                           selectedValues: _selectedTypes,
                           labelBuilder: _capitalize,
-                          emptyMessage:
-                              'No hay tipos disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterEmptyTypes,
                           onToggle: _toggleType,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Generaciones',
+                          title: l10n.pokedexFilterSectionGenerations,
                           options: widget.availableGenerations,
                           selectedValues: _selectedGenerations,
                           labelBuilder: _formatGenerationLabel,
-                          emptyMessage:
-                              'No hay generaciones disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterEmptyGenerations,
                           onToggle: _toggleGeneration,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Regiones',
+                          title: l10n.pokedexFilterSectionRegions,
                           options: widget.availableRegions,
                           selectedValues: _selectedRegions,
                           labelBuilder: _formatRegionLabel,
-                          emptyMessage:
-                              'No hay regiones disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterEmptyRegions,
                           onToggle: _toggleRegion,
                         ),
                         const SizedBox(height: 24),
                         _buildFilterSection(
-                          title: 'Formas',
+                          title: l10n.pokedexFilterSectionShapes,
                           options: widget.availableShapes,
                           selectedValues: _selectedShapes,
                           labelBuilder: _formatShapeLabel,
-                          emptyMessage:
-                              'No hay formas disponibles por ahora.',
+                          emptyMessage: l10n.pokedexFilterEmptyShapes,
                           onToggle: _toggleShape,
                         ),
                       ],
@@ -1529,21 +1532,21 @@ class _FiltersSheetState extends State<FiltersSheet> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: hasSelection ? _handleClear : null,
-                      child: const Text('Limpiar'),
+                      child: Text(l10n.pokedexFiltersClear),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextButton(
                       onPressed: _handleCancel,
-                      child: const Text('Cancelar'),
+                      child: Text(l10n.pokedexFiltersCancel),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton(
                       onPressed: _handleApply,
-                      child: const Text('Aplicar'),
+                      child: Text(l10n.pokedexFiltersApply),
                     ),
                   ),
                 ],
@@ -1555,13 +1558,15 @@ class _FiltersSheetState extends State<FiltersSheet> {
     );
   }
 
-  Widget _buildSortSection(ThemeData theme) {
-    final directionLabel = _isSortAscending ? 'Ascendente' : 'Descendente';
+  Widget _buildSortSection(ThemeData theme, AppLocalizations l10n) {
+    final directionLabel = _isSortAscending
+        ? l10n.pokedexSortAscendingLabel
+        : l10n.pokedexSortDescendingLabel;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ordenar por',
+          l10n.pokedexSortSheetTitle,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -1573,15 +1578,15 @@ class _FiltersSheetState extends State<FiltersSheet> {
             Expanded(
               child: DropdownButtonFormField<PokemonSortOption>(
                 value: _sortOption,
-                decoration: const InputDecoration(
-                  labelText: 'Criterio',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.pokedexSortCriteriaLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 items: PokemonSortOption.values
                     .map(
                       (option) => DropdownMenuItem<PokemonSortOption>(
                         value: option,
-                        child: Text(option.label),
+                        child: Text(option.label(l10n)),
                       ),
                     )
                     .toList(),
@@ -1603,7 +1608,11 @@ class _FiltersSheetState extends State<FiltersSheet> {
                       ? Icons.arrow_upward_rounded
                       : Icons.arrow_downward_rounded,
                 ),
-                label: Text(_isSortAscending ? 'Asc' : 'Desc'),
+                label: Text(
+                  _isSortAscending
+                      ? l10n.pokedexSortAscendingShort
+                      : l10n.pokedexSortDescendingShort,
+                ),
               ),
             ),
           ],
