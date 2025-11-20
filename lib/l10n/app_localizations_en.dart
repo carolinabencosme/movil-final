@@ -251,7 +251,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Egg groups ignore size, so tiny Skitty and massive Wailord are compatible parents.';
 
   @override
-  String get triviaFactDittoTitle => "Ditto mirrors Mew's stats";
+  String get triviaFactDittoTitle => 'Ditto mirrors Mew\'s stats';
 
   @override
   String get triviaFactDittoDescription =>
@@ -262,7 +262,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get triviaFactPikachuDescription =>
-      "Clefairy was once planned as the star of the series before Pikachu's popularity took over.";
+      'Clefairy was once planned as the star of the series before Pikachu\'s popularity took over.';
 
   @override
   String homeSectionCardSemanticLabel(String sectionName) {

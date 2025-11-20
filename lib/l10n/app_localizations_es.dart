@@ -262,7 +262,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ambos comparten estadísticas base y peso en los primeros juegos, alimentando teorías de fans.';
 
   @override
-  String get triviaFactPikachuTitle => 'Pikachu reemplazó a Clefairy como mascota';
+  String get triviaFactPikachuTitle =>
+      'Pikachu reemplazó a Clefairy como mascota';
 
   @override
   String get triviaFactPikachuDescription =>
