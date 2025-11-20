@@ -231,6 +231,72 @@
   "@triviaAchievementsCardSubtitle": {
     "description": "Subtitle encouraging users to review their trivia achievements."
   },
+  "triviaAchievementsTitle": "Logros de trivia",
+  "@triviaAchievementsTitle": {
+    "description": "App bar title for the trivia achievements screen."
+  },
+  "triviaAchievementsEmpty": "Aún no hay logros disponibles.",
+  "@triviaAchievementsEmpty": {
+    "description": "Empty-state message shown when no achievements are present."
+  },
+  "triviaAchievementsLockedLabel": "Pendiente",
+  "@triviaAchievementsLockedLabel": {
+    "description": "Label shown for achievements that are still locked."
+  },
+  "triviaAchievementsUnlockedLabel": "Desbloqueado · {date}",
+  "@triviaAchievementsUnlockedLabel": {
+    "description": "Label shown for achievements that have been unlocked, including the unlock date.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "12 ene, 14:30"
+      }
+    }
+  },
+  "triviaAchievementsDateFormat": "d MMM, HH:mm",
+  "@triviaAchievementsDateFormat": {
+    "description": "Date format used to display the unlock timestamp in the achievements screen."
+  },
+  "triviaAchievementFirstCorrectTitle": "Primer acierto",
+  "@triviaAchievementFirstCorrectTitle": {
+    "description": "Title for the achievement granted after answering the first trivia question correctly."
+  },
+  "triviaAchievementFirstCorrectDescription": "Responde correctamente tu primera pregunta.",
+  "@triviaAchievementFirstCorrectDescription": {
+    "description": "Description for the first correct answer achievement."
+  },
+  "triviaAchievementStreakThreeTitle": "Racha x3",
+  "@triviaAchievementStreakThreeTitle": {
+    "description": "Title for the achievement earned after three consecutive correct answers."
+  },
+  "triviaAchievementStreakThreeDescription": "Encadena tres respuestas correctas seguidas.",
+  "@triviaAchievementStreakThreeDescription": {
+    "description": "Description for the three-answer streak achievement."
+  },
+  "triviaAchievementStreakFiveTitle": "Leyenda viviente",
+  "@triviaAchievementStreakFiveTitle": {
+    "description": "Title for the achievement earned after five consecutive correct answers."
+  },
+  "triviaAchievementStreakFiveDescription": "Llega a cinco respuestas correctas seguidas.",
+  "@triviaAchievementStreakFiveDescription": {
+    "description": "Description for the five-answer streak achievement."
+  },
+  "triviaAchievementTenQuestionsTitle": "Aguante de entrenador",
+  "@triviaAchievementTenQuestionsTitle": {
+    "description": "Title for the achievement granted after playing ten questions in one session."
+  },
+  "triviaAchievementTenQuestionsDescription": "Juega diez preguntas en una sesión.",
+  "@triviaAchievementTenQuestionsDescription": {
+    "description": "Description for the ten-questions-per-session achievement."
+  },
+  "triviaAchievementScoreHunterTitle": "Cazador de puntos",
+  "@triviaAchievementScoreHunterTitle": {
+    "description": "Title for the achievement granted after scoring 500 points in one session."
+  },
+  "triviaAchievementScoreHunterDescription": "Alcanza 500 puntos en una misma sesión.",
+  "@triviaAchievementScoreHunterDescription": {
+    "description": "Description for the 500-point achievement."
+  },
   "triviaFactSkittyTitle": "Skitty puede criar con Wailord",
   "@triviaFactSkittyTitle": {
     "description": "Title for the trivia fact about Skitty and Wailord breeding."

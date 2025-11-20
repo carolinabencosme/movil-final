@@ -584,6 +584,96 @@ abstract class AppLocalizations {
   /// **"Review the badges you've earned during trivia sessions."**
   String get triviaAchievementsCardSubtitle;
 
+  /// App bar title for the trivia achievements screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Trivia achievements'**
+  String get triviaAchievementsTitle;
+
+  /// Empty-state message shown when no achievements are present.
+  ///
+  /// In en, this message translates to:
+  /// **'No achievements available yet.'**
+  String get triviaAchievementsEmpty;
+
+  /// Label shown for achievements that are still locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get triviaAchievementsLockedLabel;
+
+  /// Label shown for achievements that have been unlocked, including the unlock date.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked · {date}'**
+  String triviaAchievementsUnlockedLabel(String date);
+
+  /// Date format used to display the unlock timestamp in the achievements screen.
+  ///
+  /// In en, this message translates to:
+  /// **'d MMM, HH:mm'**
+  String get triviaAchievementsDateFormat;
+
+  /// Title for the achievement granted after answering the first trivia question correctly.
+  ///
+  /// In en, this message translates to:
+  /// **'First correct answer'**
+  String get triviaAchievementFirstCorrectTitle;
+
+  /// Description for the first correct answer achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer your first trivia question correctly.'**
+  String get triviaAchievementFirstCorrectDescription;
+
+  /// Title for the achievement earned after three consecutive correct answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak x3'**
+  String get triviaAchievementStreakThreeTitle;
+
+  /// Description for the three-answer streak achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Chain three correct answers in a row.'**
+  String get triviaAchievementStreakThreeDescription;
+
+  /// Title for the achievement earned after five consecutive correct answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Living legend'**
+  String get triviaAchievementStreakFiveTitle;
+
+  /// Description for the five-answer streak achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach five correct answers in a row.'**
+  String get triviaAchievementStreakFiveDescription;
+
+  /// Title for the achievement granted after playing ten questions in one session.
+  ///
+  /// In en, this message translates to:
+  /// **'Trainer endurance'**
+  String get triviaAchievementTenQuestionsTitle;
+
+  /// Description for the ten-questions-per-session achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Play ten questions in a single session.'**
+  String get triviaAchievementTenQuestionsDescription;
+
+  /// Title for the achievement granted after scoring 500 points in one session.
+  ///
+  /// In en, this message translates to:
+  /// **'Point hunter'**
+  String get triviaAchievementScoreHunterTitle;
+
+  /// Description for the 500-point achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach 500 points in a single session.'**
+  String get triviaAchievementScoreHunterDescription;
+
   /// Title for the trivia fact about Skitty and Wailord breeding.
   ///
   /// In en, this message translates to:
