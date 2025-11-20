@@ -1,0 +1,490 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'Pokédex GraphQL';
+
+  @override
+  String get homeHeaderTitle => 'ProDex';
+
+  @override
+  String get homeQuickAccessGymLeaders => 'Gym Leaders & Elite 4';
+
+  @override
+  String get homeQuickAccessNatures => 'Natures';
+
+  @override
+  String get homeQuickAccessMatchups => 'Type Matchups';
+
+  @override
+  String get homeQuickAccessEvolutionChains => 'Evolution Chains';
+
+  @override
+  String get homeQuickAccessBreeding => 'Breeding Guides';
+
+  @override
+  String get homeQuickAccessBerries => 'Berry Farming';
+
+  @override
+  String get authLoginTitle => 'Welcome back';
+
+  @override
+  String get authLoginSubtitle =>
+      'Sign in with your email to access your Pokédex.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authEmailHint => 'ash.ketchum@poke.app';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authLoginButton => 'Sign in';
+
+  @override
+  String get authNoAccountCta => 'Don\'t have an account? Sign up';
+
+  @override
+  String get authLoginError => 'We couldn\'t sign you in. Try again.';
+
+  @override
+  String get authEmailRequired => 'Enter your email.';
+
+  @override
+  String get authEmailInvalid => 'Invalid email format.';
+
+  @override
+  String get authPasswordRequired => 'Enter your password.';
+
+  @override
+  String get authPasswordLength =>
+      'The password must contain at least 6 characters.';
+
+  @override
+  String get authRegisterTitle => 'Create your account';
+
+  @override
+  String get authRegisterSubtitle =>
+      'Register to sync your teams and collections across all your devices.';
+
+  @override
+  String get authCreateAccountButton => 'Create account';
+
+  @override
+  String get authAlreadyHaveAccountCta => 'Already have an account? Sign in';
+
+  @override
+  String get authRegisterError =>
+      'We couldn\'t create your account. Try again later.';
+
+  @override
+  String get authSecurePasswordRequired => 'Enter a secure password.';
+
+  @override
+  String get authPasswordStrongSuggestion =>
+      'Use letters and numbers for a stronger password.';
+
+  @override
+  String get authConfirmPasswordLabel => 'Confirm password';
+
+  @override
+  String get authPasswordsMismatch => 'Passwords do not match.';
+
+  @override
+  String get authSnackbarNoUser => 'User information is not available.';
+
+  @override
+  String get authProfileUpdated => 'Profile updated successfully.';
+
+  @override
+  String get authProfileUpdateError => 'We couldn\'t update the profile.';
+
+  @override
+  String get authUpdateInfoTitle => 'Update your login information.';
+
+  @override
+  String get authUpdateInfoSubtitle =>
+      'Change your email address or set a new password. Changes apply immediately.';
+
+  @override
+  String get authNewPasswordOptionalLabel => 'New password (optional)';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsAccountSection => 'Account';
+
+  @override
+  String get settingsNoEmail => 'No email on record';
+
+  @override
+  String get settingsEditProfile => 'Edit profile';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsAppearanceSection => 'Appearance';
+
+  @override
+  String get settingsLanguageSection => 'Language';
+
+  @override
+  String get settingsLanguageLabel => 'App language';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageSpanish => 'Spanish';
+
+  @override
+  String get settingsLightModeTitle => 'Light mode';
+
+  @override
+  String get settingsLightModeSubtitle =>
+      'Bright backgrounds for well-lit environments.';
+
+  @override
+  String get settingsDarkModeTitle => 'Dark mode';
+
+  @override
+  String get settingsDarkModeSubtitle =>
+      'Dim the lights to reduce eye strain at night.';
+
+  @override
+  String get settingsInfo =>
+      'Settings save immediately and affect the entire app.';
+
+  @override
+  String get settingsSaveChanges => 'Save changes';
+
+  @override
+  String get favoritesDefaultTitle => 'Favorites';
+
+  @override
+  String get favoritesEmptyTitle => 'You don\'t have favorite Pokémon yet.';
+
+  @override
+  String get favoritesEmptySubtitle =>
+      'Explore the Pokédex and tap the heart to save your favorites.';
+
+  @override
+  String get homeQuickAccessTitle => 'Quick access';
+
+  @override
+  String get homeSectionPokedexTitle => 'Pokédex';
+
+  @override
+  String get homeSectionPokedexSubtitle => 'National index & regional dexes';
+
+  @override
+  String get homeSectionFavoritesTitle => 'Favorites';
+
+  @override
+  String get homeSectionFavoritesSubtitle => 'Your saved Pokémon';
+
+  @override
+  String get homeSectionMovesTitle => 'Moves';
+
+  @override
+  String get homeSectionMovesSubtitle => 'Damage, effects & contest data';
+
+  @override
+  String get homeSectionTmTitle => 'TM';
+
+  @override
+  String get homeSectionTmSubtitle => 'Machines & tutors by generation';
+
+  @override
+  String get homeSectionAbilitiesTitle => 'Abilities';
+
+  @override
+  String get homeSectionAbilitiesSubtitle => 'Passive effects & triggers';
+
+  @override
+  String get homeSectionChecklistsTitle => 'Checklists';
+
+  @override
+  String get homeSectionChecklistsSubtitle => 'Track goals & collections';
+
+  @override
+  String get homeSectionPartiesTitle => 'Parties';
+
+  @override
+  String get homeSectionPartiesSubtitle => 'Build teams & strategies';
+
+  @override
+  String get homeSectionLocationsTitle => 'Locations';
+
+  @override
+  String get homeSectionLocationsSubtitle => 'Regions, maps & encounter data';
+
+  @override
+  String homeSectionCardSemanticLabel(String sectionName) {
+    return 'Open the $sectionName section';
+  }
+
+  @override
+  String homeSectionCardSemanticHint(String sectionName) {
+    return 'Double tap to navigate to $sectionName';
+  }
+
+  @override
+  String get homeNotificationsSemanticLabel => 'Notifications';
+
+  @override
+  String get homeNotificationsSemanticHint => 'Opens notifications and alerts';
+
+  @override
+  String get homeStoreSemanticLabel => 'Shop';
+
+  @override
+  String get homeStoreSemanticHint => 'Opens the in-app shop';
+
+  @override
+  String get homeSettingsSemanticLabel => 'Settings';
+
+  @override
+  String get homeSettingsSemanticHint => 'Opens app settings';
+
+  @override
+  String homePlaceholderMessage(String sectionName) {
+    return 'The $sectionName section will be available soon.';
+  }
+
+  @override
+  String get abilitiesDefaultTitle => 'Abilities';
+
+  @override
+  String get abilitiesSearchHint => 'Search ability…';
+
+  @override
+  String get abilitiesErrorMessage => 'We couldn’t load the abilities.';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get abilitiesEmptySearch =>
+      'We couldn’t find abilities that match your search.';
+
+  @override
+  String get abilitiesEmptyGeneral => 'No abilities are available right now.';
+
+  @override
+  String get abilitiesNoDescription => 'No description available.';
+
+  @override
+  String get abilitiesNoShortDescription => 'No short description available.';
+
+  @override
+  String get abilitiesFullDescriptionTitle => 'Full description';
+
+  @override
+  String get abilitiesFullDescriptionFallback =>
+      'No description is available in this language.';
+
+  @override
+  String get abilitiesPokemonSectionTitle => 'Pokémon with this ability';
+
+  @override
+  String get abilitiesPokemonEmpty =>
+      'We couldn’t find Pokémon associated with this ability.';
+
+  @override
+  String get abilitiesPokemonErrorTitle =>
+      'We couldn’t load the associated Pokémon.';
+
+  @override
+  String get abilitiesPokemonErrorDescription =>
+      'Try again to see which Pokémon have this ability.';
+
+  @override
+  String get pokedexSortNumberLabel => 'Number';
+
+  @override
+  String get pokedexSortNameLabel => 'Name';
+
+  @override
+  String get pokedexSortHeightLabel => 'Height';
+
+  @override
+  String get pokedexSortWeightLabel => 'Weight';
+
+  @override
+  String abilityCardSemanticLabel(String abilityName) {
+    return 'Open ability $abilityName';
+  }
+
+  @override
+  String abilityCardSemanticHint(String abilityName) {
+    return 'Double tap to see details for $abilityName';
+  }
+
+  @override
+  String pokedexCardSemanticLabel(String pokemonName) {
+    return 'Open $pokemonName details';
+  }
+
+  @override
+  String pokedexCardSemanticHint(String pokemonName) {
+    return 'Double tap to view $pokemonName in the Pokédex';
+  }
+
+  @override
+  String get pokedexSearchHint => 'Search by name or number';
+
+  @override
+  String get pokedexFiltersTooltip => 'Filters';
+
+  @override
+  String get pokedexOfflineNoCache =>
+      'No connection and no cached data available.';
+
+  @override
+  String get pokedexOfflineBanner =>
+      'Offline mode active. Showing cached data.';
+
+  @override
+  String get pokedexConnectionRestored => 'Connection restored.';
+
+  @override
+  String get pokedexLoadError => 'We couldn’t load the Pokédex. Try again.';
+
+  @override
+  String get pokedexOfflineFiltersLimited =>
+      'Offline mode active. Some filters may be limited.';
+
+  @override
+  String pokedexShowingCountSimple(int count) {
+    return 'Showing $count Pokémon.';
+  }
+
+  @override
+  String pokedexShowingCountWithTotal(int count, int total) {
+    return 'Showing $count of $total Pokémon.';
+  }
+
+  @override
+  String pokedexActiveFilters(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count active filters',
+      one: '$count active filter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pokedexSortDirectionAscending => 'ascending';
+
+  @override
+  String get pokedexSortDirectionDescending => 'descending';
+
+  @override
+  String pokedexFilterSummarySearch(String query) {
+    return 'Search: $query';
+  }
+
+  @override
+  String pokedexFilterSummaryType(String value) {
+    return 'Type: $value';
+  }
+
+  @override
+  String pokedexFilterSummaryGeneration(String value) {
+    return 'Generation: $value';
+  }
+
+  @override
+  String pokedexFilterSummaryRegion(String value) {
+    return 'Region: $value';
+  }
+
+  @override
+  String pokedexFilterSummaryShape(String value) {
+    return 'Form: $value';
+  }
+
+  @override
+  String pokedexFilterSummarySort(String value) {
+    return 'Sort: $value';
+  }
+
+  @override
+  String get pokedexNoResults => 'No Pokémon match the current filters.';
+
+  @override
+  String get pokedexFiltersTitle => 'Filters';
+
+  @override
+  String get pokedexFiltersCloseTooltip => 'Close';
+
+  @override
+  String get pokedexFilterSectionTypes => 'Types';
+
+  @override
+  String get pokedexFilterSectionGenerations => 'Generations';
+
+  @override
+  String get pokedexFilterSectionRegions => 'Regions';
+
+  @override
+  String get pokedexFilterSectionShapes => 'Shapes';
+
+  @override
+  String get pokedexFilterEmptyTypes => 'No types available right now.';
+
+  @override
+  String get pokedexFilterEmptyGenerations =>
+      'No generations available right now.';
+
+  @override
+  String get pokedexFilterEmptyRegions => 'No regions available right now.';
+
+  @override
+  String get pokedexFilterEmptyShapes => 'No shapes available right now.';
+
+  @override
+  String get pokedexFiltersClear => 'Clear';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonApply => 'Apply';
+
+  @override
+  String get pokedexSortSheetTitle => 'Sort by';
+
+  @override
+  String get pokedexSortCriteriaLabel => 'Criterion';
+
+  @override
+  String get pokedexSortDirectionLabel => 'Direction';
+
+  @override
+  String get pokedexSortAscendingShort => 'Asc';
+
+  @override
+  String get pokedexSortDescendingShort => 'Desc';
+
+  @override
+  String get favoritesRemoveAction => 'Remove from favorites';
+
+  @override
+  String get favoritesAddAction => 'Add to favorites';
+}
