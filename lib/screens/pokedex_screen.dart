@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
+import 'package:graphql/client.dart' show LinkException;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../controllers/favorites_controller.dart';
@@ -11,6 +14,9 @@ import '../queries/get_pokemon_types.dart';
 import '../theme/pokemon_type_colors.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
+import '../services/pokemon_cache_service.dart';
+
+part 'favorites_screen.dart';
 
 /// Opciones de ordenamiento para la lista de Pokémon
 /// Permite ordenar por número, nombre, altura o peso
@@ -123,6 +129,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   
   /// Lista de Pokémon actualmente mostrados
   List<PokemonListItem> _pokemons = <PokemonListItem>[];
+
+  FavoritesController? _favoritesController;
   
   /// Opciones disponibles para los filtros
   List<String> _availableTypes = <String>[];
@@ -136,6 +144,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _hasMore = true;                // Indica si hay más resultados para cargar
   bool _filtersLoading = false;        // Indica si se están cargando los filtros
   bool _didInit = false;               // Indica si ya se inicializó
+  bool _isOfflineMode = false;         // Indica si los datos provienen de caché local
+  bool _offlineSnackShown = false;     // Controla los avisos de modo offline
+  final Connectivity _connectivity = Connectivity();
 
   /// Métricas y estado de la UI
   int _totalCount = 0;                 // Total de Pokémon que coinciden con filtros
@@ -148,6 +159,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool get _isDefaultSort =>
       _sortOption == kDefaultSortOption && _isSortAscending == kDefaultSortAscending;
 
+  PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
+
   @override
   void initState() {
     super.initState();
@@ -157,6 +170,19 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final FavoritesController? favoritesController =
+        FavoritesScope.maybeOf(context);
+    if (!identical(_favoritesController, favoritesController)) {
+      _favoritesController?.removeListener(_onFavoritesChanged);
+      _favoritesController = favoritesController;
+      _favoritesController?.addListener(_onFavoritesChanged);
+      if (favoritesController != null && _pokemons.isNotEmpty) {
+        setState(() {
+          _pokemons =
+              favoritesController.applyFavoriteStateToList(_pokemons);
+        });
+      }
+    }
     if (_didInit) return;
     _didInit = true;
     _fetchFilters();
@@ -169,6 +195,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _scrollController.dispose();
     _searchController.dispose();
     _debounce?.cancel();
+    _favoritesController?.removeListener(_onFavoritesChanged);
     super.dispose();
   }
 
@@ -182,6 +209,22 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       _fetchPokemons();
     }
+  }
+
+  void _onFavoritesChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    final FavoritesController? favoritesController = _favoritesController;
+    if (favoritesController == null) {
+      return;
+    }
+
+    setState(() {
+      _pokemons =
+          favoritesController.applyFavoriteStateToList(_pokemons);
+    });
   }
 
   /// Maneja cambios en el campo de búsqueda con debounce
@@ -387,7 +430,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   /// - Cuántos cargar (30 por página)
   /// - Desde dónde cargar (offset basado en lista actual)
   /// - Qué filtros aplicar
-  /// 
+  ///
   /// [reset]: Si es true, reinicia la lista desde el inicio
   Future<void> _fetchPokemons({bool reset = false}) async {
     if (_isFetching || (!_hasMore && !reset)) {
@@ -403,19 +446,43 @@ class _PokedexScreenState extends State<PokedexScreen> {
       }
     });
 
-    final client = GraphQLProvider.of(context).value;
+    final List<ConnectivityResult> connectivityResults =
+        await _connectivity.checkConnectivity();
+    final bool hasConnection = connectivityResults.any(
+      (ConnectivityResult result) => result != ConnectivityResult.none,
+    );
+
     final searchValue = _debouncedSearch.toLowerCase();
     final numericId = int.tryParse(_debouncedSearch);
-    
+
     // Determina qué filtros aplicar en la query
     final includeIdFilter = numericId != null && _debouncedSearch.isNotEmpty;
     final includeTypeFilter = _selectedTypes.isNotEmpty;
     final includeGenerationFilter = _selectedGenerations.isNotEmpty;
     final includeRegionFilter = _selectedRegions.isNotEmpty;
     final includeShapeFilter = _selectedShapes.isNotEmpty;
-    
+
     // No paginar cuando se busca por ID (solo devuelve un resultado)
     final shouldPaginate = !includeIdFilter;
+
+    if (!hasConnection) {
+      final bool handledOffline = await _loadPokemonsFromCache(
+        reset: reset,
+        offset: offset,
+        shouldPaginateOverride: shouldPaginate,
+        showOfflineMessage: true,
+      );
+
+      if (!handledOffline && mounted) {
+        setState(() {
+          _isFetching = false;
+          _isInitialLoading = false;
+        });
+      }
+      return;
+    }
+
+    final client = GraphQLProvider.of(context).value;
 
     final document = gql(
       buildPokemonListQuery(
@@ -468,6 +535,16 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
       final operationException = result.exception;
       if (result.hasException && operationException != null) {
+        final bool offlineHandled = operationException.linkException != null &&
+            await _loadPokemonsFromCache(
+              reset: reset,
+              offset: offset,
+              shouldPaginateOverride: shouldPaginate,
+              showOfflineMessage: true,
+            );
+        if (offlineHandled) {
+          return;
+        }
         _handleError(operationException, reset: reset);
         return;
       }
@@ -482,22 +559,49 @@ class _PokedexScreenState extends State<PokedexScreen> {
       final count =
           (aggregateMap?['aggregate'] as Map<String, dynamic>?)?['count'] as int?;
 
+      final FavoritesController? favoritesController =
+          _favoritesController ?? FavoritesScope.maybeOf(context);
+      List<PokemonListItem> resolvedResults = results;
+      await _pokemonCacheService.cachePokemons(resolvedResults);
+      if (favoritesController != null && results.isNotEmpty) {
+        resolvedResults =
+            favoritesController.applyFavoriteStateToList(results);
+        await favoritesController.cachePokemons(resolvedResults);
+      }
+
+      List<PokemonListItem> updatedPokemons;
+      if (reset) {
+        updatedPokemons = resolvedResults;
+      } else if (shouldPaginate) {
+        updatedPokemons = <PokemonListItem>[..._pokemons, ...resolvedResults];
+      } else {
+        updatedPokemons = resolvedResults;
+      }
+
+      if (favoritesController != null && updatedPokemons.isNotEmpty) {
+        updatedPokemons =
+            favoritesController.applyFavoriteStateToList(updatedPokemons);
+      }
+
       setState(() {
-        if (reset) {
-          _pokemons = results;
-        } else {
-          _pokemons = shouldPaginate
-              ? <PokemonListItem>[..._pokemons, ...results]
-              : results;
-        }
+        _pokemons = updatedPokemons;
         _totalCount = count ?? _pokemons.length;
         final expectedTotal = _totalCount == 0 ? _pokemons.length : _totalCount;
         _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
         _errorMessage = '';
       });
+      _updateOfflineMode(false);
     } catch (error) {
       if (!mounted) return;
-      _handleGenericError(error, reset: reset);
+      final bool offlineHandled = await _handleOfflineFallback(
+        reset: reset,
+        offset: offset,
+        shouldPaginate: shouldPaginate,
+        error: error,
+      );
+      if (!offlineHandled) {
+        _handleGenericError(error, reset: reset);
+      }
     } finally {
       if (!mounted) return;
       setState(() {
@@ -507,7 +611,200 @@ class _PokedexScreenState extends State<PokedexScreen> {
     }
   }
 
+  Future<bool> _handleOfflineFallback({
+    required bool reset,
+    required int offset,
+    required bool shouldPaginate,
+    required Object error,
+  }) async {
+    final bool isLinkError =
+        (error is OperationException && error.linkException != null) ||
+            error is LinkException;
+    final bool isSocketError =
+        error.toString().toLowerCase().contains('socketexception');
+    if (!isLinkError && !isSocketError) {
+      return false;
+    }
+
+    return _loadPokemonsFromCache(
+      reset: reset,
+      offset: offset,
+      shouldPaginateOverride: shouldPaginate,
+      showOfflineMessage: true,
+    );
+  }
+
+  Future<bool> _loadPokemonsFromCache({
+    required bool reset,
+    required int offset,
+    bool? shouldPaginateOverride,
+    bool showOfflineMessage = false,
+  }) async {
+    final List<PokemonListItem> cached =
+        _pokemonCacheService.getAll(sorted: false);
+    if (cached.isEmpty) {
+      _updateOfflineMode(true, showMessage: showOfflineMessage);
+      if (!mounted) {
+        return false;
+      }
+      setState(() {
+        if (reset) {
+          _pokemons = <PokemonListItem>[];
+          _hasMore = false;
+        }
+        _errorMessage =
+            'Sin conexión y sin datos guardados localmente.';
+        _isFetching = false;
+        _isInitialLoading = false;
+      });
+      return false;
+    }
+
+    final List<PokemonListItem> filtered = _applyOfflineFilters(cached);
+    final int? numericId = int.tryParse(_debouncedSearch);
+    final bool includeIdFilter =
+        numericId != null && _debouncedSearch.isNotEmpty;
+    final bool shouldPaginate =
+        shouldPaginateOverride ?? !includeIdFilter;
+
+    final FavoritesController? favoritesController =
+        _favoritesController ?? FavoritesScope.maybeOf(context);
+
+    List<PokemonListItem> page;
+    if (shouldPaginate) {
+      page = filtered.skip(offset).take(_pageSize).toList();
+    } else {
+      page = filtered;
+    }
+
+    if (favoritesController != null && page.isNotEmpty) {
+      page = favoritesController.applyFavoriteStateToList(page);
+    }
+
+    if (!mounted) {
+      return true;
+    }
+
+    setState(() {
+      if (reset || !shouldPaginate) {
+        _pokemons = page;
+      } else {
+        _pokemons = <PokemonListItem>[..._pokemons, ...page];
+      }
+      _totalCount = filtered.length;
+      final int expectedTotal =
+          shouldPaginate ? filtered.length : page.length;
+      _hasMore = shouldPaginate && _pokemons.length < expectedTotal;
+      _errorMessage = '';
+      _isFetching = false;
+      _isInitialLoading = false;
+    });
+
+    _updateOfflineMode(true, showMessage: showOfflineMessage);
+    return true;
+  }
+
+  List<PokemonListItem> _applyOfflineFilters(List<PokemonListItem> source) {
+    Iterable<PokemonListItem> filtered = source;
+    final String trimmedSearch = _debouncedSearch.trim().toLowerCase();
+    final int? numericId = int.tryParse(_debouncedSearch.trim());
+
+    if (trimmedSearch.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final bool matchesName =
+            pokemon.name.toLowerCase().contains(trimmedSearch);
+        final bool matchesId = numericId != null && pokemon.id == numericId;
+        return matchesName || matchesId;
+      });
+    }
+
+    if (_selectedTypes.isNotEmpty) {
+      final Set<String> selectedTypesLower =
+          _selectedTypes.map((type) => type.toLowerCase()).toSet();
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final Set<String> pokemonTypes =
+            pokemon.types.map((type) => type.toLowerCase()).toSet();
+        return selectedTypesLower
+            .every((String type) => pokemonTypes.contains(type));
+      });
+    }
+
+    if (_selectedGenerations.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? generation = pokemon.generationName;
+        return generation != null &&
+            _selectedGenerations.contains(generation);
+      });
+    }
+
+    if (_selectedRegions.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? region = pokemon.regionName;
+        return region != null && _selectedRegions.contains(region);
+      });
+    }
+
+    if (_selectedShapes.isNotEmpty) {
+      filtered = filtered.where((PokemonListItem pokemon) {
+        final String? shape = pokemon.shapeName;
+        return shape != null && _selectedShapes.contains(shape);
+      });
+    }
+
+    List<PokemonListItem> sorted = filtered.toList();
+    sorted.sort(_comparePokemonsForOffline);
+    if (!_isSortAscending) {
+      sorted = sorted.reversed.toList();
+    }
+    return sorted;
+  }
+
+  int _comparePokemonsForOffline(
+    PokemonListItem a,
+    PokemonListItem b,
+  ) {
+    switch (_sortOption) {
+      case PokemonSortOption.id:
+        return a.id.compareTo(b.id);
+      case PokemonSortOption.name:
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      case PokemonSortOption.height:
+        return (a.height ?? 0).compareTo(b.height ?? 0);
+      case PokemonSortOption.weight:
+        return (a.weight ?? 0).compareTo(b.weight ?? 0);
+    }
+    return 0;
+  }
+
+  void _updateOfflineMode(bool offline, {bool showMessage = false}) {
+    if (!mounted) return;
+    if (offline) {
+      if (!_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = true;
+        });
+      }
+      if (showMessage && !_offlineSnackShown) {
+        _showTransientMessage(
+          'Modo offline activo. Mostrando datos guardados localmente.',
+        );
+        _offlineSnackShown = true;
+      }
+    } else {
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      if (_offlineSnackShown) {
+        _showTransientMessage('Conexión restablecida.');
+        _offlineSnackShown = false;
+      }
+    }
+  }
+
   void _handleError(OperationException exception, {required bool reset}) {
+    _updateOfflineMode(false);
     final rawMessage = exception.graphqlErrors.isNotEmpty
         ? exception.graphqlErrors.first.message
         : exception.linkException?.originalException?.toString() ??
@@ -529,6 +826,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   void _handleGenericError(Object error, {required bool reset}) {
+    _updateOfflineMode(false);
     final rawMessage = error.toString();
     final friendlyMessage = rawMessage.isEmpty
         ? 'No se pudo cargar la Pokédex. Intenta nuevamente.'
@@ -715,6 +1013,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
           _buildSearchBar(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
+          if (_isOfflineMode) _buildOfflineBanner(theme),
           _buildSummary(theme),
           Expanded(child: _buildPokemonList()),
         ],
@@ -776,6 +1075,40 @@ class _PokedexScreenState extends State<PokedexScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner(ThemeData theme) {
+    final Color backgroundColor =
+        theme.colorScheme.tertiaryContainer.withOpacity(0.85);
+    final Color foregroundColor = theme.colorScheme.onTertiaryContainer;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              color: foregroundColor,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Modo offline activo. Algunos filtros pueden ser limitados.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1402,14 +1735,18 @@ class _PokemonListTile extends StatefulWidget {
 class _PokemonListTileState extends State<_PokemonListTile> {
   bool _isPressed = false;
 
-  void _handleTap(BuildContext context, String heroTag) {
+  void _handleTap(
+    BuildContext context,
+    String heroTag,
+    PokemonListItem pokemon,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DetailScreen(
-          pokemonId: widget.pokemon.id,
-          pokemonName: widget.pokemon.name,
-          initialPokemon: widget.pokemon,
+          pokemonId: pokemon.id,
+          pokemonName: pokemon.name,
+          initialPokemon: pokemon,
           heroTag: heroTag,
         ),
       ),
@@ -1450,7 +1787,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
     VoidCallback? onToggleFavorite,
   }) {
     final theme = Theme.of(context);
-    final pokemon = widget.pokemon;
+    final l10n = AppLocalizations.of(context)!;
+    final favoritesController = FavoritesScope.of(context);
+    final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
     final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
@@ -1468,6 +1807,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
     final displayTypes =
         pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
     final statBadges = pokemon.stats.take(3).toList();
+
+    final semanticLabel = l10n.pokedexCardSemanticLabel(pokemon.name);
+    final semanticHint = l10n.pokedexCardSemanticHint(pokemon.name);
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 180),
@@ -1487,24 +1829,28 @@ class _PokemonListTileState extends State<_PokemonListTile> {
             ),
           ],
         ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(28),
-          clipBehavior: Clip.antiAlias,
-          child: InkResponse(
-            containedInkWell: true,
-            highlightShape: BoxShape.rectangle,
+        child: Semantics(
+          button: true,
+          label: semanticLabel,
+          hint: semanticHint,
+          child: Material(
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(28),
-            onHighlightChanged: (value) {
-              if (_isPressed != value) {
-                setState(() => _isPressed = value);
-              }
-            },
-            onTap: () => _handleTap(context, heroTag),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -14,
+            clipBehavior: Clip.antiAlias,
+            child: InkResponse(
+              containedInkWell: true,
+              highlightShape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(28),
+              onHighlightChanged: (value) {
+                if (_isPressed != value) {
+                  setState(() => _isPressed = value);
+                }
+              },
+              onTap: () => _handleTap(context, heroTag, pokemon),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -14,
                   right: -14,
                   child: Icon(
                     Icons.catching_pokemon,
@@ -1512,33 +1858,33 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                     color: textColor.withOpacity(0.12),
                   ),
                 ),
-                if (onToggleFavorite != null)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.35),
-                        borderRadius: BorderRadius.circular(18),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.22),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      splashRadius: 22,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        pokemon.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color:
+                            pokemon.isFavorite ? Colors.redAccent : Colors.white,
                       ),
-                      child: IconButton(
-                        constraints:
-                            const BoxConstraints(minHeight: 36, minWidth: 36),
-                        padding: const EdgeInsets.all(4),
-                        visualDensity: VisualDensity.compact,
-                        splashRadius: 20,
-                        iconSize: 20,
-                        color: Colors.white,
-                        tooltip: isFavorite
-                            ? 'Quitar de favoritos'
-                            : 'Marcar como favorito',
-                        icon: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                        ),
-                        onPressed: onToggleFavorite,
-                      ),
+                      tooltip: pokemon.isFavorite
+                          ? 'Quitar de favoritos'
+                          : 'Agregar a favoritos',
+                      onPressed: () async {
+                        await favoritesController.toggleFavorite(pokemon);
+                      },
                     ),
                   ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
@@ -1630,7 +1976,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

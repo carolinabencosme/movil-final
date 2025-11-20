@@ -1,69 +1,57 @@
-import 'dart:async';
-import 'dart:collection';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../models/pokemon_model.dart';
 import '../services/favorites_repository.dart';
 
 class FavoritesController extends ChangeNotifier {
-  FavoritesController({
-    required FavoritesRepository repository,
-    String? currentUserEmail,
-  })  : _repository = repository,
-        _currentUserEmail = currentUserEmail,
-        _favoriteIds = repository.loadFavoritesForUser(currentUserEmail);
+  FavoritesController({required FavoritesRepository repository})
+      : _repository = repository {
+    _repository.addListener(_onRepositoryChanged);
+  }
 
   final FavoritesRepository _repository;
-  String? _currentUserEmail;
-  final Set<int> _favoriteIds;
 
-  UnmodifiableSetView<int> get favoriteIds => UnmodifiableSetView(_favoriteIds);
+  List<int> get favoriteIds => _repository.favoriteIds;
 
-  bool isFavorite(int pokemonId) => _favoriteIds.contains(pokemonId);
+  List<PokemonListItem> get favorites => _repository.favoritePokemons;
 
-  /// Updates the current user and loads their favorites.
-  /// Call this when a user logs in or the authentication state changes.
-  void setCurrentUser(String? userEmail) {
-    if (_currentUserEmail == userEmail) {
-      return;
-    }
-    _currentUserEmail = userEmail;
-    _favoriteIds.clear();
-    if (userEmail != null && userEmail.isNotEmpty) {
-      final userFavorites = _repository.loadFavoritesForUser(userEmail);
-      _favoriteIds.addAll(userFavorites);
-    }
+  bool isFavorite(int pokemonId) => _repository.isFavorite(pokemonId);
+
+  PokemonListItem applyFavoriteState(PokemonListItem pokemon) {
+    return _repository.withFavoriteState(pokemon);
+  }
+
+  List<PokemonListItem> applyFavoriteStateToList(
+    Iterable<PokemonListItem> pokemons,
+  ) {
+    return _repository.withFavoriteStateForList(pokemons);
+  }
+
+  PokemonListItem? getCachedPokemon(int pokemonId) {
+    return _repository.getCachedPokemon(pokemonId);
+  }
+
+  Future<void> toggleFavorite(PokemonListItem pokemon) async {
+    await _repository.toggleFavorite(pokemon);
+  }
+
+  Future<void> cachePokemon(PokemonListItem pokemon) async {
+    await _repository.cachePokemon(pokemon);
+  }
+
+  Future<void> cachePokemons(Iterable<PokemonListItem> pokemons) async {
+    await _repository.cachePokemons(pokemons);
+  }
+
+  void _onRepositoryChanged() {
     notifyListeners();
   }
 
-  /// Clears all favorites for the current user.
-  /// Typically called when logging out.
-  void clearFavorites() {
-    _favoriteIds.clear();
-    _currentUserEmail = null;
-    notifyListeners();
-  }
-
-  Future<void> toggleFavorite(int pokemonId) async {
-    final isFavorite = _favoriteIds.contains(pokemonId);
-    if (isFavorite) {
-      _favoriteIds.remove(pokemonId);
-    } else {
-      _favoriteIds.add(pokemonId);
-    }
-    notifyListeners();
-    await _persistFavorites();
-  }
-
-  Future<void> _persistFavorites() async {
-    final stopwatch = Stopwatch()..start();
-    await _repository.saveFavoritesForUser(_currentUserEmail, _favoriteIds);
-    if (kDebugMode) {
-      debugPrint('Saved ${_favoriteIds.length} favorites for user '
-          '${_currentUserEmail ?? "unknown"} in '
-          '${stopwatch.elapsedMilliseconds}ms');
-    }
+  @override
+  void dispose() {
+    _repository.removeListener(_onRepositoryChanged);
+    _repository.dispose();
+    super.dispose();
   }
 }
 
@@ -75,20 +63,27 @@ class FavoritesScope extends InheritedNotifier<FavoritesController> {
   }) : super(notifier: notifier, child: child);
 
   static FavoritesController of(BuildContext context) {
-    final scope =
+    final FavoritesScope? scope =
         context.dependOnInheritedWidgetOfExactType<FavoritesScope>();
     assert(scope != null,
         'FavoritesScope.of() called with a context that does not contain a FavoritesScope.');
-    final notifier = scope?.notifier;
-    if (notifier == null) {
-      throw StateError('FavoritesScope.of() found a null notifier');
+    if (scope == null) {
+      throw StateError(
+        'FavoritesScope.of() called with a context that does not contain a FavoritesScope.',
+      );
     }
-    return notifier;
+
+    final FavoritesController? controller = scope.notifier;
+    if (controller == null) {
+      throw StateError(
+        'FavoritesScope.of() called with a FavoritesScope that has a null notifier.',
+      );
+    }
+
+    return controller;
   }
 
   static FavoritesController? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<FavoritesScope>()
-        ?.notifier;
+    return context.dependOnInheritedWidgetOfExactType<FavoritesScope>()?.notifier;
   }
 }

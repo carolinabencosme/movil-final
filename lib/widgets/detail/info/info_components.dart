@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'dart:ui' show clampDouble;
 import 'package:flutter/material.dart';
 
+import 'package:pokedex/l10n/app_localizations.dart';
+
 import '../../../models/pokemon_model.dart';
 import '../../../theme/pokemon_type_colors.dart';
 import '../detail_helper_widgets.dart';
@@ -120,34 +122,35 @@ class CharacteristicsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = <CharacteristicData>[
       CharacteristicData(
         icon: Icons.height,
-        label: 'Altura',
+        label: l10n.detailCharacteristicHeight,
         value: formatHeight(characteristics.height),
       ),
       CharacteristicData(
         icon: Icons.monitor_weight_outlined,
-        label: 'Peso',
+        label: l10n.detailCharacteristicWeight,
         value: formatWeight(characteristics.weight),
       ),
       CharacteristicData(
         icon: Icons.category_outlined,
-        label: 'Categoría',
+        label: l10n.detailCharacteristicCategory,
         value: characteristics.category.isNotEmpty
             ? characteristics.category
-            : 'Sin categoría',
+            : l10n.detailCharacteristicNoCategory,
       ),
       CharacteristicData(
         icon: Icons.catching_pokemon,
-        label: 'Ratio de captura',
+        label: l10n.detailCharacteristicCatchRate,
         value: characteristics.captureRate > 0
             ? characteristics.captureRate.toString()
             : '—',
       ),
       CharacteristicData(
         icon: Icons.star_border_rounded,
-        label: 'Experiencia base',
+        label: l10n.detailCharacteristicBaseExperience,
         value: characteristics.baseExperience > 0
             ? characteristics.baseExperience.toString()
             : '—',
@@ -228,13 +231,14 @@ class _WeaknessSectionState extends State<WeaknessSection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final weaknesses = widget.matchups
         .where((matchup) => matchup.multiplier > 1.0)
         .toList()
       ..sort((a, b) => b.multiplier.compareTo(a.multiplier));
 
     if (weaknesses.isEmpty) {
-      return const Text('No hay información de debilidades disponible.');
+      return Text(l10n.detailNoWeaknessInfo);
     }
 
     return Column(
@@ -260,26 +264,23 @@ class _WeaknessSectionState extends State<WeaknessSection> {
                         category: MatchupCategory.weakness,
                       ),
                       const SizedBox(height: 12),
-                      const MatchupLegend(
+                      MatchupLegend(
                         entries: [
                           LegendEntry(
                             label: '4×',
-                            description:
-                                'Doble debilidad: el daño recibido se multiplica por cuatro.',
+                            description: l10n.detailWeaknessLegendQuadruple,
                             icon: Icons.local_fire_department,
                             colorRole: LegendColorRole.critical,
                           ),
                           LegendEntry(
                             label: '2×',
-                            description:
-                                'Debilidad clásica: ataques súper efectivos.',
+                            description: l10n.detailWeaknessLegendDouble,
                             icon: Icons.trending_up,
                             colorRole: LegendColorRole.warning,
                           ),
                           LegendEntry(
                             label: '1.5×',
-                            description:
-                                'Ventaja moderada: daño ligeramente incrementado.',
+                            description: l10n.detailWeaknessLegendModerate,
                             icon: Icons.bolt,
                             colorRole: LegendColorRole.emphasis,
                           ),
@@ -296,7 +297,9 @@ class _WeaknessSectionState extends State<WeaknessSection> {
             onPressed: _toggleExpanded,
             icon: Icon(_isExpanded ? Icons.expand_less : Icons.visibility),
             label: Text(
-              _isExpanded ? 'Ocultar debilidades' : 'Ver debilidades',
+              _isExpanded
+                  ? l10n.detailWeaknessToggleHide
+                  : l10n.detailWeaknessToggleShow,
             ),
           ),
         ),

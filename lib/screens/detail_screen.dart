@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-
-import '../controllers/favorites_controller.dart';
 import '../features/locations/screens/locations_tab.dart';
 import '../features/share/services/card_capture_service.dart';
 import '../features/share/widgets/pokemon_share_card.dart';
+import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
@@ -19,6 +20,7 @@ import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
 import '../widgets/detail/tabs/detail_tabs.dart';
 import '../widgets/pokemon_artwork.dart';
+import '../services/pokemon_cache_service.dart';
 
 /// ===============================
 /// DETAIL SCREEN (CONTENEDOR)
@@ -28,7 +30,7 @@ import '../widgets/pokemon_artwork.dart';
 /// - Tabs con secciones (Info, Stats, Matchups, Evolución, Movimientos)
 /// - Carga de datos con GraphQL: manejo de loading, error y datos parciales
 /// - Pull-to-refresh (refetch)
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   /// Requiere `pokemonId` o `pokemonName`. Si llega `initialPokemon`, se usa como preview.
   DetailScreen({
     super.key,
@@ -37,9 +39,9 @@ class DetailScreen extends StatelessWidget {
     this.initialPokemon,
     this.heroTag,
   }) : assert(
-  pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
-  'Either pokemonId or pokemonName must be provided.',
-  );
+          pokemonId != null || (pokemonName != null && pokemonName.isNotEmpty),
+          'Either pokemonId or pokemonName must be provided.',
+        );
 
   /// ID del Pokémon (National Dex)
   final int? pokemonId;
@@ -53,7 +55,61 @@ class DetailScreen extends StatelessWidget {
   /// Tag único para transición Hero del artwork
   final String? heroTag;
 
-  /// Capitaliza primera letra (para títulos bonitos)
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  bool _isOfflineMode = false;
+  bool _offlineSnackShown = false;
+  bool _hasConnection = true;
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+
+  PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeConnectivity();
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      final bool hasConnection =
+          results.any((status) => status != ConnectivityResult.none);
+      if (!mounted || hasConnection == _hasConnection) {
+        return;
+      }
+      setState(() {
+        _hasConnection = hasConnection;
+      });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _updateOfflineMode(!hasConnection),
+      );
+    });
+  }
+
+  Future<void> _initializeConnectivity() async {
+    final List<ConnectivityResult> results =
+        await _connectivity.checkConnectivity();
+    if (!mounted) return;
+    final bool hasConnection =
+        results.any((status) => status != ConnectivityResult.none);
+    if (hasConnection != _hasConnection) {
+      setState(() {
+        _hasConnection = hasConnection;
+      });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _updateOfflineMode(!hasConnection),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
@@ -78,7 +134,99 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
+  void _updateOfflineMode(bool offline) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    if (offline) {
+      if (!_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = true;
+        });
+      }
+      if (!_offlineSnackShown) {
+        _showSnack(
+          l10n.detailOfflineModeSnack,
+        );
+        _offlineSnackShown = true;
+      }
+    } else {
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      if (_offlineSnackShown) {
+        _showSnack(l10n.detailConnectionRestored);
+        _offlineSnackShown = false;
+      }
+    }
+  }
 
+  void _showSnack(String message) {
+    if (!mounted || message.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  PokemonListItem? _resolveOfflinePokemon(
+    FavoritesController favoritesController,
+  ) {
+    if (widget.initialPokemon != null) {
+      return favoritesController.applyFavoriteState(widget.initialPokemon!);
+    }
+    if (widget.pokemonId != null) {
+      final int id = widget.pokemonId!;
+      final PokemonListItem? cached =
+          favoritesController.getCachedPokemon(id) ??
+              _pokemonCacheService.getPokemon(id);
+      if (cached != null) {
+        return favoritesController.applyFavoriteState(cached);
+      }
+    } else if (widget.pokemonName != null) {
+      final PokemonListItem? fromService =
+          _pokemonCacheService.findByName(widget.pokemonName!);
+      if (fromService != null) {
+        return favoritesController.applyFavoriteState(fromService);
+      }
+    }
+    return null;
+  }
+
+  Widget _buildOfflineBanner(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
+    final Color backgroundColor =
+        theme.colorScheme.surfaceVariant.withOpacity(0.9);
+    final Color foregroundColor = theme.colorScheme.onSurfaceVariant;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, color: foregroundColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.detailOfflineBanner,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: foregroundColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +285,64 @@ class DetailScreen extends StatelessWidget {
                 name: previewName,
               ),
             );
+    final l10n = AppLocalizations.of(context)!;
+    final favoritesController = FavoritesScope.of(context);
+
+    final resolvedHeroTag = widget.heroTag ??
+        'pokemon-artwork-${widget.pokemonId ?? widget.pokemonName ?? 'unknown'}';
+
+    final previewName = widget.initialPokemon != null
+        ? _capitalize(widget.initialPokemon!.name)
+        : (widget.pokemonName != null
+            ? _capitalize(widget.pokemonName!)
+            : null);
+    final previewImage = widget.initialPokemon?.imageUrl ?? '';
+
+    final where = widget.pokemonId != null
+        ? <String, dynamic>{'id': {'_eq': widget.pokemonId}}
+        : <String, dynamic>{'name': {'_eq': widget.pokemonName!}};
+
+    PokemonListItem? cachedInitial;
+    if (widget.pokemonId != null) {
+      cachedInitial = favoritesController.getCachedPokemon(widget.pokemonId!) ??
+          _pokemonCacheService.getPokemon(widget.pokemonId!);
+    } else if (widget.pokemonName != null) {
+      cachedInitial = _pokemonCacheService.findByName(widget.pokemonName!);
+      if (cachedInitial != null) {
+        cachedInitial =
+            favoritesController.applyFavoriteState(cachedInitial!);
+      }
+    }
+
+    final PokemonListItem? initialFavorite = widget.initialPokemon != null
+        ? favoritesController.applyFavoriteState(widget.initialPokemon!)
+        : cachedInitial;
+
+    final FetchPolicy fetchPolicy =
+        _hasConnection ? FetchPolicy.cacheAndNetwork : FetchPolicy.cacheFirst;
+
+    return Query(
+      options: QueryOptions(
+        document: gql(getPokemonDetailsQuery),
+        fetchPolicy: fetchPolicy,
+        errorPolicy: ErrorPolicy.all,
+        variables: {
+          'where': where,
+          'languageIds': preferredLanguageIds,
+        },
+      ),
+      builder: (result, {fetchMore, refetch}) {
+        if (kDebugMode) {
+          debugPrint(
+            '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}',
+          );
+          debugPrint(
+            '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}',
+          );
+          if (result.hasException) {
+            debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
           }
+        }
 
           // 2) Error sin datos → estado de error con retry
           if (result.hasException && data == null) {
@@ -179,10 +384,115 @@ class DetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+        final bool offlineError =
+            !_hasConnection || result.exception?.linkException != null;
+        if (offlineError || (!result.isLoading && !result.hasException)) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _updateOfflineMode(offlineError),
+          );
+        }
+
+        final pokemonList =
+            result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
+        final data = (pokemonList?.isNotEmpty ?? false)
+            ? pokemonList?.first as Map<String, dynamic>?
+            : null;
+
+        final List<dynamic> typeEfficacies =
+            result.data?['type_efficacy'] as List<dynamic>? ??
+                const <dynamic>[];
+
+        PokemonDetail? pokemonDetail;
+        PokemonListItem? favoriteTarget = initialFavorite;
+
+        if (data != null) {
+          pokemonDetail = PokemonDetail.fromGraphQL(
+            data,
+            typeEfficacies: typeEfficacies,
+          );
+
+          favoriteTarget = PokemonListItem(
+            id: pokemonDetail.id,
+            name: pokemonDetail.name,
+            imageUrl: pokemonDetail.imageUrl,
+            types: List<String>.from(pokemonDetail.types),
+            stats: List<PokemonStat>.from(pokemonDetail.stats),
+            generationId: favoriteTarget?.generationId ??
+                widget.initialPokemon?.generationId,
+            generationName: favoriteTarget?.generationName ??
+                widget.initialPokemon?.generationName,
+            regionName: favoriteTarget?.regionName ??
+                widget.initialPokemon?.regionName,
+            shapeName: favoriteTarget?.shapeName ??
+                widget.initialPokemon?.shapeName,
+            height: pokemonDetail.characteristics.height,
+            weight: pokemonDetail.characteristics.weight,
+            isFavorite: favoritesController.isFavorite(pokemonDetail.id),
+          );
+
+          unawaited(_pokemonCacheService.cachePokemon(favoriteTarget));
+          unawaited(favoritesController.cachePokemon(favoriteTarget));
+        } else if (offlineError) {
+          favoriteTarget = _resolveOfflinePokemon(favoritesController);
+        }
+
+        if (favoriteTarget != null) {
+          favoriteTarget =
+              favoritesController.applyFavoriteState(favoriteTarget);
+        }
+
+        final String appBarTitle = favoriteTarget != null
+            ? _capitalize(favoriteTarget.name)
+            : previewName ?? l10n.detailFallbackTitle;
+
+        final PokemonListItem? offlinePokemon =
+            offlineError ? favoriteTarget : null;
+
+        Widget body;
+
+        if (result.isLoading && data == null && offlinePokemon == null) {
+          body = LoadingDetailView(
+            heroTag: resolvedHeroTag,
+            imageUrl: previewImage,
+            name: favoriteTarget != null
+                ? _capitalize(favoriteTarget.name)
+                : previewName,
+          );
+        } else if (offlinePokemon != null && data == null) {
+          body = _OfflineDetailView(
+            heroTag: resolvedHeroTag,
+            pokemon: offlinePokemon,
+          );
+        } else if (result.hasException && data == null) {
+          debugPrint(
+            'Error al cargar el detalle del Pokémon: ${result.exception}',
+          );
+          body = PokemonDetailErrorView(
+            onRetry: refetch,
+          );
+        } else if (data == null) {
+          if (kDebugMode) {
+            debugPrint(
+              '[Pokemon Detail] No pokemon data found. Full result: ${result.data}',
             );
           }
-
-          // 4) Datos parciales con error → seguimos mostrando lo que hay
+          body = Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.detailNoDataFound),
+                const SizedBox(height: 16),
+                if (refetch != null)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await refetch();
+                    },
+                    child: Text(l10n.commonRetry),
+                  ),
+              ],
+            ),
+          );
+        } else {
           if (result.hasException) {
             debugPrint(
               'Se recibieron datos parciales con errores: ${result.exception}',
@@ -251,6 +561,130 @@ class DetailScreen extends StatelessWidget {
           );
         },
       );
+        }
+
+        final ThemeData theme = Theme.of(context);
+        final Widget finalBody = _isOfflineMode
+            ? Column(
+                children: [
+                  _buildOfflineBanner(context, theme),
+                  Expanded(child: body),
+                ],
+              )
+            : body;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(appBarTitle),
+            actions: [
+              if (favoriteTarget != null)
+                _DetailFavoriteButton(pokemon: favoriteTarget),
+            ],
+          ),
+          body: finalBody,
+        );
+      },
+    );
+  }
+}
+
+class _OfflineDetailView extends StatelessWidget {
+  const _OfflineDetailView({
+    required this.heroTag,
+    required this.pokemon,
+  });
+
+  final String heroTag;
+  final PokemonListItem pokemon;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final String displayName =
+        pokemon.name.isEmpty ? 'Pokémon #${pokemon.id}' : pokemon.name;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          PokemonArtwork(
+            heroTag: heroTag,
+            imageUrl: pokemon.imageUrl,
+            size: 160,
+            padding: const EdgeInsets.all(12),
+            borderRadius: 32,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            displayName.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: pokemon.types
+                .map(
+                  (type) => Chip(
+                    label: Text(type.toUpperCase()),
+                    backgroundColor:
+                        theme.colorScheme.secondaryContainer.withOpacity(0.6),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            l10n.detailOfflineShortMessage,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.detailOfflineLongMessage,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailFavoriteButton extends StatelessWidget {
+  const _DetailFavoriteButton({required this.pokemon});
+
+  final PokemonListItem pokemon;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final favoritesController = FavoritesScope.of(context);
+    final PokemonListItem resolvedPokemon =
+        favoritesController.applyFavoriteState(pokemon);
+
+    return IconButton(
+      icon: Icon(
+        resolvedPokemon.isFavorite ? Icons.favorite : Icons.favorite_border,
+      ),
+      color: resolvedPokemon.isFavorite ? Colors.redAccent : null,
+      tooltip: resolvedPokemon.isFavorite
+          ? l10n.detailFavoriteRemoveTooltip
+          : l10n.detailFavoriteAddTooltip,
+      onPressed: () async {
+        await favoritesController.toggleFavorite(resolvedPokemon);
+      },
+    );
   }
 }
 
@@ -415,6 +849,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
 
@@ -425,7 +860,9 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
     final abilitySubtitle = mainAbilityDetail == null
         ? null
-        : (mainAbilityDetail.isHidden ? 'Habilidad oculta' : 'Habilidad principal');
+        : (mainAbilityDetail.isHidden
+            ? l10n.detailHiddenAbilityLabel
+            : l10n.detailMainAbilityLabel);
 
     // Paleta reactiva según el primer tipo del Pokémon
     final colorScheme = theme.colorScheme;
@@ -801,6 +1238,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final topMargin = 16 - (8 * progress);
+    final tabConfigs = buildDetailTabConfigs(AppLocalizations.of(context)!);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, topMargin, 16, 8),
@@ -845,7 +1283,7 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
           padding: const EdgeInsets.all(6),
           labelPadding: const EdgeInsets.symmetric(horizontal: 12),
           // Usa la configuración compartida de tabs (icono + etiqueta)
-          tabs: detailTabConfigs
+          tabs: tabConfigs
               .map(
                 (config) => Tab(
               icon: Icon(config.icon, size: 20),
@@ -950,11 +1388,31 @@ extension DetailScreenNavigationX on BuildContext {
     if (location.startsWith('/pokedex/')) {
       final slug = location.substring('/pokedex/'.length);
       final speciesId = pendingEvolutionNavigation.remove(slug);
+      final favoritesController = FavoritesScope.maybeOf(this);
+      PokemonListItem? cachedPokemon;
+      if (favoritesController != null) {
+        if (speciesId != null) {
+          cachedPokemon = favoritesController.getCachedPokemon(speciesId);
+        }
+        if (cachedPokemon == null) {
+          for (final PokemonListItem pokemon in favoritesController.favorites) {
+            if (pokemon.name == slug) {
+              cachedPokemon = pokemon;
+              break;
+            }
+          }
+        }
+        if (cachedPokemon != null) {
+          cachedPokemon =
+              favoritesController.applyFavoriteState(cachedPokemon);
+        }
+      }
       return Navigator.of(this).push<T>(
         MaterialPageRoute<T>(
           builder: (_) => DetailScreen(
             pokemonId: speciesId,
             pokemonName: slug,
+            initialPokemon: cachedPokemon,
             heroTag: speciesId != null
                 ? 'pokemon-artwork-$speciesId'
                 : 'pokemon-artwork-$slug',

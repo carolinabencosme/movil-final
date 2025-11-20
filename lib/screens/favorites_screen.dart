@@ -1,274 +1,151 @@
-import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
+part of 'pokedex_screen.dart';
 
-import '../controllers/favorites_controller.dart';
-import '../models/pokemon_model.dart';
-import '../queries/get_pokemon_list.dart';
-import '../widgets/pokemon_artwork.dart';
-import 'detail_screen.dart';
-
-/// Pantalla que muestra solo los Pokémon favoritos del usuario actual.
-/// 
-/// Esta pantalla consulta la lista completa de favoritos del usuario
-/// y muestra sus detalles usando GraphQL.
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({
     super.key,
     this.heroTag,
     this.accentColor,
+    this.title,
   });
 
   final String? heroTag;
   final Color? accentColor;
+  final String? title;
 
   @override
-  Widget build(BuildContext context) {
-    final favoritesController = FavoritesScope.maybeOf(context);
-    
-    if (favoritesController == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Favoritos'),
-          backgroundColor: accentColor,
-        ),
-        body: const Center(
-          child: Text('No se pudo cargar los favoritos'),
-        ),
-      );
-    }
-
-    return AnimatedBuilder(
-      animation: favoritesController,
-      builder: (context, _) {
-        final favoriteIds = favoritesController.favoriteIds.toList()..sort();
-
-        if (favoriteIds.isEmpty) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Favoritos'),
-              backgroundColor: accentColor,
-            ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'No tienes Pokémon favoritos',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 48),
-                    child: Text(
-                      'Marca tus Pokémon favoritos usando el ícono de corazón en la Pokédex',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Favoritos (${favoriteIds.length})'),
-            backgroundColor: accentColor,
-          ),
-          body: Query(
-            options: QueryOptions(
-              document: gql('''
-                query GetFavoritePokemons(\$ids: [Int!]!) {
-                  pokemon_v2_pokemon(where: {id: {_in: \$ids}}, order_by: {id: asc}) {
-                    id
-                    name
-                    height
-                    weight
-                    pokemon_v2_pokemontypes {
-                      pokemon_v2_type {
-                        name
-                      }
-                    }
-                    pokemon_v2_pokemonstats {
-                      base_stat
-                      pokemon_v2_stat {
-                        name
-                      }
-                    }
-                  }
-                }
-              '''),
-              variables: {'ids': favoriteIds},
-              fetchPolicy: FetchPolicy.cacheAndNetwork,
-            ),
-            builder: (result, {fetchMore, refetch}) {
-              if (result.isLoading && result.data == null) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (result.hasException && result.data == null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Error al cargar favoritos'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => refetch?.call(),
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
-              if (pokemonList == null || pokemonList.isEmpty) {
-                return const Center(
-                  child: Text('No se pudieron cargar los Pokémon favoritos'),
-                );
-              }
-
-              final pokemons = pokemonList
-                  .map((data) => PokemonListItem.fromGraphQL(data as Map<String, dynamic>))
-                  .toList();
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  await refetch?.call();
-                },
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: pokemons.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final pokemon = pokemons[index];
-                    return _FavoritePokemonTile(
-                      key: ValueKey('favorite-${pokemon.id}'),
-                      pokemon: pokemon,
-                      onRemoveFavorite: () {
-                        favoritesController.toggleFavorite(pokemon.id);
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritePokemonTile extends StatelessWidget {
-  const _FavoritePokemonTile({
-    super.key,
-    required this.pokemon,
-    required this.onRemoveFavorite,
-  });
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  FavoritesController? _favoritesController;
+  List<PokemonListItem> _favorites = <PokemonListItem>[];
 
-  final PokemonListItem pokemon;
-  final VoidCallback onRemoveFavorite;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final FavoritesController controller = FavoritesScope.of(context);
+    if (!identical(controller, _favoritesController)) {
+      _favoritesController?.removeListener(_handleFavoritesChanged);
+      _favoritesController = controller;
+      _favorites = controller.favorites;
+      controller.addListener(_handleFavoritesChanged);
+    }
+  }
 
-  String _capitalize(String value) {
-    if (value.isEmpty) return value;
-    return value[0].toUpperCase() + value.substring(1);
+  @override
+  void dispose() {
+    _favoritesController?.removeListener(_handleFavoritesChanged);
+    super.dispose();
+  }
+
+  void _handleFavoritesChanged() {
+    final FavoritesController? controller = _favoritesController;
+    if (!mounted || controller == null) return;
+    setState(() {
+      _favorites = controller.favorites;
+    });
+  }
+
+  Future<void> _handleRefresh() async {
+    final FavoritesController? controller = _favoritesController;
+    if (controller == null) return;
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    if (!mounted) return;
+    setState(() {
+      _favorites = controller.favorites;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final heroTag = 'pokemon-artwork-${pokemon.id}';
+    final l10n = AppLocalizations.of(context)!;
+    final Color accentColor = widget.accentColor ?? const Color(0xFFE94256);
+    final heroTag = widget.heroTag;
+    final title = widget.title ?? l10n.favoritesDefaultTitle;
+    final List<PokemonListItem> favorites = _favoritesController == null
+        ? const <PokemonListItem>[]
+        : _favoritesController!.applyFavoriteStateToList(_favorites);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DetailScreen(
-                pokemonId: pokemon.id,
-                pokemonName: pokemon.name,
-                initialPokemon: pokemon,
-                heroTag: heroTag,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F1E7),
+      appBar: AppBar(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        title: heroTag != null
+            ? Hero(
+                tag: heroTag,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+            : Text(
+                title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              PokemonArtwork(
-                heroTag: heroTag,
-                imageUrl: pokemon.imageUrl,
-                size: 70,
-                borderRadius: 16,
-                padding: const EdgeInsets.all(8),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: accentColor,
+          onRefresh: _handleRefresh,
+          child: favorites.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 64,
+                  ),
                   children: [
+                    Icon(
+                      Icons.favorite_border,
+                      color: accentColor.withOpacity(0.85),
+                      size: 82,
+                    ),
+                    const SizedBox(height: 24),
                     Text(
-                      '#${pokemon.id.toString().padLeft(3, '0')}',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.primary,
+                      l10n.favoritesEmptyTitle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 12),
                     Text(
-                      _capitalize(pokemon.name),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                      l10n.favoritesEmptySubtitle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    if (pokemon.types.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: pokemon.types
-                            .map((type) => Chip(
-                                  label: Text(
-                                    type.toUpperCase(),
-                                    style: theme.textTheme.labelSmall,
-                                  ),
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ],
                   ],
+                )
+              : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                  itemBuilder: (context, index) {
+                    final pokemon = favorites[index];
+                    return _PokemonListTile(
+                      key: ValueKey('favorite-${pokemon.id}'),
+                      pokemon: pokemon,
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemCount: favorites.length,
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.favorite),
-                color: Colors.red,
-                tooltip: 'Quitar de favoritos',
-                onPressed: onRemoveFavorite,
-              ),
-            ],
-          ),
         ),
       ),
     );

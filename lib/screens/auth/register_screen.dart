@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:pokedex/l10n/app_localizations.dart';
 import '../../controllers/auth_controller.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -26,6 +26,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
+
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void dispose() {
@@ -78,13 +80,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Crea tu cuenta',
+                            l10n.authRegisterTitle,
                             style: theme.textTheme.headlineSmall,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Regístrate para sincronizar tus equipos y colecciones en todos tus dispositivos.',
+                            l10n.authRegisterSubtitle,
                             style: theme.textTheme.bodyMedium,
                             textAlign: TextAlign.center,
                           ),
@@ -102,10 +104,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Correo electrónico',
-                                    hintText: 'entrenador@poke.app',
-                                    prefixIcon: Icon(Icons.mail_outline),
+                                  decoration: InputDecoration(
+                                    labelText: l10n.authEmailLabel,
+                                    hintText: l10n.authEmailHint,
+                                    prefixIcon: const Icon(Icons.mail_outline),
                                   ),
                                   validator: _validateEmail,
                                 ),
@@ -115,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   textInputAction: TextInputAction.next,
                                   obscureText: _obscurePassword,
                                   decoration: InputDecoration(
-                                    labelText: 'Contraseña',
+                                    labelText: l10n.authPasswordLabel,
                                     prefixIcon: const Icon(Icons.lock_outline),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -134,7 +136,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   textInputAction: TextInputAction.done,
                                   obscureText: _obscureConfirmation,
                                   decoration: InputDecoration(
-                                    labelText: 'Confirmar contraseña',
+                                    labelText: l10n.authConfirmPasswordLabel,
                                     prefixIcon: const Icon(Icons.lock_reset_outlined),
                                     suffixIcon: IconButton(
                                       icon: Icon(
@@ -153,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onPressed: widget.controller.isLoading
                                       ? null
                                       : _submit,
-                                  child: const Text('Crear cuenta'),
+                                  child: Text(l10n.authCreateAccountButton),
                                 ),
                               ],
                             ),
@@ -163,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onPressed: widget.controller.isLoading
                                 ? null
                                 : widget.onShowLogin,
-                            child: const Text('¿Ya tienes una cuenta? Inicia sesión'),
+                            child: Text(l10n.authAlreadyHaveAccountCta),
                           ),
                         ],
                       );
@@ -194,8 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final message = widget.controller.errorMessage ??
-        'No pudimos crear tu cuenta. Inténtalo más tarde.';
+    final message = widget.controller.errorMessage ?? l10n.authRegisterError;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -216,14 +217,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
     if (email.isEmpty) {
-      return 'Ingresa tu correo electrónico.';
+      return l10n.authEmailRequired;
     }
 
     final hasAt = email.contains('@');
     final segments = email.split('@');
     final hasDomain = segments.length == 2 && segments[1].contains('.');
     if (!hasAt || !hasDomain) {
-      return 'Formato de correo inválido.';
+      return l10n.authEmailInvalid;
     }
     return null;
   }
@@ -231,16 +232,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validatePassword(String? value) {
     final password = value ?? '';
     if (password.isEmpty) {
-      return 'Ingresa una contraseña segura.';
+      return l10n.authSecurePasswordRequired;
     }
 
     if (password.length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres.';
+      return l10n.authPasswordLength;
     }
 
     if (!RegExp(r'[0-9]').hasMatch(password) ||
         !RegExp(r'[A-Za-z]').hasMatch(password)) {
-      return 'Usa letras y números para una contraseña más fuerte.';
+      return l10n.authPasswordStrongSuggestion;
     }
 
     return null;
@@ -249,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validateConfirmation(String? value) {
     final confirmation = value ?? '';
     if (confirmation != _passwordController.text) {
-      return 'Las contraseñas no coinciden.';
+      return l10n.authPasswordsMismatch;
     }
     return null;
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../controllers/auth_controller.dart';
 import '../services/auth_repository.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({
@@ -20,6 +20,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   bool _obscurePassword = true;
+
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -50,7 +52,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar perfil'),
+        title: Text(l10n.settingsEditProfile),
       ),
       body: AnimatedBuilder(
         animation: widget.controller,
@@ -62,13 +64,13 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               Text(
-                'Actualiza tu información de acceso.',
+                l10n.authUpdateInfoTitle,
                 style:
                     textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
-                'Puedes cambiar tu correo electrónico o establecer una nueva contraseña. Los cambios se aplican inmediatamente.',
+                l10n.authUpdateInfoSubtitle,
                 style: textTheme.bodyMedium,
               ),
               if (isLoading) ...[
@@ -85,10 +87,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo electrónico',
-                        hintText: 'ash.ketchum@poke.app',
-                        prefixIcon: Icon(Icons.mail_outline),
+                      decoration: InputDecoration(
+                        labelText: l10n.authEmailLabel,
+                        hintText: l10n.authEmailHint,
+                        prefixIcon: const Icon(Icons.mail_outline),
                       ),
                       validator: _validateEmail,
                     ),
@@ -98,7 +100,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                       textInputAction: TextInputAction.done,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Nueva contraseña (opcional)',
+                        labelText: l10n.authNewPasswordOptionalLabel,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -115,7 +117,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: isLoading ? null : _submit,
-                      child: const Text('Guardar cambios'),
+                      child: Text(l10n.settingsSaveChanges),
                     ),
                   ],
                 ),
@@ -143,8 +145,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final currentEmail = controller.currentEmail;
     if (currentEmail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No hay información de usuario disponible.'),
+        SnackBar(
+          content: Text(l10n.authSnackbarNoUser),
         ),
       );
       return;
@@ -165,8 +167,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Perfil actualizado correctamente.'),
+        SnackBar(
+          content: Text(l10n.authProfileUpdated),
         ),
       );
       Navigator.of(context).pop();
@@ -182,8 +184,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No fue posible actualizar el perfil.'),
+        SnackBar(
+          content: Text(l10n.authProfileUpdateError),
         ),
       );
     }
@@ -192,14 +194,14 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
     if (email.isEmpty) {
-      return 'Ingresa tu correo electrónico.';
+      return l10n.authEmailRequired;
     }
 
     final hasAt = email.contains('@');
     final segments = email.split('@');
     final hasDomain = segments.length == 2 && segments[1].contains('.');
     if (!hasAt || !hasDomain) {
-      return 'Formato de correo inválido.';
+      return l10n.authEmailInvalid;
     }
     return null;
   }
@@ -211,12 +213,12 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     }
 
     if (password.length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres.';
+      return l10n.authPasswordLength;
     }
 
     if (!RegExp(r'[0-9]').hasMatch(password) ||
         !RegExp(r'[A-Za-z]').hasMatch(password)) {
-      return 'Usa letras y números para una contraseña más fuerte.';
+      return l10n.authPasswordStrongSuggestion;
     }
 
     return null;

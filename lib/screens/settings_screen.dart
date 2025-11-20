@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
-
+import 'package:pokedex/l10n/app_localizations.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/locale_controller.dart';
 import '../theme/theme_controller.dart';
 import 'profile_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  static const List<Locale> _languageOptions = [
+    Locale('es'),
+    Locale('en'),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = AuthScope.of(context);
     final themeController = ThemeScope.of(context);
     final themeMode = themeController.themeMode;
     final textTheme = Theme.of(context).textTheme;
+    final localeController = LocaleScope.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuración'),
+        title: Text(l10n.settingsTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -31,13 +39,13 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cuenta',
+                    l10n.settingsAccountSection,
                     style: textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    controller.currentEmail ?? 'Sin correo registrado',
+                    controller.currentEmail ?? l10n.settingsNoEmail,
                     style: textTheme.bodyLarge,
                   ),
                   if (controller.isLoading) ...[
@@ -61,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
                                     ),
                                   );
                                 },
-                          child: const Text('Editar perfil'),
+                          child: Text(l10n.settingsEditProfile),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -77,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
                                   }
                                   navigator.pop();
                                 },
-                          child: const Text('Cerrar sesión'),
+                          child: Text(l10n.settingsSignOut),
                         ),
                       ),
                     ],
@@ -88,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Apariencia',
+            l10n.settingsAppearanceSection,
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
@@ -100,9 +108,8 @@ class SettingsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _ThemeOptionTile(
-                  title: 'Modo claro',
-                  subtitle:
-                      'Fondos luminosos ideales para entornos bien iluminados.',
+                  title: l10n.settingsLightModeTitle,
+                  subtitle: l10n.settingsLightModeSubtitle,
                   icon: Icons.light_mode_outlined,
                   value: ThemeMode.light,
                   groupValue: themeMode,
@@ -110,9 +117,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 0),
                 _ThemeOptionTile(
-                  title: 'Modo oscuro',
-                  subtitle:
-                      'Atenúa la luz para reducir el cansancio visual por la noche.',
+                  title: l10n.settingsDarkModeTitle,
+                  subtitle: l10n.settingsDarkModeSubtitle,
                   icon: Icons.dark_mode_outlined,
                   value: ThemeMode.dark,
                   groupValue: themeMode,
@@ -122,13 +128,79 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          AnimatedBuilder(
+            animation: localeController,
+            builder: (context, _) {
+              final selectedLanguageCode =
+                  localeController.locale?.languageCode;
+              Locale? selectedLocale;
+              for (final locale in _languageOptions) {
+                if (locale.languageCode == selectedLanguageCode) {
+                  selectedLocale = locale;
+                  break;
+                }
+              }
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.settingsLanguageSection,
+                        style: textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<Locale>(
+                        value: selectedLocale,
+                        decoration: InputDecoration(
+                          labelText: l10n.settingsLanguageLabel,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: _languageOptions
+                            .map(
+                              (locale) => DropdownMenuItem<Locale>(
+                                value: locale,
+                                child: Text(
+                                  _languageLabel(locale, l10n),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (locale) {
+                          if (locale != null) {
+                            localeController.updateLocale(locale);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           Text(
-            'La configuración se guarda inmediatamente y afecta a toda la aplicación.',
+            l10n.settingsInfo,
             style: textTheme.bodyMedium,
           ),
         ],
       ),
     );
+  }
+
+  static String _languageLabel(Locale locale, AppLocalizations l10n) {
+    switch (locale.languageCode) {
+      case 'es':
+        return l10n.settingsLanguageSpanish;
+      case 'en':
+      default:
+        return l10n.settingsLanguageEnglish;
+    }
   }
 }
 

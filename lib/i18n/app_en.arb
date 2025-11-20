@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+  "appTitle": "Pokédex GraphQL",
+  "@appTitle": {
+    "description": "Application title shown in navigation contexts."
+  },
+  "favoritesTitle": "Favorites",
+  "@favoritesTitle": {
+    "description": "Section title for the favorites screen."
+  },
+  "favoritesEmptyState": "You haven't added any favorites yet.",
+  "@favoritesEmptyState": {
+    "description": "Empty state message when the favorites list has no entries."
+  },
+  "triviaTitle": "Trivia",
+  "@triviaTitle": {
+    "description": "Heading for the trivia section."
+  },
+  "triviaDescription": "Discover fun facts about Pokémon.",
+  "@triviaDescription": {
+    "description": "Subtitle inviting users to read trivia content."
+  }
+}

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-
+import 'package:pokedex/l10n/app_localizations.dart';
 import 'abilities_screen.dart';
 import 'favorites_screen.dart';
 import 'pokedex_screen.dart';
@@ -28,14 +28,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Cada sección define:
   /// - título, subtítulo, icono, color y heroTag
   /// - gráficos decorativos (icons/assets) y acentos de fondo (shapes)
-  final List<_SectionInfo> _sections = const [
-    _SectionInfo(
-      title: 'Pokédex',
-      subtitle: 'National index & regional dexes',
+  final List<_SectionConfig> _sectionConfigs = [
+    _SectionConfig(
+      type: HomeSectionType.pokedex,
       icon: Icons.catching_pokemon,
-      color: Color(0xFFE94256),
+      color: const Color(0xFFE94256),
       heroTag: 'section-pokedex',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.catching_pokemon,
           scale: 0.92,
@@ -48,10 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.5,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-18, 24),
+          offset: const Offset(-18, 24),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -52,
           right: -28,
@@ -77,54 +76,52 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Favoritos',
-      subtitle: 'Tus Pokémon favoritos guardados',
+    _SectionConfig(
+      type: HomeSectionType.favorites,
       icon: Icons.favorite,
-      color: Color(0xFFFF6B9D),
+      color: const Color(0xFFFF8FAB),
       heroTag: 'section-favorites',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.favorite,
-          scale: 0.9,
+          scale: 0.92,
           color: Colors.white,
-          opacity: 0.95,
+          opacity: 0.94,
         ),
         _SectionGraphic.icon(
-          icon: Icons.star,
-          scale: 0.4,
+          icon: Icons.star_rounded,
+          scale: 0.42,
           color: Colors.white,
-          opacity: 0.5,
+          opacity: 0.52,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 20),
+          offset: const Offset(-14, 22),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
-          top: -38,
+          top: -48,
           right: -24,
-          diameterFactor: 0.92,
+          diameterFactor: 0.95,
           color: Colors.white,
-          opacity: 0.18,
+          opacity: 0.2,
         ),
         _AccentShape.roundedRect(
-          bottom: -20,
-          right: 14,
-          widthFactor: 0.52,
-          heightFactor: 0.2,
-          color: Colors.white,
+          bottom: -26,
+          right: 16,
+          widthFactor: 0.5,
+          heightFactor: 0.18,
+          color: Colors.black,
           opacity: 0.12,
           borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Moves',
-      subtitle: 'Damage, effects & contest data',
+    _SectionConfig(
+      type: HomeSectionType.moves,
       icon: Icons.flash_on,
-      color: Color(0xFF4DA3FF),
+      color: const Color(0xFF4DA3FF),
       heroTag: 'section-moves',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.flash_on,
           scale: 0.88,
@@ -137,10 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.48,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-12, 18),
+          offset: const Offset(-12, 18),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -40,
           right: -26,
@@ -159,13 +156,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'TM',
-      subtitle: 'Machines & tutors by generation',
+    _SectionConfig(
+      type: HomeSectionType.tm,
       icon: Icons.memory,
-      color: Color(0xFFF2A649),
+      color: const Color(0xFFF2A649),
       heroTag: 'section-tm',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.memory,
           scale: 0.88,
@@ -178,10 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.48,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-10, 20),
+          offset: const Offset(-10, 20),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -34,
           right: -22,
@@ -200,13 +196,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Abilities',
-      subtitle: 'Passive effects & triggers',
+    _SectionConfig(
+      type: HomeSectionType.abilities,
       icon: Icons.auto_fix_high,
-      color: Color(0xFF9D4EDD),
+      color: const Color(0xFF9D4EDD),
       heroTag: 'section-abilities',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.auto_fix_high,
           scale: 0.9,
@@ -219,10 +214,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.48,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 16),
+          offset: const Offset(-14, 16),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -36,
           right: -24,
@@ -241,13 +236,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Checklists',
-      subtitle: 'Track goals & collections',
+    _SectionConfig(
+      type: HomeSectionType.checklists,
       icon: Icons.checklist_rtl,
-      color: Color(0xFF59CD90),
+      color: const Color(0xFF59CD90),
       heroTag: 'section-checklists',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.check_circle_outline,
           scale: 0.86,
@@ -260,10 +254,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.5,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-12, 18),
+          offset: const Offset(-12, 18),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -32,
           right: -20,
@@ -282,13 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Parties',
-      subtitle: 'Build teams & strategies',
+    _SectionConfig(
+      type: HomeSectionType.parties,
       icon: Icons.groups_2,
-      color: Color(0xFFFF6F91),
+      color: const Color(0xFFFF6F91),
       heroTag: 'section-parties',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.groups_2,
           scale: 0.88,
@@ -301,10 +294,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.48,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-14, 18),
+          offset: const Offset(-14, 18),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -36,
           right: -18,
@@ -323,13 +316,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-    _SectionInfo(
-      title: 'Locations',
-      subtitle: 'Regions, maps & encounter data',
+    _SectionConfig(
+      type: HomeSectionType.locations,
       icon: Icons.travel_explore,
-      color: Color(0xFF3BC9DB),
+      color: const Color(0xFF3BC9DB),
       heroTag: 'section-locations',
-      graphics: [
+      graphics: const [
         _SectionGraphic.icon(
           icon: Icons.travel_explore,
           scale: 0.88,
@@ -342,10 +334,10 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           opacity: 0.48,
           alignment: Alignment.bottomLeft,
-          offset: Offset(-10, 20),
+          offset: const Offset(-10, 20),
         ),
       ],
-      accents: [
+      accents: const [
         _AccentShape.circle(
           top: -32,
           right: -20,
@@ -380,29 +372,35 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Para secciones no implementadas, abre un placeholder genérico.
   void _openSection(_SectionInfo section) {
     Widget destination;
-    switch (section.title) {
-      case 'Pokédex':
+    switch (section.type) {
+      case HomeSectionType.pokedex:
         destination = PokedexScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
         );
         break;
-      case 'Favoritos':
+      case HomeSectionType.favorites:
         destination = FavoritesScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
+          title: section.title,
         );
         break;
-      case 'Abilities':
+      case HomeSectionType.abilities:
         destination = AbilitiesScreen(
           heroTag: section.heroTag,
           accentColor: section.color,
           title: section.title,
         );
         break;
-      default:
+      case HomeSectionType.moves:
+      case HomeSectionType.tm:
+      case HomeSectionType.checklists:
+      case HomeSectionType.parties:
+      case HomeSectionType.locations:
         destination = SectionPlaceholderScreen(info: section);
+        break;
     }
 
     // Transición fade custom (PageRouteBuilder) para consistencia visual
@@ -417,10 +415,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _resolveSectionTitle(HomeSectionType type, AppLocalizations l10n) {
+    switch (type) {
+      case HomeSectionType.pokedex:
+        return l10n.homeSectionPokedexTitle;
+      case HomeSectionType.favorites:
+        return l10n.homeSectionFavoritesTitle;
+      case HomeSectionType.moves:
+        return l10n.homeSectionMovesTitle;
+      case HomeSectionType.tm:
+        return l10n.homeSectionTmTitle;
+      case HomeSectionType.abilities:
+        return l10n.homeSectionAbilitiesTitle;
+      case HomeSectionType.checklists:
+        return l10n.homeSectionChecklistsTitle;
+      case HomeSectionType.parties:
+        return l10n.homeSectionPartiesTitle;
+      case HomeSectionType.locations:
+        return l10n.homeSectionLocationsTitle;
+    }
+  }
+
+  String _resolveSectionSubtitle(
+      HomeSectionType type, AppLocalizations l10n) {
+    switch (type) {
+      case HomeSectionType.pokedex:
+        return l10n.homeSectionPokedexSubtitle;
+      case HomeSectionType.favorites:
+        return l10n.homeSectionFavoritesSubtitle;
+      case HomeSectionType.moves:
+        return l10n.homeSectionMovesSubtitle;
+      case HomeSectionType.tm:
+        return l10n.homeSectionTmSubtitle;
+      case HomeSectionType.abilities:
+        return l10n.homeSectionAbilitiesSubtitle;
+      case HomeSectionType.checklists:
+        return l10n.homeSectionChecklistsSubtitle;
+      case HomeSectionType.parties:
+        return l10n.homeSectionPartiesSubtitle;
+      case HomeSectionType.locations:
+        return l10n.homeSectionLocationsSubtitle;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Separamos la primera sección (hero) del resto (grid)
-    final List<_SectionInfo> sections = _sections;
+    final List<_SectionInfo> sections = _sectionConfigs
+        .map(
+          (config) => config.toSectionInfo(
+            title: _resolveSectionTitle(config.type, l10n),
+            subtitle: _resolveSectionSubtitle(config.type, l10n),
+          ),
+        )
+        .toList();
     final _SectionInfo? heroSection =
         sections.isNotEmpty ? sections.first : null;
     final List<_SectionInfo> otherSections =
@@ -439,13 +488,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final double heroHeight =
         heroWidth > 0 ? math.max(280, heroWidth * 0.58) : 280;
     // Chips de acceso rápido (placeholder de navegación futura)
-    const quickAccess = [
-      'Gym Leaders & Elite 4',
-      'Natures',
-      'Type Matchups',
-      'Evolution Chains',
-      'Breeding Guides',
-      'Berry Farming',
+    final quickAccess = [
+      l10n.homeQuickAccessGymLeaders,
+      l10n.homeQuickAccessNatures,
+      l10n.homeQuickAccessMatchups,
+      l10n.homeQuickAccessEvolutionChains,
+      l10n.homeQuickAccessBreeding,
+      l10n.homeQuickAccessBerries,
     ];
 
     return Scaffold(
@@ -474,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'ProDex',
+                                    l10n.homeHeaderTitle,
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineLarge
@@ -486,16 +535,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                   ),
                                 ),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.notifications_none,
+                                  semanticLabel:
+                                      l10n.homeNotificationsSemanticLabel,
+                                  semanticHint: l10n.homeNotificationsSemanticHint,
                                 ),
                                 const SizedBox(width: 12),
-                                const _HeaderIcon(
+                                _HeaderIcon(
                                   icon: Icons.shopping_bag_outlined,
+                                  semanticLabel: l10n.homeStoreSemanticLabel,
+                                  semanticHint: l10n.homeStoreSemanticHint,
                                 ),
                                 const SizedBox(width: 12),
                                 _HeaderIcon(
                                   icon: Icons.settings_outlined,
+                                  semanticLabel: l10n.homeSettingsSemanticLabel,
+                                  semanticHint: l10n.homeSettingsSemanticHint,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -556,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Quick access',
+                              l10n.homeQuickAccessTitle,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -620,6 +676,7 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     // Estilos de tipografía adaptados si es hero o grid
     final bool isHero = widget.isHero;
@@ -651,138 +708,149 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
         scale: _pressed ? pressedScale : 1,
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        child: InkWell(
-          onTap: widget.onTap,
-          onTapDown: (_) => _setPressed(true),
-          onTapCancel: () => _setPressed(false),
-          onTapUp: (_) => _setPressed(false),
-          borderRadius: BorderRadius.circular(cornerRadius),
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            elevation: isHero ? 16 : 10,
-            shadowColor: widget.info.color.withOpacity(0.45),
-            margin: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(cornerRadius),
+        child: Semantics(
+          button: true,
+          enabled: true,
+          label: l10n.homeSectionCardSemanticLabel(widget.info.title),
+          hint: l10n.homeSectionCardSemanticHint(widget.info.title),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 48,
+              minWidth: 48,
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final double basePadding = isHero ? 28 : 22;
-                final double verticalPadding = isHero ? 30 : 24;
-                final double maxTextWidth =
-                    constraints.maxWidth * (isHero ? 0.68 : 0.74);
-                // Cuando la tarjeta hero está en un SliverToBoxAdapter sin altura
-                // acotada, fijamos un alto para evitar “unbounded height”.
-                final bool needsHeroHeight =
-                    !constraints.hasBoundedHeight && heroHeight != null;
-                final BoxConstraints effectiveConstraints = needsHeroHeight
-                    ? BoxConstraints(
-                        minWidth: constraints.minWidth,
-                        maxWidth: constraints.maxWidth,
-                        minHeight: constraints.minHeight,
-                        maxHeight: heroHeight!,
-                      )
-                    : constraints;
+            child: InkWell(
+              onTap: widget.onTap,
+              onTapDown: (_) => _setPressed(true),
+              onTapCancel: () => _setPressed(false),
+              onTapUp: (_) => _setPressed(false),
+              borderRadius: BorderRadius.circular(cornerRadius),
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                elevation: isHero ? 16 : 10,
+                shadowColor: widget.info.color.withOpacity(0.45),
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(cornerRadius),
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double basePadding = isHero ? 28 : 22;
+                    final double verticalPadding = isHero ? 30 : 24;
+                    final double maxTextWidth =
+                        constraints.maxWidth * (isHero ? 0.68 : 0.74);
+                    // Cuando la tarjeta hero está en un SliverToBoxAdapter sin altura
+                    // acotada, fijamos un alto para evitar “unbounded height”.
+                    final bool needsHeroHeight =
+                        !constraints.hasBoundedHeight && heroHeight != null;
+                    final BoxConstraints effectiveConstraints = needsHeroHeight
+                        ? BoxConstraints(
+                            minWidth: constraints.minWidth,
+                            maxWidth: constraints.maxWidth,
+                            minHeight: constraints.minHeight,
+                            maxHeight: heroHeight!,
+                          )
+                        : constraints;
 
-                // Grupo de gráficos decorativos (iconos o assets) en la esquina
-                final List<_SectionGraphic> graphics =
-                    widget.info.graphics.isNotEmpty
-                        ? widget.info.graphics
-                        : [
-                            _SectionGraphic.icon(
-                              icon: widget.info.icon,
-                              color: Colors.white,
-                              opacity: 0.94,
+                    // Grupo de gráficos decorativos (iconos o assets) en la esquina
+                    final List<_SectionGraphic> graphics =
+                        widget.info.graphics.isNotEmpty
+                            ? widget.info.graphics
+                            : [
+                                _SectionGraphic.icon(
+                                  icon: widget.info.icon,
+                                  color: Colors.white,
+                                  opacity: 0.94,
+                                ),
+                              ];
+                    // Stack principal de la tarjeta:
+                    // - Fondo degradado
+                    // - Acentos (shapes)
+                    // - Grupo de gráficos (íconos/assets)
+                    // - Texto (título/subtítulo) alineado abajo-izquierda
+
+                    final stack = Stack(
+                      fit: StackFit.expand,
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Fondo con gradiente en función del color de la sección
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  widget.info.color
+                                      .withOpacity(isHero ? 0.96 : 0.92),
+                                  widget.info.color
+                                      .withOpacity(isHero ? 0.8 : 0.78),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
-                          ];
-                // Stack principal de la tarjeta:
-                // - Fondo degradado
-                // - Acentos (shapes)
-                // - Grupo de gráficos (íconos/assets)
-                // - Texto (título/subtítulo) alineado abajo-izquierda
-
-                final stack = Stack(
-                  fit: StackFit.expand,
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fondo con gradiente en función del color de la sección
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.info.color
-                                  .withOpacity(isHero ? 0.96 : 0.92),
-                              widget.info.color
-                                  .withOpacity(isHero ? 0.8 : 0.78),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
                           ),
                         ),
-                      ),
-                    ),
-                    // Acentos decorativos (círculos/rectángulos redondeados)
-                    ..._buildBackgroundAccents(
-                      constraints: effectiveConstraints,
-                      fallbackRadius: cornerRadius,
-                    ),
-                    // Grupo de gráficos (íconos grandes) arriba-derecha
-                    Positioned(
-                      right: basePadding - (isHero ? 8 : 6),
-                      top: verticalPadding - (isHero ? 8 : 6),
-                      child: _buildGraphicGroup(
-                        constraints: effectiveConstraints,
-                        graphics: graphics,
-                      ),
-                    ),
-                    // Texto (título + subtítulo) limitado en ancho para no chocar con gráficos
-                    Positioned(
-                      left: basePadding,
-                      bottom: verticalPadding,
-                      right: basePadding,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: maxTextWidth,
+                        // Acentos decorativos (círculos/rectángulos redondeados)
+                        ..._buildBackgroundAccents(
+                          constraints: effectiveConstraints,
+                          fallbackRadius: cornerRadius,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.info.title,
-                              style: titleStyle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: isHero ? 12 : 10),
-                            Text(
-                              widget.info.subtitle,
-                              style: subtitleStyle,
-                              maxLines: isHero ? 3 : 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        // Grupo de gráficos (íconos grandes) arriba-derecha
+                        Positioned(
+                          right: basePadding - (isHero ? 8 : 6),
+                          top: verticalPadding - (isHero ? 8 : 6),
+                          child: _buildGraphicGroup(
+                            constraints: effectiveConstraints,
+                            graphics: graphics,
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                );
+                        // Texto (título + subtítulo) limitado en ancho para no chocar con gráficos
+                        Positioned(
+                          left: basePadding,
+                          bottom: verticalPadding,
+                          right: basePadding,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: maxTextWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.info.title,
+                                  style: titleStyle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: isHero ? 12 : 10),
+                                Text(
+                                  widget.info.subtitle,
+                                  style: subtitleStyle,
+                                  maxLines: isHero ? 3 : 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
 
-                if (needsHeroHeight) {
-                  return SizedBox(
-                    height: heroHeight,
-                    child: stack,
-                  );
-                }
+                    if (needsHeroHeight) {
+                      return SizedBox(
+                        height: heroHeight,
+                        child: stack,
+                      );
+                    }
 
-                return stack;
-              },
+                    return stack;
+                  },
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      ));
 
 // La tarjeta hero viaja con un Hero para transición hacia la pantalla destino
     if (!isHero) {
@@ -910,28 +978,38 @@ class _HomeSectionCardState extends State<_HomeSectionCard> {
 class _HeaderIcon extends StatelessWidget {
   const _HeaderIcon({
     required this.icon,
+    required this.semanticLabel,
+    required this.semanticHint,
     this.onTap,
   });
 
   final IconData icon;
+  final String semanticLabel;
+  final String semanticHint;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Material(
-      color: colorScheme.surfaceVariant.withOpacity(0.35),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: semanticLabel,
+      hint: semanticHint,
+      child: Material(
+        color: colorScheme.surfaceVariant.withOpacity(0.35),
         borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          height: 44,
-          width: 44,
-          child: Icon(
-            icon,
-            color: colorScheme.onSurface,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            height: 48,
+            width: 48,
+            child: Icon(
+              icon,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
       ),
@@ -950,6 +1028,7 @@ class SectionPlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(info.title),
@@ -999,7 +1078,9 @@ class SectionPlaceholderScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'La sección de ${info.title.toLowerCase()} estará disponible pronto.',
+                        l10n.homePlaceholderMessage(
+                          info.title.toLowerCase(),
+                        ),
                         textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
@@ -1017,9 +1098,55 @@ class SectionPlaceholderScreen extends StatelessWidget {
     );
   }
 }
+
+enum HomeSectionType {
+  pokedex,
+  favorites,
+  moves,
+  tm,
+  abilities,
+  checklists,
+  parties,
+  locations,
+}
 /// DTO interno con la definición de cada sección del Home.
+class _SectionConfig {
+  const _SectionConfig({
+    required this.type,
+    required this.icon,
+    required this.color,
+    required this.heroTag,
+    this.graphics = const [],
+    this.accents = const [],
+  });
+
+  final HomeSectionType type;
+  final IconData icon;
+  final Color color;
+  final String heroTag;
+  final List<_SectionGraphic> graphics;
+  final List<_AccentShape> accents;
+
+  _SectionInfo toSectionInfo({
+    required String title,
+    required String subtitle,
+  }) {
+    return _SectionInfo(
+      type: type,
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      color: color,
+      heroTag: heroTag,
+      graphics: graphics,
+      accents: accents,
+    );
+  }
+}
+
 class _SectionInfo {
   const _SectionInfo({
+    required this.type,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -1029,6 +1156,7 @@ class _SectionInfo {
     this.accents = const [],
   });
 
+  final HomeSectionType type;
   final String title;
   final String subtitle;
   final IconData icon;

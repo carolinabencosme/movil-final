@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../models/ability_model.dart';
@@ -51,6 +52,7 @@ class AbilityDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F1E7),
@@ -104,9 +106,9 @@ class AbilityDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeroCard(theme, baseDetail),
+                  _buildHeroCard(context, baseDetail),
                   const SizedBox(height: 24),
-                  _buildEffectSection(theme, baseDetail),
+                  _buildEffectSection(context, baseDetail),
                   const SizedBox(height: 24),
                   // Manejo de estados: error → retry, loading → spinner, ok → lista o vacío.
                   if (hasError)
@@ -142,7 +144,9 @@ class AbilityDetailScreen extends StatelessWidget {
 
   /// Tarjeta superior con transición Hero que muestra nombre y shortEffect.
   /// Sirve para dar continuidad visual desde la lista de habilidades.
-  Widget _buildHeroCard(ThemeData theme, AbilityDetail detail) {
+  Widget _buildHeroCard(BuildContext context, AbilityDetail detail) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Hero(
       tag: heroTag ?? 'ability-card-${detail.id}',
       child: Material(
@@ -200,7 +204,7 @@ class AbilityDetailScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       detail.shortEffect.isEmpty
-                          ? 'Sin descripción breve disponible.'
+                          ? l10n.abilitiesNoShortDescription
                           : detail.shortEffect,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF6E5E55),
@@ -218,7 +222,9 @@ class AbilityDetailScreen extends StatelessWidget {
 
   /// Sección con la descripción completa de la habilidad (`fullEffect`).
   /// Envuelta en un contenedor con sombra y títulos consistentes con la UI.
-  Widget _buildEffectSection(ThemeData theme, AbilityDetail detail) {
+  Widget _buildEffectSection(BuildContext context, AbilityDetail detail) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -240,7 +246,7 @@ class AbilityDetailScreen extends StatelessWidget {
               Icon(Icons.menu_book, color: accentColor),
               const SizedBox(width: 12),
               Text(
-                'Descripción completa',
+                l10n.abilitiesFullDescriptionTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: accentColor,
                   fontWeight: FontWeight.w700,
@@ -251,7 +257,7 @@ class AbilityDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             detail.fullEffect.isEmpty
-                ? 'Sin descripción disponible en este idioma.'
+                ? l10n.abilitiesFullDescriptionFallback
                 : detail.fullEffect,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: const Color(0xFF4A3F35),
@@ -277,6 +283,7 @@ class _PokemonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -298,7 +305,7 @@ class _PokemonList extends StatelessWidget {
               Icon(Icons.catching_pokemon, color: accentColor),
               const SizedBox(width: 12),
               Text(
-                'Pokémon que la poseen',
+                l10n.abilitiesPokemonSectionTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: accentColor,
                   fontWeight: FontWeight.w700,
@@ -346,6 +353,7 @@ class _EmptyPokemonState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -368,7 +376,7 @@ class _EmptyPokemonState extends StatelessWidget {
               Icon(Icons.catching_pokemon, color: accentColor),
               const SizedBox(width: 12),
               Text(
-                'Pokémon que la poseen',
+                l10n.abilitiesPokemonSectionTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: accentColor,
                   fontWeight: FontWeight.w700,
@@ -378,7 +386,7 @@ class _EmptyPokemonState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No encontramos Pokémon asociados a esta habilidad.',
+            l10n.abilitiesPokemonEmpty,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF6E5E55),
             ),
@@ -398,6 +406,7 @@ class _DetailErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final retry = onRetry;
     return Container(
       decoration: BoxDecoration(
@@ -417,12 +426,12 @@ class _DetailErrorState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.error_outline, color: Color(0xFF9C27B0)),
-              SizedBox(width: 12),
+            children: [
+              const Icon(Icons.error_outline, color: Color(0xFF9C27B0)),
+              const SizedBox(width: 12),
               Text(
-                'No pudimos cargar los Pokémon asociados.',
-                style: TextStyle(
+                l10n.abilitiesPokemonErrorTitle,
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF9C27B0),
                 ),
@@ -431,7 +440,7 @@ class _DetailErrorState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Intenta nuevamente para ver qué Pokémon cuentan con esta habilidad.',
+            l10n.abilitiesPokemonErrorDescription,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF6E5E55),
             ),
@@ -453,7 +462,7 @@ class _DetailErrorState extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: Text(l10n.commonRetry),
             ),
           ),
         ],

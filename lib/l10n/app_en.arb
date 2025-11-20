@@ -1,0 +1,520 @@
+{
+  "@@locale": "en",
+  "appTitle": "Pokédex GraphQL",
+  "homeHeaderTitle": "ProDex",
+  "@homeHeaderTitle": {
+    "description": "Brand-like title displayed at the top of the Home screen."
+  },
+  "homeQuickAccessGymLeaders": "Gym Leaders & Elite 4",
+  "@homeQuickAccessGymLeaders": {
+    "description": "Label for the quick-access chip that opens gym leader resources."
+  },
+  "homeQuickAccessNatures": "Natures",
+  "@homeQuickAccessNatures": {
+    "description": "Label for the quick-access chip that opens nature guides."
+  },
+  "homeQuickAccessMatchups": "Type Matchups",
+  "@homeQuickAccessMatchups": {
+    "description": "Label for the quick-access chip that shows type matchup information."
+  },
+  "homeQuickAccessEvolutionChains": "Evolution Chains",
+  "@homeQuickAccessEvolutionChains": {
+    "description": "Label for the quick-access chip that highlights evolution chain references."
+  },
+  "homeQuickAccessBreeding": "Breeding Guides",
+  "@homeQuickAccessBreeding": {
+    "description": "Label for the quick-access chip that links to breeding guides."
+  },
+  "homeQuickAccessBerries": "Berry Farming",
+  "@homeQuickAccessBerries": {
+    "description": "Label for the quick-access chip that covers berry farming tips."
+  },
+  "authLoginTitle": "Welcome back",
+  "authLoginSubtitle": "Sign in with your email to access your Pokédex.",
+  "authEmailLabel": "Email",
+  "authEmailHint": "ash.ketchum@poke.app",
+  "authPasswordLabel": "Password",
+  "authLoginButton": "Sign in",
+  "authNoAccountCta": "Don't have an account? Sign up",
+  "authLoginError": "We couldn't sign you in. Try again.",
+  "authEmailRequired": "Enter your email.",
+  "authEmailInvalid": "Invalid email format.",
+  "authPasswordRequired": "Enter your password.",
+  "authPasswordLength": "The password must contain at least 6 characters.",
+  "authRegisterTitle": "Create your account",
+  "authRegisterSubtitle": "Register to sync your teams and collections across all your devices.",
+  "authCreateAccountButton": "Create account",
+  "authAlreadyHaveAccountCta": "Already have an account? Sign in",
+  "authRegisterError": "We couldn't create your account. Try again later.",
+  "authSecurePasswordRequired": "Enter a secure password.",
+  "authPasswordStrongSuggestion": "Use letters and numbers for a stronger password.",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authPasswordsMismatch": "Passwords do not match.",
+  "authSnackbarNoUser": "User information is not available.",
+  "authProfileUpdated": "Profile updated successfully.",
+  "authProfileUpdateError": "We couldn't update the profile.",
+  "authUpdateInfoTitle": "Update your login information.",
+  "authUpdateInfoSubtitle": "Change your email address or set a new password. Changes apply immediately.",
+  "authNewPasswordOptionalLabel": "New password (optional)",
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Page title for the Settings screen."
+  },
+  "settingsAccountSection": "Account",
+  "@settingsAccountSection": {
+    "description": "Heading shown above the account information card."
+  },
+  "settingsNoEmail": "No email on record",
+  "@settingsNoEmail": {
+    "description": "Fallback text when the authenticated user does not have an email."
+  },
+  "settingsEditProfile": "Edit profile",
+  "@settingsEditProfile": {
+    "description": "Button label that opens the profile editing screen."
+  },
+  "settingsSignOut": "Sign out",
+  "@settingsSignOut": {
+    "description": "Button label used to log out of the current session."
+  },
+  "settingsAppearanceSection": "Appearance",
+  "@settingsAppearanceSection": {
+    "description": "Heading shown above the appearance/theme options."
+  },
+  "settingsLanguageSection": "Language",
+  "@settingsLanguageSection": {
+    "description": "Heading shown above the language selection card."
+  },
+  "settingsLanguageLabel": "App language",
+  "@settingsLanguageLabel": {
+    "description": "Label for the dropdown that lets the user pick a locale."
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "Name of the English locale shown inside the dropdown."
+  },
+  "settingsLanguageSpanish": "Spanish",
+  "@settingsLanguageSpanish": {
+    "description": "Name of the Spanish locale shown inside the dropdown."
+  },
+  "settingsLightModeTitle": "Light mode",
+  "@settingsLightModeTitle": {
+    "description": "Title of the light theme option within the appearance card."
+  },
+  "settingsLightModeSubtitle": "Bright backgrounds for well-lit environments.",
+  "@settingsLightModeSubtitle": {
+    "description": "Description that explains when to use the light theme option."
+  },
+  "settingsDarkModeTitle": "Dark mode",
+  "@settingsDarkModeTitle": {
+    "description": "Title of the dark theme option within the appearance card."
+  },
+  "settingsDarkModeSubtitle": "Dim the lights to reduce eye strain at night.",
+  "@settingsDarkModeSubtitle": {
+    "description": "Description that explains when to use the dark theme option."
+  },
+  "settingsInfo": "Settings save immediately and affect the entire app.",
+  "@settingsInfo": {
+    "description": "Footnote shown below the cards to clarify how settings behave."
+  },
+  "settingsSaveChanges": "Save changes",
+  "@settingsSaveChanges": {
+    "description": "Primary action button in the profile settings form."
+  },
+  "favoritesDefaultTitle": "Favorites",
+  "favoritesEmptyTitle": "You don't have favorite Pokémon yet.",
+  "favoritesEmptySubtitle": "Explore the Pokédex and tap the heart to save your favorites.",
+  "homeQuickAccessTitle": "Quick access",
+  "@homeQuickAccessTitle": {
+    "description": "Label for the horizontal list of quick-access chips on Home."
+  },
+  "homeSectionPokedexTitle": "Pokédex",
+  "@homeSectionPokedexTitle": {
+    "description": "Title of the Pokédex feature card on the Home screen."
+  },
+  "homeSectionPokedexSubtitle": "National index & regional dexes",
+  "@homeSectionPokedexSubtitle": {
+    "description": "Short description shown under the Pokédex card title."
+  },
+  "homeSectionFavoritesTitle": "Favorites",
+  "@homeSectionFavoritesTitle": {
+    "description": "Title of the favorites feature card on the Home screen."
+  },
+  "homeSectionFavoritesSubtitle": "Your saved Pokémon",
+  "@homeSectionFavoritesSubtitle": {
+    "description": "Short description shown under the favorites card title."
+  },
+  "homeSectionMovesTitle": "Moves",
+  "@homeSectionMovesTitle": {
+    "description": "Title of the moves feature card on the Home screen."
+  },
+  "homeSectionMovesSubtitle": "Damage, effects & contest data",
+  "@homeSectionMovesSubtitle": {
+    "description": "Short description shown under the moves card title."
+  },
+  "homeSectionTmTitle": "TM",
+  "@homeSectionTmTitle": {
+    "description": "Title of the technical machines feature card on the Home screen."
+  },
+  "homeSectionTmSubtitle": "Machines & tutors by generation",
+  "@homeSectionTmSubtitle": {
+    "description": "Short description shown under the TM card title."
+  },
+  "homeSectionAbilitiesTitle": "Abilities",
+  "@homeSectionAbilitiesTitle": {
+    "description": "Title of the abilities feature card on the Home screen."
+  },
+  "homeSectionAbilitiesSubtitle": "Passive effects & triggers",
+  "@homeSectionAbilitiesSubtitle": {
+    "description": "Short description shown under the abilities card title."
+  },
+  "homeSectionChecklistsTitle": "Checklists",
+  "@homeSectionChecklistsTitle": {
+    "description": "Title of the checklist feature card on the Home screen."
+  },
+  "homeSectionChecklistsSubtitle": "Track goals & collections",
+  "@homeSectionChecklistsSubtitle": {
+    "description": "Short description shown under the checklist card title."
+  },
+  "homeSectionPartiesTitle": "Parties",
+  "@homeSectionPartiesTitle": {
+    "description": "Title of the parties/teams feature card on the Home screen."
+  },
+  "homeSectionPartiesSubtitle": "Build teams & strategies",
+  "@homeSectionPartiesSubtitle": {
+    "description": "Short description shown under the parties card title."
+  },
+  "homeSectionLocationsTitle": "Locations",
+  "@homeSectionLocationsTitle": {
+    "description": "Title of the locations feature card on the Home screen."
+  },
+  "homeSectionLocationsSubtitle": "Regions, maps & encounter data",
+  "@homeSectionLocationsSubtitle": {
+    "description": "Short description shown under the locations card title."
+  },
+  "homeSectionCardSemanticLabel": "Open the {sectionName} section",
+  "@homeSectionCardSemanticLabel": {
+    "description": "Semantic label announcing navigation to a home section",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSectionCardSemanticHint": "Double tap to navigate to {sectionName}",
+  "@homeSectionCardSemanticHint": {
+    "description": "Semantic hint for opening a home section",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "detailCharacteristicHeight": "Height",
+  "@detailCharacteristicHeight": {
+    "description": "Label for the Pokémon height characteristic."
+  },
+  "detailCharacteristicWeight": "Weight",
+  "@detailCharacteristicWeight": {
+    "description": "Label for the Pokémon weight characteristic."
+  },
+  "detailCharacteristicCategory": "Category",
+  "@detailCharacteristicCategory": {
+    "description": "Label for the Pokémon category characteristic."
+  },
+  "detailCharacteristicNoCategory": "No category",
+  "@detailCharacteristicNoCategory": {
+    "description": "Fallback text when no category information is available."
+  },
+  "detailCharacteristicCatchRate": "Catch rate",
+  "@detailCharacteristicCatchRate": {
+    "description": "Label for the Pokémon catch rate characteristic."
+  },
+  "detailCharacteristicBaseExperience": "Base experience",
+  "@detailCharacteristicBaseExperience": {
+    "description": "Label for the Pokémon base experience characteristic."
+  },
+  "detailNoWeaknessInfo": "No weakness information available.",
+  "@detailNoWeaknessInfo": {
+    "description": "Message shown when weakness data is missing."
+  },
+  "detailWeaknessLegendQuadruple": "Double weakness: damage taken is multiplied by four.",
+  "@detailWeaknessLegendQuadruple": {
+    "description": "Description for the 4x weakness legend entry."
+  },
+  "detailWeaknessLegendDouble": "Classic weakness: super effective attacks.",
+  "@detailWeaknessLegendDouble": {
+    "description": "Description for the 2x weakness legend entry."
+  },
+  "detailWeaknessLegendModerate": "Moderate advantage: slightly increased damage.",
+  "@detailWeaknessLegendModerate": {
+    "description": "Description for the 1.5x weakness legend entry."
+  },
+  "detailWeaknessToggleShow": "Show weaknesses",
+  "@detailWeaknessToggleShow": {
+    "description": "Button text to expand and show weaknesses."
+  },
+  "detailWeaknessToggleHide": "Hide weaknesses",
+  "@detailWeaknessToggleHide": {
+    "description": "Button text to collapse weaknesses."
+  },
+  "homeNotificationsSemanticLabel": "Notifications",
+  "@homeNotificationsSemanticLabel": {
+    "description": "Semantic label for the notifications button"
+  },
+  "homeNotificationsSemanticHint": "Opens notifications and alerts",
+  "@homeNotificationsSemanticHint": {
+    "description": "Semantic hint for the notifications button"
+  },
+  "homeStoreSemanticLabel": "Shop",
+  "@homeStoreSemanticLabel": {
+    "description": "Semantic label for the shop button"
+  },
+  "homeStoreSemanticHint": "Opens the in-app shop",
+  "@homeStoreSemanticHint": {
+    "description": "Semantic hint for the shop button"
+  },
+  "homeSettingsSemanticLabel": "Settings",
+  "@homeSettingsSemanticLabel": {
+    "description": "Semantic label for the settings button"
+  },
+  "homeSettingsSemanticHint": "Opens app settings",
+  "@homeSettingsSemanticHint": {
+    "description": "Semantic hint for the settings button"
+  },
+  "homePlaceholderMessage": "The {sectionName} section will be available soon.",
+  "@homePlaceholderMessage": {
+    "description": "Message shown for sections that are not ready yet.",
+    "placeholders": {
+      "sectionName": {
+        "type": "String"
+      }
+    }
+  },
+  "abilitiesDefaultTitle": "Abilities",
+  "abilitiesSearchHint": "Search ability…",
+  "abilitiesErrorMessage": "We couldn’t load the abilities.",
+  "commonRetry": "Retry",
+  "abilitiesEmptySearch": "We couldn’t find abilities that match your search.",
+  "abilitiesEmptyGeneral": "No abilities are available right now.",
+  "abilitiesNoDescription": "No description available.",
+  "abilitiesNoShortDescription": "No short description available.",
+  "abilitiesFullDescriptionTitle": "Full description",
+  "abilitiesFullDescriptionFallback": "No description is available in this language.",
+  "abilitiesPokemonSectionTitle": "Pokémon with this ability",
+  "abilitiesPokemonEmpty": "We couldn’t find Pokémon associated with this ability.",
+  "abilitiesPokemonErrorTitle": "We couldn’t load the associated Pokémon.",
+  "abilitiesPokemonErrorDescription": "Try again to see which Pokémon have this ability.",
+  "pokedexSortNumberLabel": "Number",
+  "pokedexSortNameLabel": "Name",
+  "pokedexSortHeightLabel": "Height",
+  "pokedexSortWeightLabel": "Weight",
+  "abilityCardSemanticLabel": "Open ability {abilityName}",
+  "@abilityCardSemanticLabel": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic label announcing navigation to an ability detail"
+  },
+  "abilityCardSemanticHint": "Double tap to see details for {abilityName}",
+  "@abilityCardSemanticHint": {
+    "placeholders": {
+      "abilityName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic hint for opening an ability"
+  },
+  "pokedexCardSemanticLabel": "Open {pokemonName} details",
+  "@pokedexCardSemanticLabel": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic label for navigating to a Pokémon entry"
+  },
+  "pokedexCardSemanticHint": "Double tap to view {pokemonName} in the Pokédex",
+  "@pokedexCardSemanticHint": {
+    "placeholders": {
+      "pokemonName": {
+        "type": "String"
+      }
+    },
+    "description": "Semantic hint for navigating to a Pokémon entry"
+  },
+  "pokedexSearchHint": "Search by name or number",
+  "pokedexFiltersTooltip": "Filters",
+  "pokedexOfflineNoCache": "No connection and no cached data available.",
+  "pokedexOfflineBanner": "Offline mode active. Showing cached data.",
+  "pokedexConnectionRestored": "Connection restored.",
+  "pokedexLoadError": "We couldn’t load the Pokédex. Try again.",
+  "pokedexOfflineFiltersLimited": "Offline mode active. Some filters may be limited.",
+  "pokedexShowingCountSimple": "Showing {count} Pokémon.",
+  "pokedexShowingCountWithTotal": "Showing {count} of {total} Pokémon.",
+  "pokedexActiveFilters": "{count, plural, one {{count} active filter} other {{count} active filters}}",
+  "pokedexSortDirectionAscending": "ascending",
+  "pokedexSortDirectionDescending": "descending",
+  "pokedexFilterSummarySearch": "Search: {query}",
+  "pokedexFilterSummaryType": "Type: {value}",
+  "pokedexFilterSummaryGeneration": "Generation: {value}",
+  "pokedexFilterSummaryRegion": "Region: {value}",
+  "pokedexFilterSummaryShape": "Form: {value}",
+  "pokedexFilterSummarySort": "Sort: {value}",
+  "pokedexNoResults": "No Pokémon match the current filters.",
+  "pokedexFiltersTitle": "Filters",
+  "pokedexFiltersCloseTooltip": "Close",
+  "pokedexFilterSectionTypes": "Types",
+  "pokedexFilterSectionGenerations": "Generations",
+  "pokedexFilterSectionRegions": "Regions",
+  "pokedexFilterSectionShapes": "Shapes",
+  "pokedexFilterEmptyTypes": "No types available right now.",
+  "pokedexFilterEmptyGenerations": "No generations available right now.",
+  "pokedexFilterEmptyRegions": "No regions available right now.",
+  "pokedexFilterEmptyShapes": "No shapes available right now.",
+  "pokedexFiltersClear": "Clear",
+  "commonCancel": "Cancel",
+  "commonApply": "Apply",
+  "detailOfflineModeSnack": "Offline mode active. Showing locally saved data.",
+  "@detailOfflineModeSnack": {
+    "description": "SnackBar message shown when the detail screen switches to offline mode."
+  },
+  "detailConnectionRestored": "Connection restored.",
+  "@detailConnectionRestored": {
+    "description": "SnackBar message shown when connectivity returns on the detail screen."
+  },
+  "detailOfflineBanner": "Offline mode active. Some advanced data may not be available.",
+  "@detailOfflineBanner": {
+    "description": "Banner text shown at the top of the detail screen while offline."
+  },
+  "detailFallbackTitle": "Pokémon details",
+  "@detailFallbackTitle": {
+    "description": "Fallback AppBar title when the Pokémon name is not available."
+  },
+  "detailTabInformation": "Information",
+  "@detailTabInformation": {
+    "description": "Label for the detail tab that shows general Pokémon information."
+  },
+  "detailTabStatistics": "Statistics",
+  "@detailTabStatistics": {
+    "description": "Label for the detail tab that displays Pokémon stats."
+  },
+  "detailTabMatchups": "Matchups",
+  "@detailTabMatchups": {
+    "description": "Label for the detail tab that explains type matchups."
+  },
+  "detailTabEvolutions": "Evolutions",
+  "@detailTabEvolutions": {
+    "description": "Label for the detail tab that shows evolution chains."
+  },
+  "detailTabMoves": "Moves",
+  "@detailTabMoves": {
+    "description": "Label for the detail tab that lists Pokémon moves."
+  },
+  "detailNoDataFound": "We couldn't find information for this Pokémon.",
+  "@detailNoDataFound": {
+    "description": "Message shown when the detail query returns no data."
+  },
+  "detailOfflineShortMessage": "Offline mode: showing saved information.",
+  "@detailOfflineShortMessage": {
+    "description": "Short message shown in the offline detail view explaining cached data is being used."
+  },
+  "detailOfflineLongMessage": "Detailed information isn't available without a connection. Try again when you're back online.",
+  "@detailOfflineLongMessage": {
+    "description": "Longer explanation shown in the offline detail view about missing data."
+  },
+  "detailFavoriteRemoveTooltip": "Remove from favorites",
+  "@detailFavoriteRemoveTooltip": {
+    "description": "Tooltip shown on the favorite button when the Pokémon is already a favorite."
+  },
+  "detailFavoriteAddTooltip": "Add to favorites",
+  "@detailFavoriteAddTooltip": {
+    "description": "Tooltip shown on the favorite button when the Pokémon is not a favorite."
+  },
+  "detailHiddenAbilityLabel": "Hidden ability",
+  "@detailHiddenAbilityLabel": {
+    "description": "Label shown for a Pokémon's hidden ability in the detail header."
+  },
+  "detailMainAbilityLabel": "Main ability",
+  "@detailMainAbilityLabel": {
+    "description": "Label shown for a Pokémon's primary ability in the detail header."
+  },
+  "detailLoadErrorDescription": "We couldn't load the Pokémon details.\nCheck your connection or try again.",
+  "@detailLoadErrorDescription": {
+    "description": "Error message displayed when the detail screen cannot load data." 
+  },
+  "pokedexSortSheetTitle": "Sort by",
+  "pokedexSortCriteriaLabel": "Criterion",
+  "pokedexSortDirectionLabel": "Direction",
+  "pokedexSortAscendingShort": "Asc",
+  "pokedexSortDescendingShort": "Desc",
+  "favoritesRemoveAction": "Remove from favorites",
+  "favoritesAddAction": "Add to favorites",
+  "@pokedexShowingCountSimple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexShowingCountWithTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexActiveFilters": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@pokedexFilterSummarySearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryType": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryGeneration": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryRegion": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummaryShape": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@pokedexFilterSummarySort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  }
+}

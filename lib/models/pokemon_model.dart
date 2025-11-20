@@ -44,11 +44,17 @@ class PokemonListItem {
     required this.id,
     required this.name,
     required this.imageUrl,
-    this.types = const [],
-    this.stats = const [],
+    List<String> types = const <String>[],
+    List<PokemonStat> stats = const <PokemonStat>[],
     this.generationId,
     this.generationName,
-  });
+    this.regionName,
+    this.shapeName,
+    this.height,
+    this.weight,
+    this.isFavorite = false,
+  })  : types = List<String>.unmodifiable(types),
+        stats = List<PokemonStat>.unmodifiable(stats);
 
   /// ID numérico único del Pokémon (número de Pokédex Nacional)
   final int id;
@@ -67,9 +73,24 @@ class PokemonListItem {
   
   /// ID de la generación a la que pertenece (1-9)
   final int? generationId;
-  
+
   /// Nombre de la generación (ej: "generation-i", "generation-ii")
   final String? generationName;
+
+  /// Nombre de la región asociada a la generación.
+  final String? regionName;
+
+  /// Nombre de la forma del Pokémon (shape) si está disponible.
+  final String? shapeName;
+
+  /// Altura base (en decímetros) usada para ordenamientos locales.
+  final int? height;
+
+  /// Peso base (en hectogramos) usado para ordenamientos locales.
+  final int? weight;
+
+  /// Indica si el Pokémon está marcado como favorito por el usuario.
+  final bool isFavorite;
 
   /// Factory constructor que parsea datos desde GraphQL
   /// 
@@ -80,7 +101,7 @@ class PokemonListItem {
   /// - Lee tipos desde `pokemon_v2_pokemontypes`.
   /// - Convierte estadísticas desde `pokemon_v2_pokemonstats`.
   /// - Toma generación desde `pokemon_v2_pokemonspecy`.
-   /// - Resuelve la mejor URL de sprite disponible.
+  /// - Resuelve la mejor URL de sprite disponible.
   factory PokemonListItem.fromGraphQL(Map<String, dynamic> json) {
     // Tipos: mapea y filtra nulos/formatos inesperados.
     final types = (json['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [])
@@ -134,6 +155,98 @@ class PokemonListItem {
       stats: stats,
       generationId: resolvedGenerationId,
       generationName: resolvedGenerationName,
+      regionName: generationInfo?['pokemon_v2_region']?['name'] as String?,
+      shapeName:
+          species?['pokemon_v2_pokemonshape']?['name'] as String?,
+      height: json['height'] as int?,
+      weight: json['weight'] as int?,
+      isFavorite: false,
+    );
+  }
+
+  /// Crea una copia modificada del Pokémon conservando los valores actuales
+  /// para los campos no especificados.
+  PokemonListItem copyWith({
+    int? id,
+    String? name,
+    String? imageUrl,
+    List<String>? types,
+    List<PokemonStat>? stats,
+    int? generationId,
+    String? generationName,
+    String? regionName,
+    String? shapeName,
+    int? height,
+    int? weight,
+    bool? isFavorite,
+  }) {
+    return PokemonListItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
+      types: types ?? this.types,
+      stats: stats ?? this.stats,
+      generationId: generationId ?? this.generationId,
+      generationName: generationName ?? this.generationName,
+      regionName: regionName ?? this.regionName,
+      shapeName: shapeName ?? this.shapeName,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
+
+  /// Serializa el Pokémon a un mapa JSON simple.
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'name': name,
+      'imageUrl': imageUrl,
+      'types': types.toList(),
+      'stats': stats.map((stat) => stat.toJson()).toList(),
+      'generationId': generationId,
+      'generationName': generationName,
+      'regionName': regionName,
+      'shapeName': shapeName,
+      'height': height,
+      'weight': weight,
+      'isFavorite': isFavorite,
+    };
+  }
+
+  /// Reconstruye un Pokémon a partir de un JSON previamente serializado.
+  factory PokemonListItem.fromJson(Map<String, dynamic> json) {
+    final statsJson = json['stats'] as List<dynamic>? ?? const <dynamic>[];
+    return PokemonListItem(
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      imageUrl:
+          json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
+      types: (json['types'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<String>()
+          .toList(),
+      stats: statsJson
+          .map((dynamic stat) {
+            if (stat is Map<String, dynamic>) {
+              return PokemonStat.fromJson(stat);
+            }
+            return null;
+          })
+          .whereType<PokemonStat>()
+          .toList(),
+      generationId: json['generationId'] as int? ??
+          json['generation_id'] as int?,
+      generationName: json['generationName'] as String? ??
+          json['generation_name'] as String?,
+      regionName: json['regionName'] as String? ??
+          json['region_name'] as String?,
+      shapeName: json['shapeName'] as String? ??
+          json['shape_name'] as String?,
+      height: json['height'] as int?,
+      weight: json['weight'] as int?,
+      isFavorite: json['isFavorite'] as bool? ??
+          json['is_favorite'] as bool? ??
+          false,
     );
   }
 }
@@ -652,9 +765,28 @@ class PokemonStat {
 
   /// Nombre de la estadística (hp, attack, defense, special-attack, special-defense, speed)
   final String name;
-  
+
   /// Valor base de la estadística (típicamente entre 1-255)
   final int baseStat;
+
+  /// Serializa la estadística a un mapa simple.
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'name': name,
+        'baseStat': baseStat,
+      };
+
+  /// Reconstruye una estadística a partir de JSON serializado.
+  factory PokemonStat.fromJson(Map<String, dynamic> json) {
+    return PokemonStat(
+      name: json['name'] as String? ?? '',
+      baseStat: json['baseStat'] as int? ?? json['base_stat'] as int? ?? 0,
+    );
+  }
+
+  /// Compara dos estadísticas por nombre y valor base.
+  bool isEquivalentTo(PokemonStat other) {
+    return name == other.name && baseStat == other.baseStat;
+  }
 }
 
 /// Modelo de detalle de habilidad de un Pokémon
