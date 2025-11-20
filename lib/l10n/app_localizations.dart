@@ -548,6 +548,42 @@ abstract class AppLocalizations {
   /// **'Discover fun facts about Pokémon.'**
   String get triviaDescription;
 
+  /// Title for the action card that opens the trivia game.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Pokémon trivia'**
+  String get triviaPlayCardTitle;
+
+  /// Subtitle encouraging users to start the trivia game.
+  ///
+  /// In en, this message translates to:
+  /// **'Test your knowledge with silhouettes and quick clues.'**
+  String get triviaPlayCardSubtitle;
+
+  /// Title for the action card that opens the trivia rankings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View Top 10 ranking'**
+  String get triviaRankingCardTitle;
+
+  /// Subtitle inviting users to explore the top scores.
+  ///
+  /// In en, this message translates to:
+  /// **'Check high scores and get motivated to beat the board.'**
+  String get triviaRankingCardSubtitle;
+
+  /// Title for the action card that opens the trivia achievements screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked achievements'**
+  String get triviaAchievementsCardTitle;
+
+  /// Subtitle encouraging users to review their trivia achievements.
+  ///
+  /// In en, this message translates to:
+  /// **"Review the badges you've earned during trivia sessions."**
+  String get triviaAchievementsCardSubtitle;
+
   /// Title for the trivia fact about Skitty and Wailord breeding.
   ///
   /// In en, this message translates to:

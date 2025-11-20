@@ -248,6 +248,27 @@ class AppLocalizationsEs extends AppLocalizations {
   String get triviaDescription => 'Descubre datos curiosos sobre Pokémon.';
 
   @override
+  String get triviaPlayCardTitle => 'Jugar trivia Pokémon';
+
+  @override
+  String get triviaPlayCardSubtitle =>
+      'Pon a prueba tus conocimientos con siluetas y pistas rápidas.';
+
+  @override
+  String get triviaRankingCardTitle => 'Ver ranking Top 10';
+
+  @override
+  String get triviaRankingCardSubtitle =>
+      'Consulta las mejores puntuaciones y motívate a superar el marcador.';
+
+  @override
+  String get triviaAchievementsCardTitle => 'Logros desbloqueados';
+
+  @override
+  String get triviaAchievementsCardSubtitle =>
+      'Revisa las insignias que has ganado durante tus sesiones de trivia.';
+
+  @override
   String get triviaFactSkittyTitle => 'Skitty puede criar con Wailord';
 
   @override
