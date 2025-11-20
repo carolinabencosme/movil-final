@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+
 /// Servicio para capturar widgets como imágenes y compartirlas.
 /// 
 /// Utiliza RepaintBoundary y RenderRepaintBoundary para convertir
@@ -98,7 +99,7 @@ class CardCaptureService {
     } catch (e, stackTrace) {
       debugPrint('[CardCaptureService] Error al compartir imagen: $e');
       debugPrint('[CardCaptureService] StackTrace: $stackTrace');
-      return const ShareResult(status: ShareResultStatus.unavailable);
+      return ShareResult.unavailable;
     }
   }
 
