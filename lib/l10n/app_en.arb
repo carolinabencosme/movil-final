@@ -273,6 +273,26 @@
   "@detailInfoMainAbilityFallback": {
     "description": "Fallback message shown when the main ability is missing on the detail info tab."
   },
+  "detailStatsTitle": "Stats",
+  "@detailStatsTitle": {
+    "description": "Section title for the stats card on the detail tab."
+  },
+  "detailStatsFallback": "No stat information available.",
+  "@detailStatsFallback": {
+    "description": "Fallback message when stat data is missing on the detail tab."
+  },
+  "detailMatchupsWeaknessesTitle": "Weaknesses",
+  "@detailMatchupsWeaknessesTitle": {
+    "description": "Section title for the weaknesses list on the matchups tab."
+  },
+  "detailMatchupsResistancesTitle": "Resistances & immunities",
+  "@detailMatchupsResistancesTitle": {
+    "description": "Section title for the resistances and immunities list on the matchups tab."
+  },
+  "detailEvolutionChainTitle": "Evolution chain",
+  "@detailEvolutionChainTitle": {
+    "description": "Section title for the evolution chain on the detail tab."
+  },
   "detailNoWeaknessInfo": "No weakness information available.",
   "@detailNoWeaknessInfo": {
     "description": "Message shown when weakness data is missing."

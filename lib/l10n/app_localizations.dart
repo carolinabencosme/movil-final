@@ -632,6 +632,36 @@ abstract class AppLocalizations {
   /// **'No main ability available.'**
   String get detailInfoMainAbilityFallback;
 
+  /// Section title for the stats card on the detail tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get detailStatsTitle;
+
+  /// Fallback message when stat data is missing on the detail tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No stat information available.'**
+  String get detailStatsFallback;
+
+  /// Section title for the weaknesses list on the matchups tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Weaknesses'**
+  String get detailMatchupsWeaknessesTitle;
+
+  /// Section title for the resistances and immunities list on the matchups tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Resistances & immunities'**
+  String get detailMatchupsResistancesTitle;
+
+  /// Section title for the evolution chain on the detail tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Evolution chain'**
+  String get detailEvolutionChainTitle;
+
   /// Message shown when weakness data is missing.
   ///
   /// In en, this message translates to:

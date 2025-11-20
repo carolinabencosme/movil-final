@@ -296,6 +296,22 @@ class AppLocalizationsEs extends AppLocalizations {
       'Sin habilidad principal disponible.';
 
   @override
+  String get detailStatsTitle => 'Estadísticas';
+
+  @override
+  String get detailStatsFallback =>
+      'Sin información de estadísticas disponible.';
+
+  @override
+  String get detailMatchupsWeaknessesTitle => 'Debilidades';
+
+  @override
+  String get detailMatchupsResistancesTitle => 'Resistencias e inmunidades';
+
+  @override
+  String get detailEvolutionChainTitle => 'Cadena evolutiva';
+
+  @override
   String get detailNoWeaknessInfo =>
       'No hay información de debilidades disponible.';
 

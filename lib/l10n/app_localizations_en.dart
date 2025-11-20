@@ -290,6 +290,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailInfoMainAbilityFallback => 'No main ability available.';
 
   @override
+  String get detailStatsTitle => 'Stats';
+
+  @override
+  String get detailStatsFallback => 'No stat information available.';
+
+  @override
+  String get detailMatchupsWeaknessesTitle => 'Weaknesses';
+
+  @override
+  String get detailMatchupsResistancesTitle => 'Resistances & immunities';
+
+  @override
+  String get detailEvolutionChainTitle => 'Evolution chain';
+
+  @override
   String get detailNoWeaknessInfo => 'No weakness information available.';
 
   @override
