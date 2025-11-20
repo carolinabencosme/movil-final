@@ -232,12 +232,13 @@ class _PokemonStatsTabState extends State<PokemonStatsTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final padding = responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: InfoSectionCard(
-        title: 'Estadísticas',
+        title: l10n.detailStatsTitle,
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
         child: widget.pokemon.stats.isNotEmpty
@@ -251,7 +252,7 @@ class _PokemonStatsTabState extends State<PokemonStatsTab>
                     )
                     .toList(),
               )
-            : const Text('Sin información de estadísticas disponible.'),
+            : Text(l10n.detailStatsFallback),
       ),
     );
   }
@@ -284,6 +285,7 @@ class _PokemonMatchupsTabState extends State<PokemonMatchupsTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final padding = responsiveDetailTabPadding(context);
 
     return Padding(
@@ -292,7 +294,7 @@ class _PokemonMatchupsTabState extends State<PokemonMatchupsTab>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InfoSectionCard(
-            title: 'Debilidades',
+            title: l10n.detailMatchupsWeaknessesTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             child: WeaknessSection(
@@ -302,7 +304,7 @@ class _PokemonMatchupsTabState extends State<PokemonMatchupsTab>
           ),
           const SizedBox(height: 16),
           InfoSectionCard(
-            title: 'Resistencias e inmunidades',
+            title: l10n.detailMatchupsResistancesTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             child: TypeMatchupSection(
@@ -343,12 +345,13 @@ class _PokemonEvolutionTabState extends State<PokemonEvolutionTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final padding = responsiveDetailTabPadding(context);
 
     return Padding(
       padding: padding,
       child: InfoSectionCard(
-        title: 'Cadena evolutiva',
+        title: l10n.detailEvolutionChainTitle,
         backgroundColor: widget.sectionBackground,
         borderColor: widget.sectionBorder,
         child: EvolutionSection(

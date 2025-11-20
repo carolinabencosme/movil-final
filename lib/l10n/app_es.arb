@@ -273,6 +273,26 @@
   "@detailInfoMainAbilityFallback": {
     "description": "Mensaje de respaldo mostrado cuando falta la habilidad principal en la pestaña de información."
   },
+  "detailStatsTitle": "Estadísticas",
+  "@detailStatsTitle": {
+    "description": "Título de la sección para la tarjeta de estadísticas en la pestaña de detalle."
+  },
+  "detailStatsFallback": "Sin información de estadísticas disponible.",
+  "@detailStatsFallback": {
+    "description": "Mensaje alternativo cuando faltan datos de estadísticas en la pestaña de detalle."
+  },
+  "detailMatchupsWeaknessesTitle": "Debilidades",
+  "@detailMatchupsWeaknessesTitle": {
+    "description": "Título de la sección para la lista de debilidades en la pestaña de enfrentamientos."
+  },
+  "detailMatchupsResistancesTitle": "Resistencias e inmunidades",
+  "@detailMatchupsResistancesTitle": {
+    "description": "Título de la sección para la lista de resistencias e inmunidades en la pestaña de enfrentamientos."
+  },
+  "detailEvolutionChainTitle": "Cadena evolutiva",
+  "@detailEvolutionChainTitle": {
+    "description": "Título de la sección para la cadena evolutiva en la pestaña de detalle."
+  },
   "detailNoWeaknessInfo": "No hay información de debilidades disponible.",
   "@detailNoWeaknessInfo": {
     "description": "Mensaje que se muestra cuando faltan datos de debilidades."
