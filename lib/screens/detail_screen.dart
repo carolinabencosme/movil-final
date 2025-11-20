@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
@@ -116,6 +117,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   void _updateOfflineMode(bool offline) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     if (offline) {
       if (!_isOfflineMode) {
         setState(() {
@@ -124,7 +126,7 @@ class _DetailScreenState extends State<DetailScreen> {
       }
       if (!_offlineSnackShown) {
         _showSnack(
-          'Modo offline activo. Mostrando datos guardados localmente.',
+          l10n.detailOfflineModeSnack,
         );
         _offlineSnackShown = true;
       }
@@ -135,7 +137,7 @@ class _DetailScreenState extends State<DetailScreen> {
         });
       }
       if (_offlineSnackShown) {
-        _showSnack('Conexión restablecida.');
+        _showSnack(l10n.detailConnectionRestored);
         _offlineSnackShown = false;
       }
     }
@@ -176,7 +178,8 @@ class _DetailScreenState extends State<DetailScreen> {
     return null;
   }
 
-  Widget _buildOfflineBanner(ThemeData theme) {
+  Widget _buildOfflineBanner(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     final Color backgroundColor =
         theme.colorScheme.surfaceVariant.withOpacity(0.9);
     final Color foregroundColor = theme.colorScheme.onSurfaceVariant;
@@ -194,7 +197,7 @@ class _DetailScreenState extends State<DetailScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Modo offline activo. Algunos datos avanzados pueden no estar disponibles.',
+              l10n.detailOfflineBanner,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: foregroundColor,
                 fontWeight: FontWeight.w600,
@@ -208,6 +211,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
 
     final resolvedHeroTag = widget.heroTag ??
@@ -325,7 +329,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
         final String appBarTitle = favoriteTarget != null
             ? _capitalize(favoriteTarget.name)
-            : previewName ?? 'Detalles del Pokémon';
+            : previewName ?? l10n.detailFallbackTitle;
 
         final PokemonListItem? offlinePokemon =
             offlineError ? favoriteTarget : null;
@@ -362,14 +366,14 @@ class _DetailScreenState extends State<DetailScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('No se encontró información para este Pokémon.'),
+                Text(l10n.detailNoDataFound),
                 const SizedBox(height: 16),
                 if (refetch != null)
                   ElevatedButton(
                     onPressed: () async {
                       await refetch();
                     },
-                    child: const Text('Reintentar'),
+                    child: Text(l10n.commonRetry),
                   ),
               ],
             ),
@@ -415,7 +419,7 @@ class _DetailScreenState extends State<DetailScreen> {
         final Widget finalBody = _isOfflineMode
             ? Column(
                 children: [
-                  _buildOfflineBanner(theme),
+                  _buildOfflineBanner(context, theme),
                   Expanded(child: body),
                 ],
               )
@@ -447,6 +451,7 @@ class _OfflineDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final String displayName =
         pokemon.name.isEmpty ? 'Pokémon #${pokemon.id}' : pokemon.name;
@@ -490,7 +495,7 @@ class _OfflineDetailView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Modo offline: mostrando información guardada.',
+            l10n.detailOfflineShortMessage,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
@@ -498,7 +503,7 @@ class _OfflineDetailView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'La información detallada no está disponible sin conexión. Intenta nuevamente cuando recuperes internet.',
+            l10n.detailOfflineLongMessage,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),
@@ -515,6 +520,7 @@ class _DetailFavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
     final PokemonListItem resolvedPokemon =
         favoritesController.applyFavoriteState(pokemon);
@@ -525,8 +531,8 @@ class _DetailFavoriteButton extends StatelessWidget {
       ),
       color: resolvedPokemon.isFavorite ? Colors.redAccent : null,
       tooltip: resolvedPokemon.isFavorite
-          ? 'Quitar de favoritos'
-          : 'Agregar a favoritos',
+          ? l10n.detailFavoriteRemoveTooltip
+          : l10n.detailFavoriteAddTooltip,
       onPressed: () async {
         await favoritesController.toggleFavorite(resolvedPokemon);
       },
@@ -674,6 +680,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
 
@@ -684,7 +691,9 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
     final abilitySubtitle = mainAbilityDetail == null
         ? null
-        : (mainAbilityDetail.isHidden ? 'Habilidad oculta' : 'Habilidad principal');
+        : (mainAbilityDetail.isHidden
+            ? l10n.detailHiddenAbilityLabel
+            : l10n.detailMainAbilityLabel);
 
     // Paleta reactiva según el primer tipo del Pokémon
     final colorScheme = theme.colorScheme;
