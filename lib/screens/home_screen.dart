@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 import 'abilities_screen.dart';
-import 'favorites_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
 
