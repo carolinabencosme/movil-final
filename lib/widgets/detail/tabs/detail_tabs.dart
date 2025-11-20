@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
 import '../../../models/move_filters.dart';
 import '../../../models/pokemon_model.dart';
@@ -49,6 +50,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final characteristics = widget.pokemon.characteristics;
     final padding = responsiveDetailTabPadding(context);
 
@@ -58,7 +60,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InfoSectionCard(
-            title: 'Tipos',
+            title: l10n.detailInfoTypesTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
@@ -67,11 +69,11 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                     types: widget.pokemon.types,
                     formatLabel: widget.formatLabel,
                   )
-                : const Text('Sin información de tipos disponible.'),
+                : Text(l10n.detailInfoTypesFallback),
           ),
           const SizedBox(height: 16),
           InfoSectionCard(
-            title: 'Datos básicos',
+            title: l10n.detailInfoBasicDataTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             child: Column(
@@ -94,7 +96,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                           width: cardWidth,
                           child: InfoCard(
                             icon: Icons.height,
-                            label: 'Altura',
+                            label: l10n.detailInfoHeightLabel,
                             value: widget.formatHeight(characteristics.height),
                           ),
                         ),
@@ -102,7 +104,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                           width: cardWidth,
                           child: InfoCard(
                             icon: Icons.monitor_weight_outlined,
-                            label: 'Peso',
+                            label: l10n.detailInfoWeightLabel,
                             value: widget.formatWeight(characteristics.weight),
                           ),
                         ),
@@ -133,7 +135,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.mainAbility ?? 'Sin habilidad principal disponible.',
+                                widget.mainAbility ?? l10n.detailInfoMainAbilityFallback,
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -162,7 +164,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                     child: FilledButton.icon(
                       onPressed: widget.onViewMap,
                       icon: const Icon(Icons.map_outlined),
-                      label: const Text('Ver en mapa'),
+                      label: Text(l10n.detailInfoViewOnMap),
                     ),
                   ),
                 ],
@@ -171,7 +173,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
           ),
           const SizedBox(height: 16),
           InfoSectionCard(
-            title: 'Características',
+            title: l10n.detailInfoCharacteristicsTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             variant: InfoSectionCardVariant.angled,
@@ -185,7 +187,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
           ),
           const SizedBox(height: 16),
           InfoSectionCard(
-            title: 'Habilidades',
+            title: l10n.detailInfoAbilitiesTitle,
             backgroundColor: widget.sectionBackground,
             borderColor: widget.sectionBorder,
             variant: InfoSectionCardVariant.angled,
@@ -195,7 +197,7 @@ class _PokemonInfoTabState extends State<PokemonInfoTab>
                     abilities: widget.pokemon.abilities,
                     formatLabel: widget.formatLabel,
                   )
-                : const Text('Sin información de habilidades disponible.'),
+                : Text(l10n.detailInfoAbilitiesFallback),
           ),
         ],
       ),
