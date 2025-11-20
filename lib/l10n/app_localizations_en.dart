@@ -196,6 +196,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSectionFavoritesSubtitle => 'Your saved Pokémon';
 
   @override
+  String get homeSectionTriviaTitle => 'Trivia';
+
+  @override
+  String get homeSectionTriviaSubtitle => 'Fun facts & lore highlights';
+
+  @override
   String get homeSectionMovesTitle => 'Moves';
 
   @override
@@ -230,6 +236,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeSectionLocationsSubtitle => 'Regions, maps & encounter data';
+
+  @override
+  String get triviaTitle => 'Trivia';
+
+  @override
+  String get triviaDescription => 'Discover fun facts about Pokémon.';
+
+  @override
+  String get triviaFactSkittyTitle => 'Skitty can pair with Wailord';
+
+  @override
+  String get triviaFactSkittyDescription =>
+      'Egg groups ignore size, so tiny Skitty and massive Wailord are compatible parents.';
+
+  @override
+  String get triviaFactDittoTitle => "Ditto mirrors Mew's stats";
+
+  @override
+  String get triviaFactDittoDescription =>
+      'Both share identical base stats and weight in early games, inspiring fan theories.';
+
+  @override
+  String get triviaFactPikachuTitle => 'Pikachu replaced Clefairy as mascot';
+
+  @override
+  String get triviaFactPikachuDescription =>
+      "Clefairy was once planned as the star of the series before Pikachu's popularity took over.";
 
   @override
   String homeSectionCardSemanticLabel(String sectionName) {

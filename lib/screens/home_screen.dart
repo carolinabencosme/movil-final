@@ -5,6 +5,7 @@ import 'package:pokedex/l10n/app_localizations.dart';
 import 'abilities_screen.dart';
 import 'pokedex_screen.dart';
 import 'settings_screen.dart';
+import 'trivia_screen.dart';
 
 /// Pantalla principal (Home) que presenta accesos a secciones de la app.
 /// - Muestra una tarjeta “hero” (la primera) y un grid con el resto.
@@ -112,6 +113,46 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.black,
           opacity: 0.12,
           borderRadius: BorderRadius.all(Radius.circular(28)),
+        ),
+      ],
+    ),
+    _SectionConfig(
+      type: HomeSectionType.trivia,
+      icon: Icons.quiz_outlined,
+      color: const Color(0xFF32C3B6),
+      heroTag: 'section-trivia',
+      graphics: const [
+        _SectionGraphic.icon(
+          icon: Icons.psychology,
+          scale: 0.9,
+          color: Colors.white,
+          opacity: 0.95,
+        ),
+        _SectionGraphic.icon(
+          icon: Icons.auto_stories,
+          scale: 0.4,
+          color: Colors.white,
+          opacity: 0.5,
+          alignment: Alignment.bottomLeft,
+          offset: const Offset(-12, 18),
+        ),
+      ],
+      accents: const [
+        _AccentShape.circle(
+          top: -40,
+          right: -26,
+          diameterFactor: 0.9,
+          color: Colors.white,
+          opacity: 0.2,
+        ),
+        _AccentShape.roundedRect(
+          bottom: -22,
+          right: 14,
+          widthFactor: 0.54,
+          heightFactor: 0.18,
+          color: Colors.black,
+          opacity: 0.12,
+          borderRadius: BorderRadius.all(Radius.circular(26)),
         ),
       ],
     ),
@@ -386,6 +427,13 @@ class _HomeScreenState extends State<HomeScreen> {
           title: section.title,
         );
         break;
+      case HomeSectionType.trivia:
+        destination = TriviaScreen(
+          heroTag: section.heroTag,
+          accentColor: section.color,
+          title: section.title,
+        );
+        break;
       case HomeSectionType.abilities:
         destination = AbilitiesScreen(
           heroTag: section.heroTag,
@@ -420,6 +468,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return l10n.homeSectionPokedexTitle;
       case HomeSectionType.favorites:
         return l10n.homeSectionFavoritesTitle;
+      case HomeSectionType.trivia:
+        return l10n.homeSectionTriviaTitle;
       case HomeSectionType.moves:
         return l10n.homeSectionMovesTitle;
       case HomeSectionType.tm:
@@ -442,6 +492,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return l10n.homeSectionPokedexSubtitle;
       case HomeSectionType.favorites:
         return l10n.homeSectionFavoritesSubtitle;
+      case HomeSectionType.trivia:
+        return l10n.homeSectionTriviaSubtitle;
       case HomeSectionType.moves:
         return l10n.homeSectionMovesSubtitle;
       case HomeSectionType.tm:
@@ -1101,6 +1153,7 @@ class SectionPlaceholderScreen extends StatelessWidget {
 enum HomeSectionType {
   pokedex,
   favorites,
+  trivia,
   moves,
   tm,
   abilities,

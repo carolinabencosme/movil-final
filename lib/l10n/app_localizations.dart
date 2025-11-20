@@ -452,6 +452,18 @@ abstract class AppLocalizations {
   /// **'Your saved Pokémon'**
   String get homeSectionFavoritesSubtitle;
 
+  /// Title of the trivia feature card on the Home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Trivia'**
+  String get homeSectionTriviaTitle;
+
+  /// Short description shown under the trivia card title.
+  ///
+  /// In en, this message translates to:
+  /// **'Fun facts & lore highlights'**
+  String get homeSectionTriviaSubtitle;
+
   /// Title of the moves feature card on the Home screen.
   ///
   /// In en, this message translates to:
@@ -523,6 +535,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Regions, maps & encounter data'**
   String get homeSectionLocationsSubtitle;
+
+  /// Heading for the trivia section.
+  ///
+  /// In en, this message translates to:
+  /// **'Trivia'**
+  String get triviaTitle;
+
+  /// Subtitle inviting users to read trivia content.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover fun facts about Pokémon.'**
+  String get triviaDescription;
+
+  /// Title for the trivia fact about Skitty and Wailord breeding.
+  ///
+  /// In en, this message translates to:
+  /// **'Skitty can pair with Wailord'**
+  String get triviaFactSkittyTitle;
+
+  /// Description for the trivia fact about Skitty breeding with Wailord.
+  ///
+  /// In en, this message translates to:
+  /// **'Egg groups ignore size, so tiny Skitty and massive Wailord are compatible parents.'**
+  String get triviaFactSkittyDescription;
+
+  /// Title for the trivia fact about Ditto and Mew sharing stats.
+  ///
+  /// In en, this message translates to:
+  /// **"Ditto mirrors Mew's stats"**
+  String get triviaFactDittoTitle;
+
+  /// Description for the trivia fact about Ditto sharing stats with Mew.
+  ///
+  /// In en, this message translates to:
+  /// **'Both share identical base stats and weight in early games, inspiring fan theories.'**
+  String get triviaFactDittoDescription;
+
+  /// Title for the trivia fact about Pikachu becoming the series mascot.
+  ///
+  /// In en, this message translates to:
+  /// **'Pikachu replaced Clefairy as mascot'**
+  String get triviaFactPikachuTitle;
+
+  /// Description for the trivia fact about Pikachu replacing Clefairy.
+  ///
+  /// In en, this message translates to:
+  /// **"Clefairy was once planned as the star of the series before Pikachu's popularity took over."**
+  String get triviaFactPikachuDescription;
 
   /// Semantic label announcing navigation to a home section
   ///

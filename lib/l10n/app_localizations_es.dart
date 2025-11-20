@@ -199,6 +199,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeSectionFavoritesSubtitle => 'Tus Pokémon guardados';
 
   @override
+  String get homeSectionTriviaTitle => 'Curiosidades';
+
+  @override
+  String get homeSectionTriviaSubtitle => 'Datos curiosos y lore destacado';
+
+  @override
   String get homeSectionMovesTitle => 'Movimientos';
 
   @override
@@ -234,6 +240,33 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homeSectionLocationsSubtitle =>
       'Regiones, mapas y datos de encuentros';
+
+  @override
+  String get triviaTitle => 'Curiosidades';
+
+  @override
+  String get triviaDescription => 'Descubre datos curiosos sobre Pokémon.';
+
+  @override
+  String get triviaFactSkittyTitle => 'Skitty puede criar con Wailord';
+
+  @override
+  String get triviaFactSkittyDescription =>
+      'Los grupos huevo ignoran el tamaño, así que la diminuta Skitty y el enorme Wailord son compatibles.';
+
+  @override
+  String get triviaFactDittoTitle => 'Ditto refleja las estadísticas de Mew';
+
+  @override
+  String get triviaFactDittoDescription =>
+      'Ambos comparten estadísticas base y peso en los primeros juegos, alimentando teorías de fans.';
+
+  @override
+  String get triviaFactPikachuTitle => 'Pikachu reemplazó a Clefairy como mascota';
+
+  @override
+  String get triviaFactPikachuDescription =>
+      'Clefairy iba a ser la estrella de la serie antes de que la popularidad de Pikachu tomara el protagonismo.';
 
   @override
   String homeSectionCardSemanticLabel(String sectionName) {

@@ -143,6 +143,14 @@
   "@homeSectionFavoritesSubtitle": {
     "description": "Short description shown under the favorites card title."
   },
+  "homeSectionTriviaTitle": "Curiosidades",
+  "@homeSectionTriviaTitle": {
+    "description": "Title of the trivia feature card on the Home screen."
+  },
+  "homeSectionTriviaSubtitle": "Datos curiosos y lore destacado",
+  "@homeSectionTriviaSubtitle": {
+    "description": "Short description shown under the trivia card title."
+  },
   "homeSectionMovesTitle": "Movimientos",
   "@homeSectionMovesTitle": {
     "description": "Title of the moves feature card on the Home screen."
@@ -190,6 +198,38 @@
   "homeSectionLocationsSubtitle": "Regiones, mapas y datos de encuentros",
   "@homeSectionLocationsSubtitle": {
     "description": "Short description shown under the locations card title."
+  },
+  "triviaTitle": "Curiosidades",
+  "@triviaTitle": {
+    "description": "Heading for the trivia section."
+  },
+  "triviaDescription": "Descubre datos curiosos sobre Pokémon.",
+  "@triviaDescription": {
+    "description": "Subtitle inviting users to read trivia content."
+  },
+  "triviaFactSkittyTitle": "Skitty puede criar con Wailord",
+  "@triviaFactSkittyTitle": {
+    "description": "Title for the trivia fact about Skitty and Wailord breeding."
+  },
+  "triviaFactSkittyDescription": "Los grupos huevo ignoran el tamaño, así que la diminuta Skitty y el enorme Wailord son compatibles.",
+  "@triviaFactSkittyDescription": {
+    "description": "Description for the trivia fact about Skitty breeding with Wailord."
+  },
+  "triviaFactDittoTitle": "Ditto refleja las estadísticas de Mew",
+  "@triviaFactDittoTitle": {
+    "description": "Title for the trivia fact about Ditto and Mew sharing stats."
+  },
+  "triviaFactDittoDescription": "Ambos comparten estadísticas base y peso en los primeros juegos, alimentando teorías de fans.",
+  "@triviaFactDittoDescription": {
+    "description": "Description for the trivia fact about Ditto sharing stats with Mew."
+  },
+  "triviaFactPikachuTitle": "Pikachu reemplazó a Clefairy como mascota",
+  "@triviaFactPikachuTitle": {
+    "description": "Title for the trivia fact about Pikachu becoming the series mascot."
+  },
+  "triviaFactPikachuDescription": "Clefairy iba a ser la estrella de la serie antes de que la popularidad de Pikachu tomara el protagonismo.",
+  "@triviaFactPikachuDescription": {
+    "description": "Description for the trivia fact about Pikachu replacing Clefairy."
   },
   "homeSectionCardSemanticLabel": "Abrir la sección {sectionName}",
   "@homeSectionCardSemanticLabel": {
