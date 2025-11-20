@@ -414,6 +414,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get triviaRankingTooltip => 'Ver ranking';
 
   @override
+  String get triviaRankingTitle => 'Ranking de trivia';
+
+  @override
+  String get triviaRankingClearHistoryTooltip => 'Limpiar historial';
+
+  @override
+  String triviaRankingQuestionsLabel(int count) {
+    return '$count preguntas';
+  }
+
+  @override
+  String triviaRankingPointsSuffix(int points) {
+    return '$points pts';
+  }
+
+  @override
+  String triviaRankingTopPrefix(int position) {
+    return 'Top $position';
+  }
+
+  @override
+  String get triviaRankingEmptyTitle => 'Aún no hay partidas registradas';
+
+  @override
+  String get triviaRankingEmptySubtitle =>
+      'Juega una ronda y guarda tu puntuación para aparecer en el Top 10.';
+
+  @override
   String get triviaAchievementsTooltip => 'Ver logros';
 
   @override

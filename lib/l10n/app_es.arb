@@ -414,6 +414,49 @@
   "@triviaRankingTooltip": {
     "description": "Tooltip para la acción que abre la pantalla de ranking de trivia."
   },
+  "triviaRankingTitle": "Ranking de trivia",
+  "@triviaRankingTitle": {
+    "description": "Título de la pantalla de ranking de trivia."
+  },
+  "triviaRankingClearHistoryTooltip": "Limpiar historial",
+  "@triviaRankingClearHistoryTooltip": {
+    "description": "Tooltip para la acción que borra el historial del ranking de trivia."
+  },
+  "triviaRankingQuestionsLabel": "{count} preguntas",
+  "@triviaRankingQuestionsLabel": {
+    "description": "Etiqueta para la cantidad de preguntas jugadas en una sesión de trivia.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingPointsSuffix": "{points} pts",
+  "@triviaRankingPointsSuffix": {
+    "description": "Sufijo que muestra los puntos totales de una sesión de trivia.",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingTopPrefix": "Top {position}",
+  "@triviaRankingTopPrefix": {
+    "description": "Etiqueta que indica la posición en el listado de mejores puntajes.",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingEmptyTitle": "Aún no hay partidas registradas",
+  "@triviaRankingEmptyTitle": {
+    "description": "Título del estado vacío en la pantalla de ranking de trivia."
+  },
+  "triviaRankingEmptySubtitle": "Juega una ronda y guarda tu puntuación para aparecer en el Top 10.",
+  "@triviaRankingEmptySubtitle": {
+    "description": "Subtítulo que anima a jugar y guardar una sesión de trivia cuando el ranking está vacío."
+  },
   "triviaAchievementsTooltip": "Ver logros",
   "@triviaAchievementsTooltip": {
     "description": "Tooltip para la acción que abre la pantalla de logros de trivia."

@@ -414,6 +414,49 @@
   "@triviaRankingTooltip": {
     "description": "Tooltip for the action that opens the trivia ranking screen."
   },
+  "triviaRankingTitle": "Trivia ranking",
+  "@triviaRankingTitle": {
+    "description": "Title for the trivia ranking screen."
+  },
+  "triviaRankingClearHistoryTooltip": "Clear history",
+  "@triviaRankingClearHistoryTooltip": {
+    "description": "Tooltip for the action that clears the trivia ranking history."
+  },
+  "triviaRankingQuestionsLabel": "{count} questions",
+  "@triviaRankingQuestionsLabel": {
+    "description": "Label for the number of questions played in a trivia session.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingPointsSuffix": "{points} pts",
+  "@triviaRankingPointsSuffix": {
+    "description": "Suffix that shows the total trivia points for a session.",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingTopPrefix": "Top {position}",
+  "@triviaRankingTopPrefix": {
+    "description": "Prefix label indicating the ranking position inside the top list.",
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaRankingEmptyTitle": "No games saved yet",
+  "@triviaRankingEmptyTitle": {
+    "description": "Title for the empty state on the trivia ranking screen."
+  },
+  "triviaRankingEmptySubtitle": "Play a round and save your score to appear in the Top 10.",
+  "@triviaRankingEmptySubtitle": {
+    "description": "Subtitle encouraging users to play and save a trivia session when the ranking is empty."
+  },
   "triviaAchievementsTooltip": "View achievements",
   "@triviaAchievementsTooltip": {
     "description": "Tooltip for the action that opens the trivia achievements screen."

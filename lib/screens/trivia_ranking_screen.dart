@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/trivia_score.dart';
 import '../services/trivia_repository.dart';
 
@@ -15,6 +16,7 @@ class TriviaRankingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final Color highlight = accentColor ?? theme.colorScheme.primary;
     final TriviaRepository repository = TriviaRepositoryScope.of(context);
 
@@ -23,12 +25,12 @@ class TriviaRankingScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: highlight,
         foregroundColor: Colors.white,
-        title: const Text('Ranking trivia'),
+        title: Text(l10n.triviaRankingTitle),
         actions: [
           IconButton(
             onPressed: () => repository.clearAll(),
             icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'Limpiar historial',
+            tooltip: l10n.triviaRankingClearHistoryTooltip,
           ),
         ],
       ),
@@ -38,7 +40,9 @@ class TriviaRankingScreen extends StatelessWidget {
           final List<TriviaScore> topScores = repository.getTopScores(limit: 10);
 
           if (topScores.isEmpty) {
-            return _EmptyState(highlight: highlight);
+            return _EmptyState(
+              highlight: highlight,
+            );
           }
 
           return ListView.separated(
@@ -80,11 +84,14 @@ class _RankingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final Color badgeColor = position == 1
         ? accentColor
         : position == 2
             ? accentColor.withOpacity(0.8)
             : accentColor.withOpacity(0.65);
+    final String questionsLabel =
+        l10n.triviaRankingQuestionsLabel(score.questionsPlayed);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -112,7 +119,7 @@ class _RankingTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${score.questionsPlayed} preguntas · ${_formatDate(score.playedAt)}',
+                    '$questionsLabel · ${_formatDate(score.playedAt)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -124,7 +131,7 @@ class _RankingTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${score.score} pts',
+                  l10n.triviaRankingPointsSuffix(score.score),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: accentColor,
                     fontWeight: FontWeight.bold,
@@ -138,7 +145,7 @@ class _RankingTile extends StatelessWidget {
                         color: accentColor, size: 18),
                     const SizedBox(width: 6),
                     Text(
-                      'Top ${position <= 10 ? position : ''}',
+                      l10n.triviaRankingTopPrefix(position),
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: accentColor.withOpacity(0.8)),
                     ),
@@ -174,7 +181,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aún no hay partidas registradas',
+              AppLocalizations.of(context)!.triviaRankingEmptyTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
@@ -182,7 +189,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Juega una ronda y guarda tu puntuación para aparecer en el Top 10.',
+              AppLocalizations.of(context)!.triviaRankingEmptySubtitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

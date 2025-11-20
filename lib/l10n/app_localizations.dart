@@ -842,6 +842,48 @@ abstract class AppLocalizations {
   /// **'View ranking'**
   String get triviaRankingTooltip;
 
+  /// Title for the trivia ranking screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Trivia ranking'**
+  String get triviaRankingTitle;
+
+  /// Tooltip for the action that clears the trivia ranking history.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get triviaRankingClearHistoryTooltip;
+
+  /// Label for the number of questions played in a trivia session.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} questions'**
+  String triviaRankingQuestionsLabel(int count);
+
+  /// Suffix that shows the total trivia points for a session.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String triviaRankingPointsSuffix(int points);
+
+  /// Prefix label indicating the ranking position inside the top list.
+  ///
+  /// In en, this message translates to:
+  /// **'Top {position}'**
+  String triviaRankingTopPrefix(int position);
+
+  /// Title for the empty state on the trivia ranking screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No games saved yet'**
+  String get triviaRankingEmptyTitle;
+
+  /// Subtitle encouraging users to play and save a trivia session when the ranking is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a round and save your score to appear in the Top 10.'**
+  String get triviaRankingEmptySubtitle;
+
   /// Tooltip for the action that opens the trivia achievements screen.
   ///
   /// In en, this message translates to:
