@@ -242,10 +242,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get detailInfoTypesTitle => 'Types';
+
+  @override
+  String get detailInfoTypesFallback => 'No type information available.';
+
+  @override
+  String get detailInfoBasicDataTitle => 'Basic data';
+
+  @override
   String get detailCharacteristicHeight => 'Height';
 
   @override
+  String get detailInfoHeightLabel => 'Height';
+
+  @override
   String get detailCharacteristicWeight => 'Weight';
+
+  @override
+  String get detailInfoWeightLabel => 'Weight';
+
+  @override
+  String get detailInfoViewOnMap => 'View on map';
 
   @override
   String get detailCharacteristicCategory => 'Category';
@@ -258,6 +276,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailCharacteristicBaseExperience => 'Base experience';
+
+  @override
+  String get detailInfoCharacteristicsTitle => 'Characteristics';
+
+  @override
+  String get detailInfoAbilitiesTitle => 'Abilities';
+
+  @override
+  String get detailInfoAbilitiesFallback => 'No ability information available.';
+
+  @override
+  String get detailInfoMainAbilityFallback => 'No main ability available.';
 
   @override
   String get detailNoWeaknessInfo => 'No weakness information available.';

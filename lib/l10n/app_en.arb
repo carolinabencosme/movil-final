@@ -209,13 +209,37 @@
       }
     }
   },
+  "detailInfoTypesTitle": "Types",
+  "@detailInfoTypesTitle": {
+    "description": "Section title for the Pokémon types list on the detail info tab."
+  },
+  "detailInfoTypesFallback": "No type information available.",
+  "@detailInfoTypesFallback": {
+    "description": "Fallback message when type data is missing on the detail info tab."
+  },
+  "detailInfoBasicDataTitle": "Basic data",
+  "@detailInfoBasicDataTitle": {
+    "description": "Section title for the basic data card on the detail info tab."
+  },
   "detailCharacteristicHeight": "Height",
   "@detailCharacteristicHeight": {
     "description": "Label for the Pokémon height characteristic."
   },
+  "detailInfoHeightLabel": "Height",
+  "@detailInfoHeightLabel": {
+    "description": "Label for the height value within the detail info tab."
+  },
   "detailCharacteristicWeight": "Weight",
   "@detailCharacteristicWeight": {
     "description": "Label for the Pokémon weight characteristic."
+  },
+  "detailInfoWeightLabel": "Weight",
+  "@detailInfoWeightLabel": {
+    "description": "Label for the weight value within the detail info tab."
+  },
+  "detailInfoViewOnMap": "View on map",
+  "@detailInfoViewOnMap": {
+    "description": "Call-to-action button label to open the Pokémon location map."
   },
   "detailCharacteristicCategory": "Category",
   "@detailCharacteristicCategory": {
@@ -232,6 +256,22 @@
   "detailCharacteristicBaseExperience": "Base experience",
   "@detailCharacteristicBaseExperience": {
     "description": "Label for the Pokémon base experience characteristic."
+  },
+  "detailInfoCharacteristicsTitle": "Characteristics",
+  "@detailInfoCharacteristicsTitle": {
+    "description": "Section title for the characteristics card on the detail info tab."
+  },
+  "detailInfoAbilitiesTitle": "Abilities",
+  "@detailInfoAbilitiesTitle": {
+    "description": "Section title for the abilities carousel on the detail info tab."
+  },
+  "detailInfoAbilitiesFallback": "No ability information available.",
+  "@detailInfoAbilitiesFallback": {
+    "description": "Fallback message when ability data is missing on the detail info tab."
+  },
+  "detailInfoMainAbilityFallback": "No main ability available.",
+  "@detailInfoMainAbilityFallback": {
+    "description": "Fallback message shown when the main ability is missing on the detail info tab."
   },
   "detailNoWeaknessInfo": "No weakness information available.",
   "@detailNoWeaknessInfo": {

@@ -209,13 +209,37 @@
       }
     }
   },
+  "detailInfoTypesTitle": "Tipos",
+  "@detailInfoTypesTitle": {
+    "description": "Título de sección para la lista de tipos en la pestaña de información."
+  },
+  "detailInfoTypesFallback": "Sin información de tipos disponible.",
+  "@detailInfoTypesFallback": {
+    "description": "Mensaje de respaldo cuando no hay datos de tipos en la pestaña de información."
+  },
+  "detailInfoBasicDataTitle": "Datos básicos",
+  "@detailInfoBasicDataTitle": {
+    "description": "Título de sección para la tarjeta de datos básicos en la pestaña de información."
+  },
   "detailCharacteristicHeight": "Altura",
   "@detailCharacteristicHeight": {
     "description": "Etiqueta para la característica de altura del Pokémon."
   },
+  "detailInfoHeightLabel": "Altura",
+  "@detailInfoHeightLabel": {
+    "description": "Etiqueta para el valor de altura dentro de la pestaña de información."
+  },
   "detailCharacteristicWeight": "Peso",
   "@detailCharacteristicWeight": {
     "description": "Etiqueta para la característica de peso del Pokémon."
+  },
+  "detailInfoWeightLabel": "Peso",
+  "@detailInfoWeightLabel": {
+    "description": "Etiqueta para el valor de peso dentro de la pestaña de información."
+  },
+  "detailInfoViewOnMap": "Ver en mapa",
+  "@detailInfoViewOnMap": {
+    "description": "Etiqueta del botón para abrir el mapa de ubicación del Pokémon."
   },
   "detailCharacteristicCategory": "Categoría",
   "@detailCharacteristicCategory": {
@@ -232,6 +256,22 @@
   "detailCharacteristicBaseExperience": "Experiencia base",
   "@detailCharacteristicBaseExperience": {
     "description": "Etiqueta para la característica de experiencia base del Pokémon."
+  },
+  "detailInfoCharacteristicsTitle": "Características",
+  "@detailInfoCharacteristicsTitle": {
+    "description": "Título de sección para la tarjeta de características en la pestaña de información."
+  },
+  "detailInfoAbilitiesTitle": "Habilidades",
+  "@detailInfoAbilitiesTitle": {
+    "description": "Título de sección para el carrusel de habilidades en la pestaña de información."
+  },
+  "detailInfoAbilitiesFallback": "Sin información de habilidades disponible.",
+  "@detailInfoAbilitiesFallback": {
+    "description": "Mensaje de respaldo cuando no hay datos de habilidades en la pestaña de información."
+  },
+  "detailInfoMainAbilityFallback": "Sin habilidad principal disponible.",
+  "@detailInfoMainAbilityFallback": {
+    "description": "Mensaje de respaldo mostrado cuando falta la habilidad principal en la pestaña de información."
   },
   "detailNoWeaknessInfo": "No hay información de debilidades disponible.",
   "@detailNoWeaknessInfo": {

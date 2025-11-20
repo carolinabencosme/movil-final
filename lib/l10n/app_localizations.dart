@@ -536,17 +536,53 @@ abstract class AppLocalizations {
   /// **'Double tap to navigate to {sectionName}'**
   String homeSectionCardSemanticHint(String sectionName);
 
+  /// Section title for the Pokémon types list on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get detailInfoTypesTitle;
+
+  /// Fallback message when type data is missing on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No type information available.'**
+  String get detailInfoTypesFallback;
+
+  /// Section title for the basic data card on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic data'**
+  String get detailInfoBasicDataTitle;
+
   /// Label for the Pokémon height characteristic.
   ///
   /// In en, this message translates to:
   /// **'Height'**
   String get detailCharacteristicHeight;
 
+  /// Label for the height value within the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get detailInfoHeightLabel;
+
   /// Label for the Pokémon weight characteristic.
   ///
   /// In en, this message translates to:
   /// **'Weight'**
   String get detailCharacteristicWeight;
+
+  /// Label for the weight value within the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get detailInfoWeightLabel;
+
+  /// Call-to-action button label to open the Pokémon location map.
+  ///
+  /// In en, this message translates to:
+  /// **'View on map'**
+  String get detailInfoViewOnMap;
 
   /// Label for the Pokémon category characteristic.
   ///
@@ -571,6 +607,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Base experience'**
   String get detailCharacteristicBaseExperience;
+
+  /// Section title for the characteristics card on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Characteristics'**
+  String get detailInfoCharacteristicsTitle;
+
+  /// Section title for the abilities carousel on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Abilities'**
+  String get detailInfoAbilitiesTitle;
+
+  /// Fallback message when ability data is missing on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No ability information available.'**
+  String get detailInfoAbilitiesFallback;
+
+  /// Fallback message shown when the main ability is missing on the detail info tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No main ability available.'**
+  String get detailInfoMainAbilityFallback;
 
   /// Message shown when weakness data is missing.
   ///
