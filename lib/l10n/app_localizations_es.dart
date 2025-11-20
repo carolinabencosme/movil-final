@@ -236,12 +236,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Regiones, mapas y datos de encuentros';
 
   @override
-  String homeSectionCardSemanticLabel(String sectionName) {
+  String homeSectionCardSemanticLabel({required String sectionName}) {
     return 'Abrir la sección $sectionName';
   }
 
   @override
-  String homeSectionCardSemanticHint(String sectionName) {
+  String homeSectionCardSemanticHint({required String sectionName}) {
     return 'Toca dos veces para ir a $sectionName';
   }
 
@@ -265,7 +265,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeSettingsSemanticHint => 'Abre la configuración de la app';
 
   @override
-  String homePlaceholderMessage(String sectionName) {
+  String homePlaceholderMessage({required String sectionName}) {
     return 'La sección de $sectionName estará disponible pronto.';
   }
 
@@ -330,22 +330,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pokedexSortWeightLabel => 'Peso';
 
   @override
-  String abilityCardSemanticLabel(String abilityName) {
+  String abilityCardSemanticLabel({required String abilityName}) {
     return 'Abrir la habilidad $abilityName';
   }
 
   @override
-  String abilityCardSemanticHint(String abilityName) {
+  String abilityCardSemanticHint({required String abilityName}) {
     return 'Toca dos veces para ver detalles de $abilityName';
   }
 
   @override
-  String pokedexCardSemanticLabel(String pokemonName) {
+  String pokedexCardSemanticLabel({required String pokemonName}) {
     return 'Abrir detalles de $pokemonName';
   }
 
   @override
-  String pokedexCardSemanticHint(String pokemonName) {
+  String pokedexCardSemanticHint({required String pokemonName}) {
     return 'Toca dos veces para ver a $pokemonName en la Pokédex';
   }
 
