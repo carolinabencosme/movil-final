@@ -1037,6 +1037,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildSearchBar(ThemeData theme) {
+    final localizations = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -1046,7 +1047,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Buscar por nombre o número',
+                hintText: localizations.pokedexSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 prefixIconColor: theme.colorScheme.primary,
                 suffixIcon: _searchTerm.isEmpty
@@ -1129,21 +1130,29 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildSummary(ThemeData theme) {
+    final localizations = AppLocalizations.of(context)!;
     if (_pokemons.isEmpty && !_isFetching) {
       return const SizedBox.shrink();
     }
     final countText = _totalCount == 0
-        ? 'Mostrando ${_pokemons.length} Pokémon'
-        : 'Mostrando ${_pokemons.length} de $_totalCount Pokémon';
+        ? localizations.pokedexShowingCountSimple(_pokemons.length)
+        : localizations.pokedexShowingCountWithTotal(
+            _pokemons.length,
+            _totalCount,
+          );
     final details = <String>[];
     if (_activeFiltersCount > 0) {
-      details.add(
-        '$_activeFiltersCount filtro${_activeFiltersCount == 1 ? '' : 's'} activos',
-      );
+      details.add(localizations.pokedexActiveFilters(_activeFiltersCount));
     }
     if (!_isDefaultSort) {
-      final directionText = _isSortAscending ? 'ascendente' : 'descendente';
-      details.add('Orden: ${_sortOption.label} $directionText');
+      final directionText = _isSortAscending
+          ? localizations.pokedexSortDirectionAscending
+          : localizations.pokedexSortDirectionDescending;
+      details.add(
+        localizations.pokedexFilterSummarySort(
+          '${_sortOption.label} $directionText',
+        ),
+      );
     }
     final suffix = details.isNotEmpty ? ' · ${details.join(' · ')}' : '';
     final summaryText = '$countText$suffix';

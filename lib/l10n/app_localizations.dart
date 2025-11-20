@@ -827,14 +827,14 @@ abstract class AppLocalizations {
   /// No description provided for @pokedexShowingCountSimple.
   ///
   /// In en, this message translates to:
-  /// **'Showing {count} Pokémon.'**
-  String pokedexShowingCountSimple(int count);
+  /// **'Showing {visible} Pokémon.'**
+  String pokedexShowingCountSimple(int visible);
 
   /// No description provided for @pokedexShowingCountWithTotal.
   ///
   /// In en, this message translates to:
-  /// **'Showing {count} of {total} Pokémon.'**
-  String pokedexShowingCountWithTotal(int count, int total);
+  /// **'Showing {visible} of {total} Pokémon.'**
+  String pokedexShowingCountWithTotal(int visible, int total);
 
   /// No description provided for @pokedexActiveFilters.
   ///

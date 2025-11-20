@@ -345,14 +345,17 @@
     "description": "Semantic hint for navigating to a Pokémon entry"
   },
   "pokedexSearchHint": "Search by name or number",
+  "@pokedexSearchHint": {
+    "description": "Hint text shown in the Pokédex search field."
+  },
   "pokedexFiltersTooltip": "Filters",
   "pokedexOfflineNoCache": "No connection and no cached data available.",
   "pokedexOfflineBanner": "Offline mode active. Showing cached data.",
   "pokedexConnectionRestored": "Connection restored.",
   "pokedexLoadError": "We couldn’t load the Pokédex. Try again.",
   "pokedexOfflineFiltersLimited": "Offline mode active. Some filters may be limited.",
-  "pokedexShowingCountSimple": "Showing {count} Pokémon.",
-  "pokedexShowingCountWithTotal": "Showing {count} of {total} Pokémon.",
+  "pokedexShowingCountSimple": "Showing {visible} Pokémon.",
+  "pokedexShowingCountWithTotal": "Showing {visible} of {total} Pokémon.",
   "pokedexActiveFilters": "{count, plural, one {{count} active filter} other {{count} active filters}}",
   "pokedexSortDirectionAscending": "ascending",
   "pokedexSortDirectionDescending": "descending",
@@ -453,14 +456,14 @@
   "favoritesAddAction": "Add to favorites",
   "@pokedexShowingCountSimple": {
     "placeholders": {
-      "count": {
+      "visible": {
         "type": "int"
       }
     }
   },
   "@pokedexShowingCountWithTotal": {
     "placeholders": {
-      "count": {
+      "visible": {
         "type": "int"
       },
       "total": {
