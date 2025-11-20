@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../controllers/auth_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../services/trivia_repository.dart';
+import 'trivia_ranking_screen.dart';
 
 class PokemonTriviaScreen extends StatefulWidget {
   const PokemonTriviaScreen({super.key});
@@ -42,11 +45,24 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   int _currentIndex = 0;
   bool _showSolution = false;
   bool _isAnimating = false;
+  int _questionsPlayed = 0;
+  int _correctAnswers = 0;
+  TriviaRepository? _triviaRepository;
+  AuthController? _authController;
+
+  int get _score => _correctAnswers * 100;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _triviaRepository = TriviaRepositoryScope.maybeOf(context);
+    _authController = AuthScope.maybeOf(context);
   }
 
   @override
@@ -70,6 +86,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
   void _handleTimeout() {
     _timer?.cancel();
+    _questionsPlayed += 1;
     _showFeedback(
       message: '¡Tiempo agotado! La respuesta era ${_currentQuestion.name}.',
       isSuccess: false,
@@ -99,6 +116,10 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     setState(() {
       _showSolution = isCorrect;
       _isAnimating = true;
+      _questionsPlayed += 1;
+      if (isCorrect) {
+        _correctAnswers += 1;
+      }
     });
 
     _showFeedback(
@@ -137,6 +158,48 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  Future<void> _saveSession() async {
+    final TriviaRepository? repository = _triviaRepository;
+    if (repository == null) {
+      _showFeedback(
+        message: 'No se pudo acceder al ranking en este momento.',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    if (_questionsPlayed == 0) {
+      _showFeedback(
+        message: 'Juega al menos una pregunta antes de guardar.',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    final String playerName = _authController?.currentEmail ?? 'Invitado';
+    await repository.saveSession(
+      playerName: playerName,
+      score: _score,
+      questionsPlayed: _questionsPlayed,
+    );
+
+    if (!mounted) return;
+    _showFeedback(
+      message: 'Sesión guardada en el ranking',
+      isSuccess: true,
+    );
+  }
+
+  void _openRanking() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TriviaRankingScreen(
+          accentColor: Theme.of(context).colorScheme.secondary,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -147,6 +210,18 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.triviaTitle),
+        actions: [
+          IconButton(
+            onPressed: _openRanking,
+            icon: const Icon(Icons.leaderboard_outlined),
+            tooltip: 'Ver ranking',
+          ),
+          IconButton(
+            onPressed: _saveSession,
+            icon: const Icon(Icons.save_alt),
+            tooltip: 'Guardar sesión',
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -155,6 +230,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTimer(theme),
+              const SizedBox(height: 10),
+              _buildStats(theme),
               const SizedBox(height: 16),
               Text(
                 question.prompt,
@@ -220,6 +297,30 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStats(ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatChip(
+            icon: Icons.check_circle_outline,
+            label: 'Correctas',
+            value: '$_correctAnswers',
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatChip(
+            icon: Icons.star_border_rounded,
+            label: 'Puntuación',
+            value: '$_score pts',
+            color: theme.colorScheme.secondary,
+          ),
+        ),
+      ],
     );
   }
 
@@ -359,6 +460,61 @@ class _PokemonSilhouette extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       clipBehavior: Clip.antiAlias,
       child: image,
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withOpacity(0.18),
+            foregroundColor: color,
+            radius: 18,
+            child: Icon(icon, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              Text(
+                value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
