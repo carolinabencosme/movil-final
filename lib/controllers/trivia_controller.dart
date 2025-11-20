@@ -6,6 +6,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../services/pokemon_cache_service.dart';
+import '../services/trivia_repository.dart';
 
 enum TriviaAttemptState { idle, correct, incorrect, timeout }
 
@@ -14,14 +15,17 @@ class TriviaController extends ChangeNotifier {
     required GraphQLClient graphQLClient,
     PokemonCacheService? cacheService,
     Random? random,
+    TriviaRepository? triviaRepository,
     this.pointsPerHit = 10,
     this.fetchLimit = 120,
   })  : _client = graphQLClient,
         _cacheService = cacheService,
+        _triviaRepository = triviaRepository,
         _random = random ?? Random();
 
   final GraphQLClient _client;
   final PokemonCacheService? _cacheService;
+  final TriviaRepository? _triviaRepository;
   final Random _random;
 
   /// Puntos que se otorgan por respuesta correcta.
@@ -33,6 +37,7 @@ class TriviaController extends ChangeNotifier {
   PokemonListItem? _currentPokemon;
   TriviaAttemptState _attemptState = TriviaAttemptState.idle;
   int _score = 0;
+  int _correctAnswers = 0;
   int _streak = 0;
   int _questionsServed = 0;
   bool _isLoading = false;
@@ -43,6 +48,7 @@ class TriviaController extends ChangeNotifier {
   TriviaAttemptState get attemptState => _attemptState;
   int get score => _score;
   int get streak => _streak;
+  int get correctAnswers => _correctAnswers;
   int get questionsServed => _questionsServed;
   bool get isLoading => _isLoading;
 
@@ -107,16 +113,20 @@ class TriviaController extends ChangeNotifier {
         : TriviaAttemptState.incorrect;
     if (isCorrect) {
       _score += pointsPerHit;
+      _correctAnswers += 1;
       _streak += 1;
     } else {
+      _correctAnswers = max(0, _correctAnswers);
       _streak = 0;
     }
+    _evaluateAchievements(isCorrect: isCorrect);
     notifyListeners();
   }
 
   void onTimeout() {
     _attemptState = TriviaAttemptState.timeout;
     _streak = 0;
+    _evaluateAchievements(isCorrect: false);
     notifyListeners();
   }
 
@@ -136,6 +146,7 @@ class TriviaController extends ChangeNotifier {
 
   void resetScore() {
     _score = 0;
+    _correctAnswers = 0;
     _streak = 0;
     _attemptState = TriviaAttemptState.idle;
     notifyListeners();
@@ -145,6 +156,7 @@ class TriviaController extends ChangeNotifier {
     _pool = pokemons;
     _remaining = List<PokemonListItem>.from(_pool);
     _questionsServed = 0;
+    _correctAnswers = 0;
     _currentPokemon = null;
     loadNextPokemon();
   }
@@ -153,5 +165,26 @@ class TriviaController extends ChangeNotifier {
     if (_isLoading == value) return;
     _isLoading = value;
     notifyListeners();
+  }
+
+  Future<void> _evaluateAchievements({required bool isCorrect}) async {
+    final TriviaRepository? repository = _triviaRepository;
+    if (repository == null) return;
+
+    if (isCorrect && _correctAnswers >= 1) {
+      await repository.unlockAchievement('first_correct');
+    }
+    if (isCorrect && _streak >= 3) {
+      await repository.unlockAchievement('streak_three');
+    }
+    if (isCorrect && _streak >= 5) {
+      await repository.unlockAchievement('streak_five');
+    }
+    if (_questionsServed >= 10) {
+      await repository.unlockAchievement('ten_questions');
+    }
+    if (_score >= 500) {
+      await repository.unlockAchievement('score_hunter');
+    }
   }
 }

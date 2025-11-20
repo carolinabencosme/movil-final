@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import 'pokemon_trivia_screen.dart';
+import 'trivia_achievements_screen.dart';
 import 'trivia_ranking_screen.dart';
 
 class TriviaScreen extends StatelessWidget {
@@ -85,6 +86,21 @@ class TriviaScreen extends StatelessWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => TriviaRankingScreen(
+                    accentColor: highlightColor,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              color: highlightColor,
+              title: 'Logros desbloqueados',
+              subtitle:
+                  'Revisa las insignias que has ganado durante tus sesiones de trivia.',
+              icon: Icons.emoji_events_outlined,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TriviaAchievementsScreen(
                     accentColor: highlightColor,
                   ),
                 ),

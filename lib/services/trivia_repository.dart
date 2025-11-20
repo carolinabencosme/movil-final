@@ -4,26 +4,39 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 
+import '../models/trivia_achievement.dart';
 import '../models/trivia_score.dart';
 
 /// Repositorio para persistir y consultar puntuaciones de trivia usando Hive.
 class TriviaRepository extends ChangeNotifier {
-  TriviaRepository._(this._scoresBox);
+  TriviaRepository._(this._scoresBox, this._achievementsBox);
 
   static const String _scoresBoxName = 'trivia_scores_box';
+  static const String _achievementsBoxName = 'trivia_achievements_box';
 
   final Box<TriviaScore> _scoresBox;
+  final Box<TriviaAchievement> _achievementsBox;
 
   /// Inicializa el adaptador y abre la caja dedicada de puntuaciones.
   static Future<TriviaRepository> init() async {
-    final TriviaScoreAdapter adapter = TriviaScoreAdapter();
-    if (!Hive.isAdapterRegistered(adapter.typeId)) {
-      Hive.registerAdapter(adapter);
+    final TriviaScoreAdapter scoreAdapter = TriviaScoreAdapter();
+    final TriviaAchievementAdapter achievementAdapter = TriviaAchievementAdapter();
+    if (!Hive.isAdapterRegistered(scoreAdapter.typeId)) {
+      Hive.registerAdapter(scoreAdapter);
+    }
+    if (!Hive.isAdapterRegistered(achievementAdapter.typeId)) {
+      Hive.registerAdapter(achievementAdapter);
     }
 
-    final Box<TriviaScore> box =
+    final Box<TriviaScore> scoresBox =
         await Hive.openBox<TriviaScore>(_scoresBoxName);
-    return TriviaRepository._(box);
+    final Box<TriviaAchievement> achievementsBox =
+        await Hive.openBox<TriviaAchievement>(_achievementsBoxName);
+
+    final TriviaRepository repository =
+        TriviaRepository._(scoresBox, achievementsBox);
+    await repository._seedAchievementsIfNeeded();
+    return repository;
   }
 
   /// Devuelve las mejores puntuaciones, ordenadas descendentemente por score
@@ -71,6 +84,42 @@ class TriviaRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Devuelve todos los logros disponibles, ordenando primero los desbloqueados
+  /// con fecha más reciente y luego los bloqueados.
+  List<TriviaAchievement> getAchievements() {
+    final List<TriviaAchievement> achievements =
+        _achievementsBox.values.toList(growable: false);
+    achievements.sort((TriviaAchievement a, TriviaAchievement b) {
+      if (a.isUnlocked && b.isUnlocked) {
+        return b.unlockedAt!.compareTo(a.unlockedAt!);
+      }
+      if (a.isUnlocked) return -1;
+      if (b.isUnlocked) return 1;
+      return a.title.compareTo(b.title);
+    });
+    return achievements;
+  }
+
+  /// Desbloquea un logro cuando se cumplen sus condiciones.
+  /// Devuelve el logro actualizado si cambió de estado.
+  Future<TriviaAchievement?> unlockAchievement(String id) async {
+    final TriviaAchievement? existing = _achievementsBox.get(id);
+    if (existing == null || existing.isUnlocked) return null;
+
+    final TriviaAchievement updated =
+        existing.copyWith(unlockedAt: DateTime.now());
+
+    await _achievementsBox.put(id, updated);
+    notifyListeners();
+    return updated;
+  }
+
+  Future<void> resetAchievements() async {
+    await _achievementsBox.clear();
+    await _seedAchievementsIfNeeded();
+    notifyListeners();
+  }
+
   /// Mantiene un tamaño máximo de historial para evitar crecimiento infinito.
   Future<void> _trimIfNeeded({int maxEntries = 50}) async {
     if (_scoresBox.length <= maxEntries) return;
@@ -88,7 +137,49 @@ class TriviaRepository extends ChangeNotifier {
   @override
   void dispose() {
     unawaited(_scoresBox.close());
+    unawaited(_achievementsBox.close());
     super.dispose();
+  }
+
+  Future<void> _seedAchievementsIfNeeded() async {
+    if (_achievementsBox.isNotEmpty) return;
+
+    final List<TriviaAchievement> defaults = <TriviaAchievement>[
+      const TriviaAchievement(
+        id: 'first_correct',
+        title: 'Primer acierto',
+        description: 'Responde correctamente tu primera pregunta.',
+        iconName: 'celebration',
+      ),
+      const TriviaAchievement(
+        id: 'streak_three',
+        title: 'Racha x3',
+        description: 'Encadena tres respuestas correctas seguidas.',
+        iconName: 'bolt',
+      ),
+      const TriviaAchievement(
+        id: 'streak_five',
+        title: 'Leyenda viviente',
+        description: 'Llega a cinco respuestas correctas seguidas.',
+        iconName: 'local_fire_department',
+      ),
+      const TriviaAchievement(
+        id: 'ten_questions',
+        title: 'Aguante de entrenador',
+        description: 'Juega diez preguntas en una sesión.',
+        iconName: 'self_improvement',
+      ),
+      const TriviaAchievement(
+        id: 'score_hunter',
+        title: 'Cazador de puntos',
+        description: 'Alcanza 500 puntos en una misma sesión.',
+        iconName: 'military_tech',
+      ),
+    ];
+
+    for (final TriviaAchievement achievement in defaults) {
+      await _achievementsBox.put(achievement.id, achievement);
+    }
   }
 }
 
