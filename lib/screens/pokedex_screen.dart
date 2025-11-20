@@ -1419,6 +1419,7 @@ class _FiltersSheetState extends State<FiltersSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final hasSelection = _selectedTypes.isNotEmpty ||
         _selectedGenerations.isNotEmpty ||
         _selectedRegions.isNotEmpty ||
