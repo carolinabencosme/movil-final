@@ -17,30 +17,6 @@ class PokemonTriviaScreen extends StatefulWidget {
 }
 
 class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
-  final List<_TriviaQuestion> _questions = const [
-    _TriviaQuestion(
-      name: 'pikachu',
-      prompt: '¿Quién es este Pokémon eléctrico icónico?',
-      imageUrl:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
-      options: ['Pikachu', 'Raichu', 'Pichu'],
-    ),
-    _TriviaQuestion(
-      name: 'bulbasaur',
-      prompt: 'Inicia la Pokédex y posee una semilla en su espalda.',
-      imageUrl:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png',
-      options: ['Bulbasaur', 'Ivysaur', 'Oddish'],
-    ),
-    _TriviaQuestion(
-      name: 'charizard',
-      prompt: 'Dragón que escupe fuego y pertenece a Kanto.',
-      imageUrl:
-          'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
-      options: ['Charizard', 'Aerodactyl', 'Charmeleon'],
-    ),
-  ];
-
   final TextEditingController _answerController = TextEditingController();
   Timer? _timer;
   int _remainingSeconds = 20;
@@ -95,22 +71,63 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   void _handleTimeout() {
+    final l10n = AppLocalizations.of(context)!;
     _timer?.cancel();
     _questionsPlayed += 1;
     _streak = 0;
     _showFeedback(
-      message: '¡Tiempo agotado! La respuesta era ${_currentQuestion.name}.',
+      message: l10n.triviaTimeoutMessage(_currentQuestion.name),
       isSuccess: false,
     );
     _evaluateAchievements(isCorrect: false);
     _advanceQuestion();
   }
 
-  _TriviaQuestion get _currentQuestion => _questions[_currentIndex];
+  List<_TriviaQuestion> get _localizedQuestions {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      _TriviaQuestion(
+        name: l10n.triviaOptionPikachu,
+        prompt: l10n.triviaQuestionPikachuPrompt,
+        imageUrl:
+            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+        options: [
+          l10n.triviaOptionPikachu,
+          l10n.triviaOptionRaichu,
+          l10n.triviaOptionPichu,
+        ],
+      ),
+      _TriviaQuestion(
+        name: l10n.triviaOptionBulbasaur,
+        prompt: l10n.triviaQuestionBulbasaurPrompt,
+        imageUrl:
+            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png',
+        options: [
+          l10n.triviaOptionBulbasaur,
+          l10n.triviaOptionIvysaur,
+          l10n.triviaOptionOddish,
+        ],
+      ),
+      _TriviaQuestion(
+        name: l10n.triviaOptionCharizard,
+        prompt: l10n.triviaQuestionCharizardPrompt,
+        imageUrl:
+            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
+        options: [
+          l10n.triviaOptionCharizard,
+          l10n.triviaOptionAerodactyl,
+          l10n.triviaOptionCharmeleon,
+        ],
+      ),
+    ];
+  }
+
+  _TriviaQuestion get _currentQuestion =>
+      _localizedQuestions[_currentIndex % _localizedQuestions.length];
 
   void _advanceQuestion() {
     setState(() {
-      _currentIndex = (_currentIndex + 1) % _questions.length;
+      _currentIndex = (_currentIndex + 1) % _localizedQuestions.length;
       _showSolution = false;
       _isAnimating = false;
       _answerController.clear();
@@ -119,6 +136,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   void _submitAnswer([String? selected]) {
+    final l10n = AppLocalizations.of(context)!;
     final normalizedInput = (selected ?? _answerController.text).trim().toLowerCase();
     if (normalizedInput.isEmpty || _isAnimating) return;
 
@@ -139,8 +157,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
     _showFeedback(
       message: isCorrect
-          ? '¡Correcto! Era ${_currentQuestion.name}.'
-          : 'Respuesta incorrecta. Inténtalo con el siguiente.',
+          ? l10n.triviaCorrectMessage(_currentQuestion.name)
+          : l10n.triviaIncorrectMessage,
       isSuccess: isCorrect,
     );
 
@@ -176,10 +194,11 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   Future<void> _saveSession() async {
+    final l10n = AppLocalizations.of(context)!;
     final TriviaRepository? repository = _triviaRepository;
     if (repository == null) {
       _showFeedback(
-        message: 'No se pudo acceder al ranking en este momento.',
+        message: l10n.triviaSaveUnavailableMessage,
         isSuccess: false,
       );
       return;
@@ -187,13 +206,14 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
     if (_questionsPlayed == 0) {
       _showFeedback(
-        message: 'Juega al menos una pregunta antes de guardar.',
+        message: l10n.triviaSaveNoQuestionsMessage,
         isSuccess: false,
       );
       return;
     }
 
-    final String playerName = _authController?.currentEmail ?? 'Invitado';
+    final String playerName =
+        _authController?.currentEmail ?? l10n.triviaGuestPlayerName;
     await repository.saveSession(
       playerName: playerName,
       score: _score,
@@ -202,7 +222,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
     if (!mounted) return;
     _showFeedback(
-      message: 'Sesión guardada en el ranking',
+      message: l10n.triviaSessionSavedMessage,
       isSuccess: true,
     );
   }
@@ -241,17 +261,17 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
           IconButton(
             onPressed: _openRanking,
             icon: const Icon(Icons.leaderboard_outlined),
-            tooltip: 'Ver ranking',
+            tooltip: l10n.triviaRankingTooltip,
           ),
           IconButton(
             onPressed: _openAchievements,
             icon: const Icon(Icons.emoji_events_outlined),
-            tooltip: 'Ver logros',
+            tooltip: l10n.triviaAchievementsTooltip,
           ),
           IconButton(
             onPressed: _saveSession,
             icon: const Icon(Icons.save_alt),
-            tooltip: 'Guardar sesión',
+            tooltip: l10n.triviaSaveSessionTooltip,
           ),
         ],
       ),
@@ -261,9 +281,9 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTimer(theme),
+              _buildTimer(theme, l10n),
               const SizedBox(height: 10),
-              _buildStats(theme),
+              _buildStats(theme, l10n),
               const SizedBox(height: 16),
               Text(
                 question.prompt,
@@ -300,7 +320,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
               const SizedBox(height: 16),
               _buildOptions(theme, question),
               const SizedBox(height: 12),
-              _buildInput(theme),
+              _buildInput(theme, l10n),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -308,7 +328,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _submitAnswer,
                       icon: const Icon(Icons.quiz_outlined),
-                      label: const Text('Comprobar'),
+                      label: Text(l10n.triviaCheckButtonLabel),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -321,7 +341,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
                   IconButton.filledTonal(
                     onPressed: _advanceQuestion,
                     icon: const Icon(Icons.skip_next_rounded),
-                    tooltip: 'Saltar',
+                    tooltip: l10n.triviaSkipTooltip,
                   ),
                 ],
               ),
@@ -332,7 +352,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     );
   }
 
-  Widget _buildStats(ThemeData theme) {
+  Widget _buildStats(ThemeData theme, AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -340,7 +360,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
             Expanded(
               child: _StatChip(
                 icon: Icons.check_circle_outline,
-                label: 'Correctas',
+                label: l10n.triviaStatsCorrectAnswers,
                 value: '$_correctAnswers',
                 color: theme.colorScheme.primary,
               ),
@@ -349,8 +369,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
             Expanded(
               child: _StatChip(
                 icon: Icons.star_border_rounded,
-                label: 'Puntuación',
-                value: '$_score pts',
+                label: l10n.triviaStatsScore,
+                value: '$_score ${l10n.triviaPointsAbbreviation}',
                 color: theme.colorScheme.secondary,
               ),
             ),
@@ -361,7 +381,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
           alignment: Alignment.centerLeft,
           child: _StatChip(
             icon: Icons.local_fire_department_outlined,
-            label: 'Racha',
+            label: l10n.triviaStatsStreak,
             value: '$_streak',
             color: theme.colorScheme.error,
           ),
@@ -370,7 +390,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     );
   }
 
-  Widget _buildTimer(ThemeData theme) {
+  Widget _buildTimer(ThemeData theme, AppLocalizations l10n) {
     final Color color = _remainingSeconds <= 5
         ? theme.colorScheme.error
         : theme.colorScheme.primary;
@@ -385,12 +405,12 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tiempo restante',
+              l10n.triviaRemainingTimeLabel,
               style: theme.textTheme.labelLarge
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             Text(
-              '${_remainingSeconds}s',
+              l10n.triviaRemainingSeconds(_remainingSeconds),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
@@ -421,13 +441,13 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     );
   }
 
-  Widget _buildInput(ThemeData theme) {
+  Widget _buildInput(ThemeData theme, AppLocalizations l10n) {
     return TextField(
       controller: _answerController,
       textInputAction: TextInputAction.done,
       onSubmitted: _submitAnswer,
       decoration: InputDecoration(
-        labelText: 'Tu respuesta',
+        labelText: l10n.triviaAnswerLabel,
         prefixIcon: const Icon(Icons.catching_pokemon),
         filled: true,
         fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.4),
@@ -491,7 +511,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '¡Logro desbloqueado! 🎉',
+                  AppLocalizations.of(context)!.triviaAchievementUnlockedTitle,
                   style: theme.textTheme.titleSmall
                       ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                 ),

@@ -255,6 +255,149 @@
   "@triviaFactPikachuDescription": {
     "description": "Description for the trivia fact about Pikachu replacing Clefairy."
   },
+  "triviaQuestionPikachuPrompt": "Who is this iconic Electric-type Pokémon?",
+  "@triviaQuestionPikachuPrompt": {
+    "description": "Prompt shown for the Pikachu silhouette question."
+  },
+  "triviaQuestionBulbasaurPrompt": "Starts the Pokédex and carries a seed on its back.",
+  "@triviaQuestionBulbasaurPrompt": {
+    "description": "Prompt shown for the Bulbasaur silhouette question."
+  },
+  "triviaQuestionCharizardPrompt": "Fire-breathing dragon from Kanto.",
+  "@triviaQuestionCharizardPrompt": {
+    "description": "Prompt shown for the Charizard silhouette question."
+  },
+  "triviaOptionPikachu": "Pikachu",
+  "@triviaOptionPikachu": {
+    "description": "Localized label for Pikachu used in trivia options and answers."
+  },
+  "triviaOptionRaichu": "Raichu",
+  "@triviaOptionRaichu": {
+    "description": "Localized label for Raichu used in trivia options."
+  },
+  "triviaOptionPichu": "Pichu",
+  "@triviaOptionPichu": {
+    "description": "Localized label for Pichu used in trivia options."
+  },
+  "triviaOptionBulbasaur": "Bulbasaur",
+  "@triviaOptionBulbasaur": {
+    "description": "Localized label for Bulbasaur used in trivia options and answers."
+  },
+  "triviaOptionIvysaur": "Ivysaur",
+  "@triviaOptionIvysaur": {
+    "description": "Localized label for Ivysaur used in trivia options."
+  },
+  "triviaOptionOddish": "Oddish",
+  "@triviaOptionOddish": {
+    "description": "Localized label for Oddish used in trivia options."
+  },
+  "triviaOptionCharizard": "Charizard",
+  "@triviaOptionCharizard": {
+    "description": "Localized label for Charizard used in trivia options and answers."
+  },
+  "triviaOptionAerodactyl": "Aerodactyl",
+  "@triviaOptionAerodactyl": {
+    "description": "Localized label for Aerodactyl used in trivia options."
+  },
+  "triviaOptionCharmeleon": "Charmeleon",
+  "@triviaOptionCharmeleon": {
+    "description": "Localized label for Charmeleon used in trivia options."
+  },
+  "triviaRemainingTimeLabel": "Remaining time",
+  "@triviaRemainingTimeLabel": {
+    "description": "Label shown above the trivia countdown timer."
+  },
+  "triviaRemainingSeconds": "{seconds}s",
+  "@triviaRemainingSeconds": {
+    "description": "Displays the remaining seconds in the trivia timer.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "triviaStatsCorrectAnswers": "Correct answers",
+  "@triviaStatsCorrectAnswers": {
+    "description": "Label for the trivia correct answers counter."
+  },
+  "triviaStatsScore": "Score",
+  "@triviaStatsScore": {
+    "description": "Label for the trivia score counter."
+  },
+  "triviaStatsStreak": "Streak",
+  "@triviaStatsStreak": {
+    "description": "Label for the trivia streak counter."
+  },
+  "triviaPointsAbbreviation": "pts",
+  "@triviaPointsAbbreviation": {
+    "description": "Short suffix for points on the trivia stats chip."
+  },
+  "triviaAnswerLabel": "Your answer",
+  "@triviaAnswerLabel": {
+    "description": "Label for the trivia free-text answer input."
+  },
+  "triviaCheckButtonLabel": "Check",
+  "@triviaCheckButtonLabel": {
+    "description": "Label for the button that submits a trivia answer."
+  },
+  "triviaSkipTooltip": "Skip",
+  "@triviaSkipTooltip": {
+    "description": "Tooltip for the button that skips to the next trivia question."
+  },
+  "triviaRankingTooltip": "View ranking",
+  "@triviaRankingTooltip": {
+    "description": "Tooltip for the action that opens the trivia ranking screen."
+  },
+  "triviaAchievementsTooltip": "View achievements",
+  "@triviaAchievementsTooltip": {
+    "description": "Tooltip for the action that opens the trivia achievements screen."
+  },
+  "triviaSaveSessionTooltip": "Save session",
+  "@triviaSaveSessionTooltip": {
+    "description": "Tooltip for the action that saves the trivia session to the ranking."
+  },
+  "triviaTimeoutMessage": "Time is up! The answer was {pokemon}.",
+  "@triviaTimeoutMessage": {
+    "description": "Snackbar message shown when the trivia timer ends before answering.",
+    "placeholders": {
+      "pokemon": {
+        "type": "String"
+      }
+    }
+  },
+  "triviaCorrectMessage": "Correct! It was {pokemon}.",
+  "@triviaCorrectMessage": {
+    "description": "Snackbar message shown when the trivia answer is correct.",
+    "placeholders": {
+      "pokemon": {
+        "type": "String"
+      }
+    }
+  },
+  "triviaIncorrectMessage": "Incorrect answer. Try the next one.",
+  "@triviaIncorrectMessage": {
+    "description": "Snackbar message shown when the trivia answer is incorrect."
+  },
+  "triviaSaveUnavailableMessage": "Couldn't access the ranking right now.",
+  "@triviaSaveUnavailableMessage": {
+    "description": "Snackbar message shown when the ranking repository is unavailable."
+  },
+  "triviaSaveNoQuestionsMessage": "Play at least one question before saving.",
+  "@triviaSaveNoQuestionsMessage": {
+    "description": "Snackbar message shown when trying to save a trivia session without playing."
+  },
+  "triviaGuestPlayerName": "Guest",
+  "@triviaGuestPlayerName": {
+    "description": "Fallback player name used when no authenticated user is present."
+  },
+  "triviaSessionSavedMessage": "Session saved to the ranking",
+  "@triviaSessionSavedMessage": {
+    "description": "Snackbar message shown after saving the trivia session."
+  },
+  "triviaAchievementUnlockedTitle": "Achievement unlocked! 🎉",
+  "@triviaAchievementUnlockedTitle": {
+    "description": "Heading for the snackbar shown when a trivia achievement unlocks."
+  },
   "homeSectionCardSemanticLabel": "Open the {sectionName} section",
   "@homeSectionCardSemanticLabel": {
     "description": "Semantic label announcing navigation to a home section",
