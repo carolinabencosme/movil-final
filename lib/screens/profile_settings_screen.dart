@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
 import '../controllers/auth_controller.dart';
 import '../services/auth_repository.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({
