@@ -524,6 +524,90 @@ abstract class AppLocalizations {
   /// **'Regions, maps & encounter data'**
   String get homeSectionLocationsSubtitle;
 
+  /// Semantic label announcing navigation to a home section
+  ///
+  /// In en, this message translates to:
+  /// **'Open the {sectionName} section'**
+  String homeSectionCardSemanticLabel(String sectionName);
+
+  /// Semantic hint for opening a home section
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to navigate to {sectionName}'**
+  String homeSectionCardSemanticHint(String sectionName);
+
+  /// Label for the Pokémon height characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get detailCharacteristicHeight;
+
+  /// Label for the Pokémon weight characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get detailCharacteristicWeight;
+
+  /// Label for the Pokémon category characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get detailCharacteristicCategory;
+
+  /// Fallback text when no category information is available.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get detailCharacteristicNoCategory;
+
+  /// Label for the Pokémon catch rate characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Catch rate'**
+  String get detailCharacteristicCatchRate;
+
+  /// Label for the Pokémon base experience characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Base experience'**
+  String get detailCharacteristicBaseExperience;
+
+  /// Message shown when weakness data is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'No weakness information available.'**
+  String get detailNoWeaknessInfo;
+
+  /// Description for the 4x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Double weakness: damage taken is multiplied by four.'**
+  String get detailWeaknessLegendQuadruple;
+
+  /// Description for the 2x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic weakness: super effective attacks.'**
+  String get detailWeaknessLegendDouble;
+
+  /// Description for the 1.5x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate advantage: slightly increased damage.'**
+  String get detailWeaknessLegendModerate;
+
+  /// Button text to expand and show weaknesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Show weaknesses'**
+  String get detailWeaknessToggleShow;
+
+  /// Button text to collapse weaknesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide weaknesses'**
+  String get detailWeaknessToggleHide;
+
   /// Semantic label for the notifications button
   ///
   /// In en, this message translates to:
@@ -560,6 +644,11 @@ abstract class AppLocalizations {
   /// **'Opens app settings'**
   String get homeSettingsSemanticHint;
 
+  /// Message shown for sections that are not ready yet.
+  ///
+  /// In en, this message translates to:
+  /// **'The {sectionName} section will be available soon.'**
+  String homePlaceholderMessage(String sectionName);
 
   /// No description provided for @abilitiesDefaultTitle.
   ///
@@ -669,6 +758,30 @@ abstract class AppLocalizations {
   /// **'Weight'**
   String get pokedexSortWeightLabel;
 
+  /// Semantic label announcing navigation to an ability detail
+  ///
+  /// In en, this message translates to:
+  /// **'Open ability {abilityName}'**
+  String abilityCardSemanticLabel(String abilityName);
+
+  /// Semantic hint for opening an ability
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to see details for {abilityName}'**
+  String abilityCardSemanticHint(String abilityName);
+
+  /// Semantic label for navigating to a Pokémon entry
+  ///
+  /// In en, this message translates to:
+  /// **'Open {pokemonName} details'**
+  String pokedexCardSemanticLabel(String pokemonName);
+
+  /// Semantic hint for navigating to a Pokémon entry
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to view {pokemonName} in the Pokédex'**
+  String pokedexCardSemanticHint(String pokemonName);
+
   /// No description provided for @pokedexSearchHint.
   ///
   /// In en, this message translates to:
@@ -711,6 +824,18 @@ abstract class AppLocalizations {
   /// **'Offline mode active. Some filters may be limited.'**
   String get pokedexOfflineFiltersLimited;
 
+  /// No description provided for @pokedexShowingCountSimple.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count} Pokémon.'**
+  String pokedexShowingCountSimple(int count);
+
+  /// No description provided for @pokedexShowingCountWithTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count} of {total} Pokémon.'**
+  String pokedexShowingCountWithTotal(int count, int total);
+
   /// No description provided for @pokedexActiveFilters.
   ///
   /// In en, this message translates to:
@@ -728,6 +853,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'descending'**
   String get pokedexSortDirectionDescending;
+
+  /// No description provided for @pokedexFilterSummarySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search: {query}'**
+  String pokedexFilterSummarySearch(String query);
+
+  /// No description provided for @pokedexFilterSummaryType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type: {value}'**
+  String pokedexFilterSummaryType(String value);
+
+  /// No description provided for @pokedexFilterSummaryGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation: {value}'**
+  String pokedexFilterSummaryGeneration(String value);
+
+  /// No description provided for @pokedexFilterSummaryRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region: {value}'**
+  String pokedexFilterSummaryRegion(String value);
+
+  /// No description provided for @pokedexFilterSummaryShape.
+  ///
+  /// In en, this message translates to:
+  /// **'Form: {value}'**
+  String pokedexFilterSummaryShape(String value);
+
+  /// No description provided for @pokedexFilterSummarySort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort: {value}'**
+  String pokedexFilterSummarySort(String value);
 
   /// No description provided for @pokedexNoResults.
   ///
@@ -813,98 +974,112 @@ abstract class AppLocalizations {
   /// **'Apply'**
   String get commonApply;
 
+  /// SnackBar message shown when the detail screen switches to offline mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode active. Showing locally saved data.'**
+  String get detailOfflineModeSnack;
+
+  /// SnackBar message shown when connectivity returns on the detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection restored.'**
+  String get detailConnectionRestored;
+
+  /// Banner text shown at the top of the detail screen while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode active. Some advanced data may not be available.'**
+  String get detailOfflineBanner;
+
+  /// Fallback AppBar title when the Pokémon name is not available.
+  ///
+  /// In en, this message translates to:
+  /// **'Pokémon details'**
+  String get detailFallbackTitle;
+
+  /// Label for the detail tab that shows general Pokémon information.
+  ///
+  /// In en, this message translates to:
+  /// **'Information'**
+  String get detailTabInformation;
+
+  /// Label for the detail tab that displays Pokémon stats.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get detailTabStatistics;
+
+  /// Label for the detail tab that explains type matchups.
+  ///
+  /// In en, this message translates to:
+  /// **'Matchups'**
+  String get detailTabMatchups;
+
+  /// Label for the detail tab that shows evolution chains.
+  ///
+  /// In en, this message translates to:
+  /// **'Evolutions'**
+  String get detailTabEvolutions;
+
+  /// Label for the detail tab that lists Pokémon moves.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves'**
+  String get detailTabMoves;
+
+  /// Message shown when the detail query returns no data.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find information for this Pokémon.'**
+  String get detailNoDataFound;
+
+  /// Short message shown in the offline detail view explaining cached data is being used.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode: showing saved information.'**
+  String get detailOfflineShortMessage;
+
+  /// Longer explanation shown in the offline detail view about missing data.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed information isn\'t available without a connection. Try again when you\'re back online.'**
+  String get detailOfflineLongMessage;
+
+  /// Tooltip shown on the favorite button when the Pokémon is already a favorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get detailFavoriteRemoveTooltip;
+
+  /// Tooltip shown on the favorite button when the Pokémon is not a favorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get detailFavoriteAddTooltip;
+
+  /// Label shown for a Pokémon's hidden ability in the detail header.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden ability'**
+  String get detailHiddenAbilityLabel;
+
+  /// Label shown for a Pokémon's primary ability in the detail header.
+  ///
+  /// In en, this message translates to:
+  /// **'Main ability'**
+  String get detailMainAbilityLabel;
+
+  /// Error message displayed when the detail screen cannot load data.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the Pokémon details.\nCheck your connection or try again.'**
+  String get detailLoadErrorDescription;
+
   /// No description provided for @pokedexSortSheetTitle.
   ///
   /// In en, this message translates to:
   /// **'Sort by'**
-  String get detailOfflineModeSnack;
-  String get detailConnectionRestored;
-  String get detailOfflineBanner;
-  String get detailFallbackTitle;
-  String get detailTabInformation;
-  String get detailTabStatistics;
-  String get detailTabMatchups;
-  String get detailTabEvolutions;
-  String get detailTabMoves;
-  String get detailNoDataFound;
-  String get detailOfflineShortMessage;
-  String get detailOfflineLongMessage;
-  String get detailFavoriteRemoveTooltip;
-  String get detailFavoriteAddTooltip;
-  String get detailHiddenAbilityLabel;
-  String get detailMainAbilityLabel;
-  String get detailLoadErrorDescription;
-  /// Label for the Pokémon height characteristic.
-  ///
-  /// In en, this message translates to:
-  /// **'Height'**
-  String get detailCharacteristicHeight;
-
-  /// Label for the Pokémon weight characteristic.
-  ///
-  /// In en, this message translates to:
-  /// **'Weight'**
-  String get detailCharacteristicWeight;
-
-  /// Label for the Pokémon category characteristic.
-  ///
-  /// In en, this message translates to:
-  /// **'Category'**
-  String get detailCharacteristicCategory;
-
-  /// Fallback text when no category information is available.
-  ///
-  /// In en, this message translates to:
-  /// **'No category'**
-  String get detailCharacteristicNoCategory;
-
-  /// Label for the Pokémon catch rate characteristic.
-  ///
-  /// In en, this message translates to:
-  /// **'Catch rate'**
-  String get detailCharacteristicCatchRate;
-
-  /// Label for the Pokémon base experience characteristic.
-  ///
-  /// In en, this message translates to:
-  /// **'Base experience'**
-  String get detailCharacteristicBaseExperience;
-
-  /// Message shown when weakness data is missing.
-  ///
-  /// In en, this message translates to:
-  /// **'No weakness information available.'**
-  String get detailNoWeaknessInfo;
-
-  /// Description for the 4x weakness legend entry.
-  ///
-  /// In en, this message translates to:
-  /// **'Double weakness: damage taken is multiplied by four.'**
-  String get detailWeaknessLegendQuadruple;
-
-  /// Description for the 2x weakness legend entry.
-  ///
-  /// In en, this message translates to:
-  /// **'Classic weakness: super effective attacks.'**
-  String get detailWeaknessLegendDouble;
-
-  /// Description for the 1.5x weakness legend entry.
-  ///
-  /// In en, this message translates to:
-  /// **'Moderate advantage: slightly increased damage.'**
-  String get detailWeaknessLegendModerate;
-
-  /// Button text to expand and show weaknesses.
-  ///
-  /// In en, this message translates to:
-  /// **'Show weaknesses'**
-  String get detailWeaknessToggleShow;
-
-  /// Button text to collapse weaknesses.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide weaknesses'**
-  String get detailWeaknessToggleHide;
   String get pokedexSortSheetTitle;
 
   /// No description provided for @pokedexSortCriteriaLabel.
@@ -943,726 +1118,9 @@ abstract class AppLocalizations {
   /// **'Add to favorites'**
   String get favoritesAddAction;
 }
-class AppLocalizationsEN extends AppLocalizations {
-  AppLocalizationsEN(): super('en');
-  @override
-  String get appTitle => 'Pokédex GraphQL';
-  @override
-  String get homeHeaderTitle => 'ProDex';
-  @override
-  String get homeQuickAccessGymLeaders => 'Gym Leaders & Elite 4';
-  @override
-  String get homeQuickAccessNatures => 'Natures';
-  @override
-  String get homeQuickAccessMatchups => 'Type Matchups';
-  @override
-  String get homeQuickAccessEvolutionChains => 'Evolution Chains';
-  @override
-  String get homeQuickAccessBreeding => 'Breeding Guides';
-  @override
-  String get homeQuickAccessBerries => 'Berry Farming';
-  @override
-  String get authLoginTitle => 'Welcome back';
-  @override
-  String get authLoginSubtitle => 'Sign in with your email to access your Pokédex.';
-  @override
-  String get authEmailLabel => 'Email';
-  @override
-  String get authEmailHint => 'ash.ketchum@poke.app';
-  @override
-  String get authPasswordLabel => 'Password';
-  @override
-  String get authLoginButton => 'Sign in';
-  @override
-  String get authNoAccountCta => 'Don\'t have an account? Sign up';
-  @override
-  String get authLoginError => 'We couldn\'t sign you in. Try again.';
-  @override
-  String get authEmailRequired => 'Enter your email.';
-  @override
-  String get authEmailInvalid => 'Invalid email format.';
-  @override
-  String get authPasswordRequired => 'Enter your password.';
-  @override
-  String get authPasswordLength => 'The password must contain at least 6 characters.';
-  @override
-  String get authRegisterTitle => 'Create your account';
-  @override
-  String get authRegisterSubtitle => 'Register to sync your teams and collections across all your devices.';
-  @override
-  String get authCreateAccountButton => 'Create account';
-  @override
-  String get authAlreadyHaveAccountCta => 'Already have an account? Sign in';
-  @override
-  String get authRegisterError => 'We couldn\'t create your account. Try again later.';
-  @override
-  String get authSecurePasswordRequired => 'Enter a secure password.';
-  @override
-  String get authPasswordStrongSuggestion => 'Use letters and numbers for a stronger password.';
-  @override
-  String get authConfirmPasswordLabel => 'Confirm password';
-  @override
-  String get authPasswordsMismatch => 'Passwords do not match.';
-  @override
-  String get authSnackbarNoUser => 'User information is not available.';
-  @override
-  String get authProfileUpdated => 'Profile updated successfully.';
-  @override
-  String get authProfileUpdateError => 'We couldn\'t update the profile.';
-  @override
-  String get authUpdateInfoTitle => 'Update your login information.';
-  @override
-  String get authUpdateInfoSubtitle => 'Change your email address or set a new password. Changes apply immediately.';
-  @override
-  String get authNewPasswordOptionalLabel => 'New password (optional)';
-  @override
-  String get settingsTitle => 'Settings';
-  @override
-  String get settingsAccountSection => 'Account';
-  @override
-  String get settingsNoEmail => 'No email on record';
-  @override
-  String get settingsEditProfile => 'Edit profile';
-  @override
-  String get settingsSignOut => 'Sign out';
-  @override
-  String get settingsAppearanceSection => 'Appearance';
-  @override
-  String get settingsLanguageSection => 'Language';
-  @override
-  String get settingsLanguageLabel => 'App language';
-  @override
-  String get settingsLanguageEnglish => 'English';
-  @override
-  String get settingsLanguageSpanish => 'Spanish';
-  @override
-  String get settingsLightModeTitle => 'Light mode';
-  @override
-  String get settingsLightModeSubtitle => 'Bright backgrounds for well-lit environments.';
-  @override
-  String get settingsDarkModeTitle => 'Dark mode';
-  @override
-  String get settingsDarkModeSubtitle => 'Dim the lights to reduce eye strain at night.';
-  @override
-  String get settingsInfo => 'Settings save immediately and affect the entire app.';
-  @override
-  String get settingsSaveChanges => 'Save changes';
-  @override
-  String get favoritesDefaultTitle => 'Favorites';
-  @override
-  String get favoritesEmptyTitle => 'You don\'t have favorite Pokémon yet.';
-  @override
-  String get favoritesEmptySubtitle => 'Explore the Pokédex and tap the heart to save your favorites.';
-  @override
-  String get homeQuickAccessTitle => 'Quick access';
-  @override
-  String get homeSectionPokedexTitle => 'Pokédex';
-  @override
-  String get homeSectionPokedexSubtitle => 'National index & regional dexes';
-  @override
-  String get homeSectionFavoritesTitle => 'Favorites';
-  @override
-  String get homeSectionFavoritesSubtitle => 'Your saved Pokémon';
-  @override
-  String get homeSectionMovesTitle => 'Moves';
-  @override
-  String get homeSectionMovesSubtitle => 'Damage, effects & contest data';
-  @override
-  String get homeSectionTmTitle => 'TM';
-  @override
-  String get homeSectionTmSubtitle => 'Machines & tutors by generation';
-  @override
-  String get homeSectionAbilitiesTitle => 'Abilities';
-  @override
-  String get homeSectionAbilitiesSubtitle => 'Passive effects & triggers';
-  @override
-  String get homeSectionChecklistsTitle => 'Checklists';
-  @override
-  String get homeSectionChecklistsSubtitle => 'Track goals & collections';
-  @override
-  String get homeSectionPartiesTitle => 'Parties';
-  @override
-  String get homeSectionPartiesSubtitle => 'Build teams & strategies';
-  @override
-  String get homeSectionLocationsTitle => 'Locations';
-  @override
-  String get homeSectionLocationsSubtitle => 'Regions, maps & encounter data';
-  @override
-  String homeSectionCardSemanticLabel({required String sectionName}) =>
-      'Open the ${sectionName} section';
-  @override
-  String homeSectionCardSemanticHint({required String sectionName}) =>
-      'Double tap to navigate to ${sectionName}';
-  @override
-  String get homeNotificationsSemanticLabel => 'Notifications';
-  @override
-  String get homeNotificationsSemanticHint => 'Opens notifications and alerts';
-  @override
-  String get homeStoreSemanticLabel => 'Shop';
-  @override
-  String get homeStoreSemanticHint => 'Opens the in-app shop';
-  @override
-  String get homeSettingsSemanticLabel => 'Settings';
-  @override
-  String get homeSettingsSemanticHint => 'Opens app settings';
-  @override
-  String homePlaceholderMessage({required String sectionName}) => 'The ${sectionName} section will be available soon.';
-  @override
-  String get abilitiesDefaultTitle => 'Abilities';
-  @override
-  String get abilitiesSearchHint => 'Search ability…';
-  @override
-  String get abilitiesErrorMessage => 'We couldn’t load the abilities.';
-  @override
-  String get commonRetry => 'Retry';
-  @override
-  String get abilitiesEmptySearch => 'We couldn’t find abilities that match your search.';
-  @override
-  String get abilitiesEmptyGeneral => 'No abilities are available right now.';
-  @override
-  String get abilitiesNoDescription => 'No description available.';
-  @override
-  String get abilitiesNoShortDescription => 'No short description available.';
-  @override
-  String get abilitiesFullDescriptionTitle => 'Full description';
-  @override
-  String get abilitiesFullDescriptionFallback => 'No description is available in this language.';
-  @override
-  String get abilitiesPokemonSectionTitle => 'Pokémon with this ability';
-  @override
-  String get abilitiesPokemonEmpty => 'We couldn’t find Pokémon associated with this ability.';
-  @override
-  String get abilitiesPokemonErrorTitle => 'We couldn’t load the associated Pokémon.';
-  @override
-  String get abilitiesPokemonErrorDescription => 'Try again to see which Pokémon have this ability.';
-  @override
-  String abilityCardSemanticLabel({required String abilityName}) =>
-      'Open ability ${abilityName}';
-  @override
-  String abilityCardSemanticHint({required String abilityName}) =>
-      'Double tap to see details for ${abilityName}';
-  @override
-  String get pokedexSortNumberLabel => 'Number';
-  @override
-  String get pokedexSortNameLabel => 'Name';
-  @override
-  String get pokedexSortHeightLabel => 'Height';
-  @override
-  String get pokedexSortWeightLabel => 'Weight';
-  @override
-  String pokedexCardSemanticLabel({required String pokemonName}) =>
-      'Open ${pokemonName} details';
-  @override
-  String pokedexCardSemanticHint({required String pokemonName}) =>
-      'Double tap to view ${pokemonName} in the Pokédex';
-  @override
-  String get pokedexSearchHint => 'Search by name or number';
-  @override
-  String get pokedexFiltersTooltip => 'Filters';
-  @override
-  String get pokedexOfflineNoCache => 'No connection and no cached data available.';
-  @override
-  String get pokedexOfflineBanner => 'Offline mode active. Showing cached data.';
-  @override
-  String get pokedexConnectionRestored => 'Connection restored.';
-  @override
-  String get pokedexLoadError => 'We couldn’t load the Pokédex. Try again.';
-  @override
-  String get pokedexOfflineFiltersLimited => 'Offline mode active. Some filters may be limited.';
-  @override
-  String pokedexShowingCountSimple({required int count}) => 'Showing ${count} Pokémon.';
-  @override
-  String pokedexShowingCountWithTotal({required int count, required int total}) => 'Showing ${count} of ${total} Pokémon.';
-  @override
-  String pokedexActiveFilters(int count) {
-    return intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      one: 'count',
-      other: 'count',
-    );
-  }
-  @override
-  String get pokedexSortDirectionAscending => 'ascending';
-  @override
-  String get pokedexSortDirectionDescending => 'descending';
-  @override
-  String pokedexFilterSummarySearch({required String query}) => 'Search: ${query}';
-  @override
-  String pokedexFilterSummaryType({required String value}) => 'Type: ${value}';
-  @override
-  String pokedexFilterSummaryGeneration({required String value}) => 'Generation: ${value}';
-  @override
-  String pokedexFilterSummaryRegion({required String value}) => 'Region: ${value}';
-  @override
-  String pokedexFilterSummaryShape({required String value}) => 'Form: ${value}';
-  @override
-  String pokedexFilterSummarySort({required String value}) => 'Sort: ${value}';
-  @override
-  String get pokedexNoResults => 'No Pokémon match the current filters.';
-  @override
-  String get pokedexFiltersTitle => 'Filters';
-  @override
-  String get pokedexFiltersCloseTooltip => 'Close';
-  @override
-  String get pokedexFilterSectionTypes => 'Types';
-  @override
-  String get pokedexFilterSectionGenerations => 'Generations';
-  @override
-  String get pokedexFilterSectionRegions => 'Regions';
-  @override
-  String get pokedexFilterSectionShapes => 'Shapes';
-  @override
-  String get pokedexFilterEmptyTypes => 'No types available right now.';
-  @override
-  String get pokedexFilterEmptyGenerations => 'No generations available right now.';
-  @override
-  String get pokedexFilterEmptyRegions => 'No regions available right now.';
-  @override
-  String get pokedexFilterEmptyShapes => 'No shapes available right now.';
-  @override
-  String get pokedexFiltersClear => 'Clear';
-  @override
-  String get commonCancel => 'Cancel';
-  @override
-  String get commonApply => 'Apply';
-  @override
-  String get detailOfflineModeSnack => 'Offline mode active. Showing locally saved data.';
-  @override
-  String get detailConnectionRestored => 'Connection restored.';
-  @override
-  String get detailOfflineBanner => 'Offline mode active. Some advanced data may not be available.';
-  @override
-  String get detailFallbackTitle => 'Pokémon details';
-  @override
-  String get detailTabInformation => 'Information';
-  @override
-  String get detailTabStatistics => 'Statistics';
-  @override
-  String get detailTabMatchups => 'Matchups';
-  @override
-  String get detailTabEvolutions => 'Evolutions';
-  @override
-  String get detailTabMoves => 'Moves';
-  @override
-  String get detailNoDataFound => 'We couldn\'t find information for this Pokémon.';
-  @override
-  String get detailOfflineShortMessage => 'Offline mode: showing saved information.';
-  @override
-  String get detailOfflineLongMessage => 'Detailed information isn\'t available without a connection. Try again when you\'re back online.';
-  @override
-  String get detailFavoriteRemoveTooltip => 'Remove from favorites';
-  @override
-  String get detailFavoriteAddTooltip => 'Add to favorites';
-  @override
-  String get detailHiddenAbilityLabel => 'Hidden ability';
-  @override
-  String get detailMainAbilityLabel => 'Main ability';
-  @override
-  String get detailLoadErrorDescription => 'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
-  @override
-  String get detailCharacteristicHeight => 'Height';
-  @override
-  String get detailCharacteristicWeight => 'Weight';
-  @override
-  String get detailCharacteristicCategory => 'Category';
-  @override
-  String get detailCharacteristicNoCategory => 'No category';
-  @override
-  String get detailCharacteristicCatchRate => 'Catch rate';
-  @override
-  String get detailCharacteristicBaseExperience => 'Base experience';
-  @override
-  String get detailNoWeaknessInfo => 'No weakness information available.';
-  @override
-  String get detailWeaknessLegendQuadruple =>
-      'Double weakness: damage taken is multiplied by four.';
-  @override
-  String get detailWeaknessLegendDouble => 'Classic weakness: super effective attacks.';
-  @override
-  String get detailWeaknessLegendModerate =>
-      'Moderate advantage: slightly increased damage.';
-  @override
-  String get detailWeaknessToggleShow => 'Show weaknesses';
-  @override
-  String get detailWeaknessToggleHide => 'Hide weaknesses';
-  @override
-  String get pokedexSortSheetTitle => 'Sort by';
-  @override
-  String get pokedexSortCriteriaLabel => 'Criterion';
-  @override
-  String get pokedexSortDirectionLabel => 'Direction';
-  @override
-  String get pokedexSortAscendingShort => 'Asc';
-  @override
-  String get pokedexSortDescendingShort => 'Desc';
-  @override
-  String get favoritesRemoveAction => 'Remove from favorites';
-  @override
-  String get favoritesAddAction => 'Add to favorites';
-}
 
-class AppLocalizationsES extends AppLocalizations {
-  AppLocalizationsES(): super('es');
-  @override
-  String get appTitle => 'Pokédex GraphQL';
-  @override
-  String get homeHeaderTitle => 'ProDex';
-  @override
-  String get homeQuickAccessGymLeaders => 'Líderes de Gimnasio y Alto Mando';
-  @override
-  String get homeQuickAccessNatures => 'Naturalezas';
-  @override
-  String get homeQuickAccessMatchups => 'Enfrentamientos de tipos';
-  @override
-  String get homeQuickAccessEvolutionChains => 'Cadenas evolutivas';
-  @override
-  String get homeQuickAccessBreeding => 'Guías de crianza';
-  @override
-  String get homeQuickAccessBerries => 'Cultivo de bayas';
-  @override
-  String get authLoginTitle => 'Bienvenido de nuevo';
-  @override
-  String get authLoginSubtitle => 'Inicia sesión con tu correo electrónico para acceder a tu Pokédex.';
-  @override
-  String get authEmailLabel => 'Correo electrónico';
-  @override
-  String get authEmailHint => 'ash.ketchum@poke.app';
-  @override
-  String get authPasswordLabel => 'Contraseña';
-  @override
-  String get authLoginButton => 'Iniciar sesión';
-  @override
-  String get authNoAccountCta => '¿No tienes cuenta? Regístrate';
-  @override
-  String get authLoginError => 'No fue posible iniciar sesión. Inténtalo de nuevo.';
-  @override
-  String get authEmailRequired => 'Ingresa tu correo electrónico.';
-  @override
-  String get authEmailInvalid => 'Formato de correo inválido.';
-  @override
-  String get authPasswordRequired => 'Ingresa tu contraseña.';
-  @override
-  String get authPasswordLength => 'La contraseña debe tener al menos 6 caracteres.';
-  @override
-  String get authRegisterTitle => 'Crea tu cuenta';
-  @override
-  String get authRegisterSubtitle => 'Regístrate para sincronizar tus equipos y colecciones en todos tus dispositivos.';
-  @override
-  String get authCreateAccountButton => 'Crear cuenta';
-  @override
-  String get authAlreadyHaveAccountCta => '¿Ya tienes una cuenta? Inicia sesión';
-  @override
-  String get authRegisterError => 'No pudimos crear tu cuenta. Inténtalo más tarde.';
-  @override
-  String get authSecurePasswordRequired => 'Ingresa una contraseña segura.';
-  @override
-  String get authPasswordStrongSuggestion => 'Usa letras y números para una contraseña más fuerte.';
-  @override
-  String get authConfirmPasswordLabel => 'Confirmar contraseña';
-  @override
-  String get authPasswordsMismatch => 'Las contraseñas no coinciden.';
-  @override
-  String get authSnackbarNoUser => 'No hay información de usuario disponible.';
-  @override
-  String get authProfileUpdated => 'Perfil actualizado correctamente.';
-  @override
-  String get authProfileUpdateError => 'No fue posible actualizar el perfil.';
-  @override
-  String get authUpdateInfoTitle => 'Actualiza tu información de acceso.';
-  @override
-  String get authUpdateInfoSubtitle => 'Puedes cambiar tu correo electrónico o establecer una nueva contraseña. Los cambios se aplican inmediatamente.';
-  @override
-  String get authNewPasswordOptionalLabel => 'Nueva contraseña (opcional)';
-  @override
-  String get settingsTitle => 'Configuración';
-  @override
-  String get settingsAccountSection => 'Cuenta';
-  @override
-  String get settingsNoEmail => 'Sin correo registrado';
-  @override
-  String get settingsEditProfile => 'Editar perfil';
-  @override
-  String get settingsSignOut => 'Cerrar sesión';
-  @override
-  String get settingsAppearanceSection => 'Apariencia';
-  @override
-  String get settingsLanguageSection => 'Idioma';
-  @override
-  String get settingsLanguageLabel => 'Idioma de la app';
-  @override
-  String get settingsLanguageEnglish => 'Inglés';
-  @override
-  String get settingsLanguageSpanish => 'Español';
-  @override
-  String get settingsLightModeTitle => 'Modo claro';
-  @override
-  String get settingsLightModeSubtitle => 'Fondos luminosos ideales para entornos bien iluminados.';
-  @override
-  String get settingsDarkModeTitle => 'Modo oscuro';
-  @override
-  String get settingsDarkModeSubtitle => 'Atenúa la luz para reducir el cansancio visual por la noche.';
-  @override
-  String get settingsInfo => 'La configuración se guarda inmediatamente y afecta a toda la aplicación.';
-  @override
-  String get settingsSaveChanges => 'Guardar cambios';
-  @override
-  String get favoritesDefaultTitle => 'Favoritos';
-  @override
-  String get favoritesEmptyTitle => 'Aún no tienes Pokémon favoritos.';
-  @override
-  String get favoritesEmptySubtitle => 'Explora la Pokédex y marca con el corazón los Pokémon que quieras guardar.';
-  @override
-  String get homeQuickAccessTitle => 'Accesos rápidos';
-  @override
-  String get homeSectionPokedexTitle => 'Pokédex';
-  @override
-  String get homeSectionPokedexSubtitle => 'Índice nacional y pokédex regionales';
-  @override
-  String get homeSectionFavoritesTitle => 'Favoritos';
-  @override
-  String get homeSectionFavoritesSubtitle => 'Tus Pokémon guardados';
-  @override
-  String get homeSectionMovesTitle => 'Movimientos';
-  @override
-  String get homeSectionMovesSubtitle => 'Daño, efectos y datos de concursos';
-  @override
-  String get homeSectionTmTitle => 'MT';
-  @override
-  String get homeSectionTmSubtitle => 'Máquinas y tutores por generación';
-  @override
-  String get homeSectionAbilitiesTitle => 'Habilidades';
-  @override
-  String get homeSectionAbilitiesSubtitle => 'Efectos pasivos y activadores';
-  @override
-  String get homeSectionChecklistsTitle => 'Listas de control';
-  @override
-  String get homeSectionChecklistsSubtitle => 'Sigue metas y colecciones';
-  @override
-  String get homeSectionPartiesTitle => 'Equipos';
-  @override
-  String get homeSectionPartiesSubtitle => 'Arma equipos y estrategias';
-  @override
-  String get homeSectionLocationsTitle => 'Ubicaciones';
-  @override
-  String get homeSectionLocationsSubtitle => 'Regiones, mapas y datos de encuentros';
-  @override
-  String homeSectionCardSemanticLabel({required String sectionName}) =>
-      'Abrir la sección ${sectionName}';
-  @override
-  String homeSectionCardSemanticHint({required String sectionName}) =>
-      'Toca dos veces para ir a ${sectionName}';
-  @override
-  String get homeNotificationsSemanticLabel => 'Notificaciones';
-  @override
-  String get homeNotificationsSemanticHint =>
-      'Abre tus notificaciones y alertas';
-  @override
-  String get homeStoreSemanticLabel => 'Tienda';
-  @override
-  String get homeStoreSemanticHint => 'Abre la tienda de la app';
-  @override
-  String get homeSettingsSemanticLabel => 'Ajustes';
-  @override
-  String get homeSettingsSemanticHint => 'Abre la configuración de la app';
-  @override
-  String homePlaceholderMessage({required String sectionName}) => 'La sección de ${sectionName} estará disponible pronto.';
-  @override
-  String get abilitiesDefaultTitle => 'Habilidades';
-  @override
-  String get abilitiesSearchHint => 'Buscar habilidad…';
-  @override
-  String get abilitiesErrorMessage => 'No se pudieron cargar las habilidades.';
-  @override
-  String get commonRetry => 'Reintentar';
-  @override
-  String get abilitiesEmptySearch => 'No encontramos habilidades que coincidan con tu búsqueda.';
-  @override
-  String get abilitiesEmptyGeneral => 'No hay habilidades disponibles en este momento.';
-  @override
-  String get abilitiesNoDescription => 'Sin descripción disponible.';
-  @override
-  String get abilitiesNoShortDescription => 'Sin descripción breve disponible.';
-  @override
-  String get abilitiesFullDescriptionTitle => 'Descripción completa';
-  @override
-  String get abilitiesFullDescriptionFallback => 'Sin descripción disponible en este idioma.';
-  @override
-  String get abilitiesPokemonSectionTitle => 'Pokémon que la poseen';
-  @override
-  String get abilitiesPokemonEmpty => 'No encontramos Pokémon asociados a esta habilidad.';
-  @override
-  String get abilitiesPokemonErrorTitle => 'No pudimos cargar los Pokémon asociados.';
-  @override
-  String get abilitiesPokemonErrorDescription => 'Intenta nuevamente para ver qué Pokémon cuentan con esta habilidad.';
-  @override
-  String abilityCardSemanticLabel({required String abilityName}) =>
-      'Abrir la habilidad ${abilityName}';
-  @override
-  String abilityCardSemanticHint({required String abilityName}) =>
-      'Toca dos veces para ver detalles de ${abilityName}';
-  @override
-  String get pokedexSortNumberLabel => 'Número';
-  @override
-  String get pokedexSortNameLabel => 'Nombre';
-  @override
-  String get pokedexSortHeightLabel => 'Altura';
-  @override
-  String get pokedexSortWeightLabel => 'Peso';
-  @override
-  String pokedexCardSemanticLabel({required String pokemonName}) =>
-      'Abrir detalles de ${pokemonName}';
-  @override
-  String pokedexCardSemanticHint({required String pokemonName}) =>
-      'Toca dos veces para ver a ${pokemonName} en la Pokédex';
-  @override
-  String get pokedexSearchHint => 'Buscar por nombre o número';
-  @override
-  String get pokedexFiltersTooltip => 'Filtros';
-  @override
-  String get pokedexOfflineNoCache => 'Sin conexión y sin datos guardados localmente.';
-  @override
-  String get pokedexOfflineBanner => 'Modo offline activo. Mostrando datos guardados localmente.';
-  @override
-  String get pokedexConnectionRestored => 'Conexión restablecida.';
-  @override
-  String get pokedexLoadError => 'No se pudo cargar la Pokédex. Intenta nuevamente.';
-  @override
-  String get pokedexOfflineFiltersLimited => 'Modo offline activo. Algunos filtros pueden ser limitados.';
-  @override
-  String pokedexShowingCountSimple({required int count}) => 'Mostrando ${count} Pokémon.';
-  @override
-  String pokedexShowingCountWithTotal({required int count, required int total}) => 'Mostrando ${count} de ${total} Pokémon.';
-  @override
-  String pokedexActiveFilters(int count) {
-    return intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      one: 'count',
-      other: 'count',
-    );
-  }
-  @override
-  String get pokedexSortDirectionAscending => 'ascendente';
-  @override
-  String get pokedexSortDirectionDescending => 'descendente';
-  @override
-  String pokedexFilterSummarySearch({required String query}) => 'Búsqueda: ${query}';
-  @override
-  String pokedexFilterSummaryType({required String value}) => 'Tipo: ${value}';
-  @override
-  String pokedexFilterSummaryGeneration({required String value}) => 'Generación: ${value}';
-  @override
-  String pokedexFilterSummaryRegion({required String value}) => 'Región: ${value}';
-  @override
-  String pokedexFilterSummaryShape({required String value}) => 'Forma: ${value}';
-  @override
-  String pokedexFilterSummarySort({required String value}) => 'Orden: ${value}';
-  @override
-  String get pokedexNoResults => 'No se encontraron Pokémon para los filtros actuales.';
-  @override
-  String get pokedexFiltersTitle => 'Filtros';
-  @override
-  String get pokedexFiltersCloseTooltip => 'Cerrar';
-  @override
-  String get pokedexFilterSectionTypes => 'Tipos';
-  @override
-  String get pokedexFilterSectionGenerations => 'Generaciones';
-  @override
-  String get pokedexFilterSectionRegions => 'Regiones';
-  @override
-  String get pokedexFilterSectionShapes => 'Formas';
-  @override
-  String get pokedexFilterEmptyTypes => 'No hay tipos disponibles por ahora.';
-  @override
-  String get pokedexFilterEmptyGenerations => 'No hay generaciones disponibles por ahora.';
-  @override
-  String get pokedexFilterEmptyRegions => 'No hay regiones disponibles por ahora.';
-  @override
-  String get pokedexFilterEmptyShapes => 'No hay formas disponibles por ahora.';
-  @override
-  String get pokedexFiltersClear => 'Limpiar';
-  @override
-  String get commonCancel => 'Cancelar';
-  @override
-  String get commonApply => 'Aplicar';
-  @override
-  String get detailOfflineModeSnack => 'Modo offline activo. Mostrando datos guardados localmente.';
-  @override
-  String get detailConnectionRestored => 'Conexión restablecida.';
-  @override
-  String get detailOfflineBanner => 'Modo offline activo. Algunos datos avanzados pueden no estar disponibles.';
-  @override
-  String get detailFallbackTitle => 'Detalles del Pokémon';
-  @override
-  String get detailTabInformation => 'Información';
-  @override
-  String get detailTabStatistics => 'Estadísticas';
-  @override
-  String get detailTabMatchups => 'Enfrentamientos';
-  @override
-  String get detailTabEvolutions => 'Evoluciones';
-  @override
-  String get detailTabMoves => 'Movimientos';
-  @override
-  String get detailNoDataFound => 'No se encontró información para este Pokémon.';
-  @override
-  String get detailOfflineShortMessage => 'Modo offline: mostrando información guardada.';
-  @override
-  String get detailOfflineLongMessage => 'La información detallada no está disponible sin conexión. Intenta nuevamente cuando recuperes internet.';
-  @override
-  String get detailFavoriteRemoveTooltip => 'Quitar de favoritos';
-  @override
-  String get detailFavoriteAddTooltip => 'Agregar a favoritos';
-  @override
-  String get detailHiddenAbilityLabel => 'Habilidad oculta';
-  @override
-  String get detailMainAbilityLabel => 'Habilidad principal';
-  @override
-  String get detailLoadErrorDescription => 'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.';
-  @override
-  String get detailCharacteristicHeight => 'Altura';
-  @override
-  String get detailCharacteristicWeight => 'Peso';
-  @override
-  String get detailCharacteristicCategory => 'Categoría';
-  @override
-  String get detailCharacteristicNoCategory => 'Sin categoría';
-  @override
-  String get detailCharacteristicCatchRate => 'Ratio de captura';
-  @override
-  String get detailCharacteristicBaseExperience => 'Experiencia base';
-  @override
-  String get detailNoWeaknessInfo => 'No hay información de debilidades disponible.';
-  @override
-  String get detailWeaknessLegendQuadruple =>
-      'Doble debilidad: el daño recibido se multiplica por cuatro.';
-  @override
-  String get detailWeaknessLegendDouble => 'Debilidad clásica: ataques súper efectivos.';
-  @override
-  String get detailWeaknessLegendModerate =>
-      'Ventaja moderada: daño ligeramente incrementado.';
-  @override
-  String get detailWeaknessToggleShow => 'Ver debilidades';
-  @override
-  String get detailWeaknessToggleHide => 'Ocultar debilidades';
-  @override
-  String get pokedexSortSheetTitle => 'Ordenar por';
-  @override
-  String get pokedexSortCriteriaLabel => 'Criterio';
-  @override
-  String get pokedexSortDirectionLabel => 'Dirección';
-  @override
-  String get pokedexSortAscendingShort => 'Asc';
-  @override
-  String get pokedexSortDescendingShort => 'Desc';
-  @override
-  String get favoritesRemoveAction => 'Quitar de favoritos';
-  @override
-  String get favoritesAddAction => 'Agregar a favoritos';
-}
-
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
