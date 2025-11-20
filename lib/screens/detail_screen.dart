@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import '../features/locations/screens/locations_tab.dart';
+import '../features/share/services/card_capture_service.dart';
+import '../features/share/widgets/pokemon_share_card.dart';
 import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
@@ -114,6 +117,23 @@ class _DetailScreenState extends State<DetailScreen> {
     return value[0].toUpperCase() + value.substring(1);
   }
 
+  /// Muestra el diálogo para compartir la tarjeta del Pokémon
+  void _showShareDialog(BuildContext context, PokemonDetail pokemon) {
+    final theme = Theme.of(context);
+    final typeColor = pokemon.types.isNotEmpty
+        ? (pokemonTypeColors[pokemon.types.first.toLowerCase()] ??
+            theme.colorScheme.primary)
+        : theme.colorScheme.primary;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _ShareCardDialog(
+        pokemon: pokemon,
+        themeColor: typeColor,
+      ),
+    );
+  }
+
   void _updateOfflineMode(bool offline) {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
@@ -210,6 +230,61 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // HeroTag estable incluso si entra por id o name
+    final resolvedHeroTag =
+        heroTag ?? 'pokemon-artwork-${pokemonId ?? pokemonName ?? 'unknown'}';
+
+    // Nombre e imagen para el “skeleton/preview” antes del GraphQL completo
+    final previewName = initialPokemon != null
+        ? _capitalize(initialPokemon!.name)
+        : (pokemonName != null ? _capitalize(pokemonName!) : null);
+    final previewImage = initialPokemon?.imageUrl ?? '';
+
+    // Filtro dinámico para GraphQL (por id o por name)
+    final where = pokemonId != null
+        ? <String, dynamic>{'id': {'_eq': pokemonId}}
+        : <String, dynamic>{'name': {'_eq': pokemonName!}};
+
+    return Query(
+      options: QueryOptions(
+        document: gql(getPokemonDetailsQuery),
+        fetchPolicy: FetchPolicy.cacheAndNetwork, // cache first -> network
+        errorPolicy: ErrorPolicy.all, // permite datos parciales
+        variables: {
+          'where': where,
+          'languageIds': preferredLanguageIds, // EN/ES típicamente [7,9]
+        },
+      ),
+      builder: (result, {fetchMore, refetch}) {
+          // Logs de depuración (solo en debug)
+          if (kDebugMode) {
+            debugPrint(
+                '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}');
+            debugPrint(
+                '[Pokemon Detail] Available data keys: ${result.data?.keys.toList()}');
+            if (result.hasException) {
+              debugPrint('[Pokemon Detail] Exception details: ${result.exception}');
+            }
+          }
+
+          // Tomamos el primer Pokémon que cumpla el where
+          final pokemonList = result.data?['pokemon_v2_pokemon'] as List<dynamic>?;
+          final data = (pokemonList?.isNotEmpty ?? false)
+              ? pokemonList?.first as Map<String, dynamic>?
+              : null;
+
+          // 1) Carga inicial sin cache → vista de loading personalizada
+          if (result.isLoading && data == null) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(previewName ?? 'Detalles del Pokémon'),
+              ),
+              body: LoadingDetailView(
+                heroTag: resolvedHeroTag,
+                imageUrl: previewImage,
+                name: previewName,
+              ),
+            );
     final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);
 
@@ -269,6 +344,46 @@ class _DetailScreenState extends State<DetailScreen> {
           }
         }
 
+          // 2) Error sin datos → estado de error con retry
+          if (result.hasException && data == null) {
+            debugPrint(
+              'Error al cargar el detalle del Pokémon: ${result.exception}',
+            );
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(previewName ?? 'Detalles del Pokémon'),
+              ),
+              body: PokemonDetailErrorView(
+                onRetry: refetch,
+              ),
+            );
+          }
+
+          // 3) Sin datos (no encontró) → mensaje + botón para reintentar
+          if (data == null) {
+            if (kDebugMode) {
+              debugPrint('[Pokemon Detail] No pokemon data found. Full result: ${result.data}');
+            }
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(previewName ?? 'Detalles del Pokémon'),
+              ),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('No se encontró información para este Pokémon.'),
+                    const SizedBox(height: 16),
+                    if (refetch != null)
+                      ElevatedButton(
+                        onPressed: () async {
+                          await refetch();
+                        },
+                        child: const Text('Reintentar'),
+                      ),
+                  ],
+                ),
+              ),
         final bool offlineError =
             !_hasConnection || result.exception?.linkException != null;
         if (offlineError || (!result.isLoading && !result.hasException)) {
@@ -384,34 +499,68 @@ class _DetailScreenState extends State<DetailScreen> {
             );
           }
 
-          final PokemonDetail detail = pokemonDetail!;
-          body = RefreshIndicator(
-            onRefresh: () async {
-              await refetch?.call();
-            },
-            child: SafeArea(
-              child: Builder(
-                builder: (context) {
-                  return Stack(
-                    children: [
-                      PokemonDetailBody(
-                        pokemon: detail,
-                        resolvedHeroTag: resolvedHeroTag,
-                        capitalize: _capitalize,
-                      ),
-                      if (result.isLoading)
-                        const Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 0,
-                          child: LinearProgressIndicator(minHeight: 2),
+          // Eficacias de tipo para calcular matchups (deb/resist/inmunidad)
+          final typeEfficacies =
+              result.data?['type_efficacy'] as List<dynamic>? ?? [];
+
+          // Parse a modelo de dominio completo
+          final pokemon = PokemonDetail.fromGraphQL(
+            data,
+            typeEfficacies: typeEfficacies,
+          );
+
+          // Pull-to-refresh que llama refetch()
+          final favoritesController = FavoritesScope.maybeOf(context);
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(_capitalize(pokemon.name)),
+              actions: [
+                if (favoritesController != null)
+                  _FavoriteToggleAction(
+                    pokemonId: pokemon.id,
+                    favoritesController: favoritesController,
+                  ),
+              ],
+            ),
+            body: RefreshIndicator(
+              onRefresh: () async {
+                await refetch?.call();
+              },
+              child: SafeArea(
+                child: Builder(
+                  builder: (context) {
+                    return Stack(
+                      children: [
+                        // Cuerpo con NestedScrollView + Slivers + TabBar/TabBarView
+                        PokemonDetailBody(
+                          pokemon: pokemon,
+                          resolvedHeroTag: resolvedHeroTag,
+                          capitalize: _capitalize,
                         ),
-                    ],
-                  );
-                },
+                        // Barra de progreso fina cuando llegan actualizaciones
+                        if (result.isLoading)
+                          const Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => _showShareDialog(context, pokemon),
+              icon: const Icon(Icons.share),
+              label: const Text('Compartir'),
+              tooltip: 'Compartir Pokémon Card',
+            ),
           );
+        },
+      );
         }
 
         final ThemeData theme = Theme.of(context);
@@ -570,18 +719,39 @@ class PokemonDetailBody extends StatefulWidget {
 class _PokemonDetailBodyState extends State<PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late final ScrollController _primaryScrollController;
+
+  static const int _locationsTabIndex = 5;
 
   @override
   void initState() {
     super.initState();
-    // 5 pestañas: Info, Stats, Matchups, Evolución, Movimientos
-    _tabController = TabController(length: 5, vsync: this);
+    // 6 pestañas: Info, Stats, Matchups, Evolución, Movimientos, Ubicaciones
+    _tabController = TabController(length: 6, vsync: this);
+    _primaryScrollController = ScrollController();
   }
 
   @override
   void dispose() {
+    _primaryScrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleViewMapTap() async {
+    if (_tabController.index != _locationsTabIndex) {
+      _tabController.animateTo(_locationsTabIndex);
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
+    if (_primaryScrollController.hasClients) {
+      await _primaryScrollController.animateTo(
+        _primaryScrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   /// ============ Helpers de formato ============
@@ -719,12 +889,15 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 
     return DecoratedBox(
       decoration: BoxDecoration(color: backgroundTint),
-      child: ScrollConfiguration(
-        behavior: scrollBehavior,
-        child: NestedScrollView(
-          physics: const BouncingScrollPhysics(),
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            final overlapHandle =
+      child: PrimaryScrollController(
+        controller: _primaryScrollController,
+        child: ScrollConfiguration(
+          behavior: scrollBehavior,
+          child: NestedScrollView(
+            controller: _primaryScrollController,
+            physics: const BouncingScrollPhysics(),
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              final overlapHandle =
           NestedScrollView.sliverOverlapAbsorberHandleFor(context);
           return [
             // Absorbe el solapamiento entre header y body dentro del NestedScroll
@@ -759,6 +932,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
                 abilitySubtitle: abilitySubtitle,
                 sectionBackground: sectionBackground,
                 sectionBorder: sectionBorder,
+                onViewMap: _handleViewMapTap,
               ),
             ),
             _DetailTabScrollView(
@@ -805,10 +979,21 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
                 sectionBorder: sectionBorder,
               ),
             ),
+            _DetailTabScrollView(
+              storageKey: const PageStorageKey('locations-tab'),
+              topPadding: 24,
+              bottomPadding: bottomPadding,
+              child: PokemonLocationsTab(
+                pokemon: pokemon,
+                sectionBackground: sectionBackground,
+                sectionBorder: sectionBorder,
+              ),
+            ),
           ],
         ),
       ),
     ),
+      ),
     );
   }
 }
@@ -1159,6 +1344,39 @@ class _DetailTabScrollView extends StatelessWidget {
   }
 }
 
+class _FavoriteToggleAction extends StatelessWidget {
+  const _FavoriteToggleAction({
+    required this.pokemonId,
+    required this.favoritesController,
+  });
+
+  final int pokemonId;
+  final FavoritesController favoritesController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedBuilder(
+      animation: favoritesController,
+      builder: (context, _) {
+        final isFavorite = favoritesController.isFavorite(pokemonId);
+        return IconButton(
+          tooltip: isFavorite
+              ? 'Quitar de favoritos'
+              : 'Marcar como favorito',
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? theme.colorScheme.error : null,
+          ),
+          onPressed: () {
+            favoritesController.toggleFavorite(pokemonId);
+          },
+        );
+      },
+    );
+  }
+}
+
 /// ===============================
 /// EXTENSION DE NAVEGACIÓN
 /// ===============================
@@ -1203,5 +1421,181 @@ extension DetailScreenNavigationX on BuildContext {
       );
     }
     return Navigator.of(this).pushNamed<T>(location);
+  }
+}
+
+/// ===============================
+/// SHARE CARD DIALOG
+/// ===============================
+/// Diálogo que muestra la tarjeta del Pokémon y permite compartirla.
+class _ShareCardDialog extends StatefulWidget {
+  const _ShareCardDialog({
+    required this.pokemon,
+    required this.themeColor,
+  });
+
+  final PokemonDetail pokemon;
+  final Color themeColor;
+
+  @override
+  State<_ShareCardDialog> createState() => _ShareCardDialogState();
+}
+
+class _ShareCardDialogState extends State<_ShareCardDialog> {
+  final GlobalKey _cardKey = GlobalKey();
+  final CardCaptureService _captureService = CardCaptureService();
+  bool _isSharing = false;
+
+  Future<void> _shareCard() async {
+    if (_isSharing) return;
+
+    setState(() {
+      _isSharing = true;
+    });
+
+    try {
+      // Dar tiempo para que el RepaintBoundary se inicialice si es necesario
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      final success = await _captureService.captureAndShare(
+        _cardKey,
+        filename: 'pokemon_${widget.pokemon.id}_card.png',
+        text: 'Check out ${widget.pokemon.name.toUpperCase()} #${widget.pokemon.id}!',
+      );
+
+      if (mounted) {
+        if (success) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Tarjeta compartida exitosamente!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo compartir la tarjeta. Intenta de nuevo.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[ShareCardDialog] Error al compartir: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSharing = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Compartir Pokémon Card',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+
+            // Preview de la tarjeta (escala pequeña)
+            Container(
+              height: 300,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: RepaintBoundary(
+                  key: _cardKey,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: PokemonShareCard(
+                      pokemon: widget.pokemon,
+                      themeColor: widget.themeColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Botones
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _isSharing
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isSharing ? null : _shareCard,
+                      icon: _isSharing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.share),
+                      label: Text(_isSharing ? 'Compartiendo...' : 'Compartir'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

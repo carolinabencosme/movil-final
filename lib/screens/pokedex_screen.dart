@@ -1761,6 +1761,31 @@ class _PokemonListTileState extends State<_PokemonListTile> {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesController = FavoritesScope.maybeOf(context);
+    if (favoritesController == null) {
+      return _buildTile(context, isFavorite: false);
+    }
+
+    return AnimatedBuilder(
+      animation: favoritesController,
+      builder: (context, _) {
+        final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
+        return _buildTile(
+          context,
+          isFavorite: isFavorite,
+          onToggleFavorite: () {
+            favoritesController.toggleFavorite(widget.pokemon.id);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTile(
+    BuildContext context, {
+    required bool isFavorite,
+    VoidCallback? onToggleFavorite,
+  }) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final favoritesController = FavoritesScope.of(context);

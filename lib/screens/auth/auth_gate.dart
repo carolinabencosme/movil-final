@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../core/services/onboarding_service.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../home_screen.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -19,9 +21,47 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _isLoading = true;
+  bool _onboardingCompleted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final completed = await OnboardingService.isOnboardingCompleted();
+    if (mounted) {
+      setState(() {
+        _onboardingCompleted = completed;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _completeOnboarding() {
+    setState(() {
+      _onboardingCompleted = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (!_onboardingCompleted) {
+      return OnboardingScreen(
+        onComplete: _completeOnboarding,
+      );
+    }
+
     return AnimatedBuilder(
       animation: widget.controller,
       builder: (context, _) {

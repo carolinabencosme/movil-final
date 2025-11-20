@@ -402,6 +402,18 @@ class PokemonDetail {
       }
     }
 
+    final eggGroupEntries =
+        species?['pokemon_v2_pokemonegggroups'] as List<dynamic>? ?? [];
+    final eggGroups = <String>[];
+    for (final dynamic entry in eggGroupEntries) {
+      final map = entry as Map<String, dynamic>?;
+      final eggGroup = map?['pokemon_v2_egggroup'] as Map<String, dynamic>?;
+      final name = eggGroup?['name'];
+      if (name is String && name.isNotEmpty) {
+        eggGroups.add(name);
+      }
+    }
+
 // Características “no de batalla”.
     final baseExperience = json['base_experience'] as int? ?? 0;
     final captureRate = species?['capture_rate'] as int? ?? 0;
@@ -422,6 +434,7 @@ class PokemonDetail {
       baseExperience: baseExperience,
       captureRate: captureRate,
       category: category,
+      eggGroups: eggGroups,
     );
 
     // Efectividades de tipos (agregadas multiplicativamente).
@@ -806,6 +819,7 @@ class PokemonCharacteristics {
     required this.baseExperience,
     required this.captureRate,
     required this.category,
+    this.eggGroups = const <String>[],
   });
 
   /// Altura en decímetros (dividir por 10 para metros)
@@ -822,6 +836,9 @@ class PokemonCharacteristics {
   
   /// Categoría del Pokémon (ej: "Seed Pokémon", "Flame Pokémon")
   final String category;
+
+  /// Grupos huevo disponibles (p. ej., ["Monster", "Dragon"])
+  final List<String> eggGroups;
 }
 
 /// Relación de daño para un tipo atacante contra el Pokémon actual.

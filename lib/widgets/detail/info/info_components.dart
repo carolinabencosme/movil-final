@@ -112,11 +112,13 @@ class CharacteristicsSection extends StatelessWidget {
     required this.characteristics,
     required this.formatHeight,
     required this.formatWeight,
+    required this.formatLabel,
   });
 
   final PokemonCharacteristics characteristics;
   final String Function(int) formatHeight;
   final String Function(int) formatWeight;
+  final String Function(String) formatLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +153,17 @@ class CharacteristicsSection extends StatelessWidget {
         label: l10n.detailCharacteristicBaseExperience,
         value: characteristics.baseExperience > 0
             ? characteristics.baseExperience.toString()
+            : '—',
+      ),
+      CharacteristicData(
+        icon: Icons.egg_outlined,
+        label: characteristics.eggGroups.length == 1
+            ? 'Grupo huevo'
+            : 'Grupos huevo',
+        value: characteristics.eggGroups.isNotEmpty
+            ? characteristics.eggGroups
+                .map((group) => formatLabel(group))
+                .join(' / ')
             : '—',
       ),
     ];

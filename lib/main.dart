@@ -5,6 +5,8 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/favorites_controller.dart';
+import 'screens/detail_screen.dart';
+import 'widgets/detail/detail_constants.dart';
 import 'controllers/locale_controller.dart';
 import 'graphql_config.dart';
 import 'screens/auth/auth_gate.dart';
