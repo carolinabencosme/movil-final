@@ -518,6 +518,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pokedexFiltersCloseTooltip => 'Close';
 
   @override
+  String get pokedexFiltersCancel => 'Cancel';
+
+  @override
+  String get pokedexFiltersApply => 'Apply';
+
+  @override
   String get pokedexFilterSectionTypes => 'Types';
 
   @override
@@ -657,6 +663,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pokedexSortDirectionLabel => 'Direction';
+
+  @override
+  String get pokedexSortAscendingLabel => 'Ascending';
+
+  @override
+  String get pokedexSortDescendingLabel => 'Descending';
 
   @override
   String get pokedexSortAscendingShort => 'Asc';
