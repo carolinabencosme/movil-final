@@ -834,6 +834,77 @@ abstract class AppLocalizations {
   String get detailHiddenAbilityLabel;
   String get detailMainAbilityLabel;
   String get detailLoadErrorDescription;
+  /// Label for the Pokémon height characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get detailCharacteristicHeight;
+
+  /// Label for the Pokémon weight characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get detailCharacteristicWeight;
+
+  /// Label for the Pokémon category characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get detailCharacteristicCategory;
+
+  /// Fallback text when no category information is available.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get detailCharacteristicNoCategory;
+
+  /// Label for the Pokémon catch rate characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Catch rate'**
+  String get detailCharacteristicCatchRate;
+
+  /// Label for the Pokémon base experience characteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Base experience'**
+  String get detailCharacteristicBaseExperience;
+
+  /// Message shown when weakness data is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'No weakness information available.'**
+  String get detailNoWeaknessInfo;
+
+  /// Description for the 4x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Double weakness: damage taken is multiplied by four.'**
+  String get detailWeaknessLegendQuadruple;
+
+  /// Description for the 2x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic weakness: super effective attacks.'**
+  String get detailWeaknessLegendDouble;
+
+  /// Description for the 1.5x weakness legend entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate advantage: slightly increased damage.'**
+  String get detailWeaknessLegendModerate;
+
+  /// Button text to expand and show weaknesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Show weaknesses'**
+  String get detailWeaknessToggleShow;
+
+  /// Button text to collapse weaknesses.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide weaknesses'**
+  String get detailWeaknessToggleHide;
   String get pokedexSortSheetTitle;
 
   /// No description provided for @pokedexSortCriteriaLabel.
@@ -1190,6 +1261,32 @@ class AppLocalizationsEN extends AppLocalizations {
   @override
   String get detailLoadErrorDescription => 'We couldn\'t load the Pokémon details.\nCheck your connection or try again.';
   @override
+  String get detailCharacteristicHeight => 'Height';
+  @override
+  String get detailCharacteristicWeight => 'Weight';
+  @override
+  String get detailCharacteristicCategory => 'Category';
+  @override
+  String get detailCharacteristicNoCategory => 'No category';
+  @override
+  String get detailCharacteristicCatchRate => 'Catch rate';
+  @override
+  String get detailCharacteristicBaseExperience => 'Base experience';
+  @override
+  String get detailNoWeaknessInfo => 'No weakness information available.';
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Double weakness: damage taken is multiplied by four.';
+  @override
+  String get detailWeaknessLegendDouble => 'Classic weakness: super effective attacks.';
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Moderate advantage: slightly increased damage.';
+  @override
+  String get detailWeaknessToggleShow => 'Show weaknesses';
+  @override
+  String get detailWeaknessToggleHide => 'Hide weaknesses';
+  @override
   String get pokedexSortSheetTitle => 'Sort by';
   @override
   String get pokedexSortCriteriaLabel => 'Criterion';
@@ -1523,6 +1620,32 @@ class AppLocalizationsES extends AppLocalizations {
   String get detailMainAbilityLabel => 'Habilidad principal';
   @override
   String get detailLoadErrorDescription => 'No se pudo obtener los datos del Pokémon.\nVerifica tu conexión o intenta de nuevo.';
+  @override
+  String get detailCharacteristicHeight => 'Altura';
+  @override
+  String get detailCharacteristicWeight => 'Peso';
+  @override
+  String get detailCharacteristicCategory => 'Categoría';
+  @override
+  String get detailCharacteristicNoCategory => 'Sin categoría';
+  @override
+  String get detailCharacteristicCatchRate => 'Ratio de captura';
+  @override
+  String get detailCharacteristicBaseExperience => 'Experiencia base';
+  @override
+  String get detailNoWeaknessInfo => 'No hay información de debilidades disponible.';
+  @override
+  String get detailWeaknessLegendQuadruple =>
+      'Doble debilidad: el daño recibido se multiplica por cuatro.';
+  @override
+  String get detailWeaknessLegendDouble => 'Debilidad clásica: ataques súper efectivos.';
+  @override
+  String get detailWeaknessLegendModerate =>
+      'Ventaja moderada: daño ligeramente incrementado.';
+  @override
+  String get detailWeaknessToggleShow => 'Ver debilidades';
+  @override
+  String get detailWeaknessToggleHide => 'Ocultar debilidades';
   @override
   String get pokedexSortSheetTitle => 'Ordenar por';
   @override

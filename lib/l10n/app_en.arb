@@ -209,6 +209,54 @@
       }
     }
   },
+  "detailCharacteristicHeight": "Height",
+  "@detailCharacteristicHeight": {
+    "description": "Label for the Pokémon height characteristic."
+  },
+  "detailCharacteristicWeight": "Weight",
+  "@detailCharacteristicWeight": {
+    "description": "Label for the Pokémon weight characteristic."
+  },
+  "detailCharacteristicCategory": "Category",
+  "@detailCharacteristicCategory": {
+    "description": "Label for the Pokémon category characteristic."
+  },
+  "detailCharacteristicNoCategory": "No category",
+  "@detailCharacteristicNoCategory": {
+    "description": "Fallback text when no category information is available."
+  },
+  "detailCharacteristicCatchRate": "Catch rate",
+  "@detailCharacteristicCatchRate": {
+    "description": "Label for the Pokémon catch rate characteristic."
+  },
+  "detailCharacteristicBaseExperience": "Base experience",
+  "@detailCharacteristicBaseExperience": {
+    "description": "Label for the Pokémon base experience characteristic."
+  },
+  "detailNoWeaknessInfo": "No weakness information available.",
+  "@detailNoWeaknessInfo": {
+    "description": "Message shown when weakness data is missing."
+  },
+  "detailWeaknessLegendQuadruple": "Double weakness: damage taken is multiplied by four.",
+  "@detailWeaknessLegendQuadruple": {
+    "description": "Description for the 4x weakness legend entry."
+  },
+  "detailWeaknessLegendDouble": "Classic weakness: super effective attacks.",
+  "@detailWeaknessLegendDouble": {
+    "description": "Description for the 2x weakness legend entry."
+  },
+  "detailWeaknessLegendModerate": "Moderate advantage: slightly increased damage.",
+  "@detailWeaknessLegendModerate": {
+    "description": "Description for the 1.5x weakness legend entry."
+  },
+  "detailWeaknessToggleShow": "Show weaknesses",
+  "@detailWeaknessToggleShow": {
+    "description": "Button text to expand and show weaknesses."
+  },
+  "detailWeaknessToggleHide": "Hide weaknesses",
+  "@detailWeaknessToggleHide": {
+    "description": "Button text to collapse weaknesses."
+  },
   "homeNotificationsSemanticLabel": "Notifications",
   "@homeNotificationsSemanticLabel": {
     "description": "Semantic label for the notifications button"
