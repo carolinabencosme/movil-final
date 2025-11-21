@@ -91,9 +91,8 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
     final controller = ref.read(triviaControllerProvider);
     controller.addListener(_onControllerChanged);
     _sessionRequested = false;
-      _requestSessionLoad();
-      _syncCurrentPokemon();
-    }
+    _requestSessionLoad();
+    _syncCurrentPokemon();
   }
 
   @override

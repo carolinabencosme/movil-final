@@ -65,13 +65,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
-                  child: AnimatedBuilder(
-                    animation: widget.controller,
-                    builder: (context, _) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                           Icon(
                             Icons.catching_pokemon,
                             size: 48,
@@ -151,9 +148,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 FilledButton(
-                                  onPressed: ref.watch(authLoadingProvider)
-                                      ? null
-                                      : _submit,
+                                  onPressed:
+                                      ref.watch(authLoadingProvider) ? null : _submit,
                                   child: Text(l10n.authCreateAccountButton),
                                 ),
                               ],
@@ -167,13 +163,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             child: Text(l10n.authAlreadyHaveAccountCta),
                           ),
                         ],
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ),
       ),
     );

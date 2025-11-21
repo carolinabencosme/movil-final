@@ -62,82 +62,78 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
-                  child: AnimatedBuilder(
-                    animation: widget.controller,
-                    builder: (context, _) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Icon(
-                            Icons.catching_pokemon,
-                            size: 48,
-                            color: colorScheme.primary,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.authLoginTitle,
-                            style: theme.textTheme.headlineSmall,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.authLoginSubtitle,
-                            style: theme.textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 28),
-                          if (ref.watch(authLoadingProvider))
-                            const LinearProgressIndicator(),
-                          if (ref.watch(authLoadingProvider))
-                            const SizedBox(height: 20),
-                          Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                TextFormField(
-                                  controller: _emailController,
-                                  keyboardType: TextInputType.emailAddress,
-                                  textInputAction: TextInputAction.next,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.authEmailLabel,
-                                    hintText: l10n.authEmailHint,
-                                    prefixIcon: const Icon(Icons.mail_outline),
-                                  ),
-                                  validator: _validateEmail,
-                                ),
-                                const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: _passwordController,
-                                  textInputAction: TextInputAction.done,
-                                  obscureText: _obscurePassword,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.authPasswordLabel,
-                                    prefixIcon: const Icon(Icons.lock_outline),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _obscurePassword
-                                            ? Icons.visibility_off_outlined
-                                            : Icons.visibility_outlined,
-                                      ),
-                                      onPressed: _togglePassword,
-                                    ),
-                                  ),
-                                  validator: _validatePassword,
-                                  onFieldSubmitted: (_) => _submit(),
-                                ),
-                                const SizedBox(height: 24),
-                                FilledButton(
-                                  onPressed: ref.watch(authLoadingProvider)
-                                      ? null
-                                      : _submit,
-                                  child: Text(l10n.authLoginButton),
-                                ),
-                              ],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Icon(
+                        Icons.catching_pokemon,
+                        size: 48,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.authLoginTitle,
+                        style: theme.textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.authLoginSubtitle,
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 28),
+                      if (ref.watch(authLoadingProvider))
+                        const LinearProgressIndicator(),
+                      if (ref.watch(authLoadingProvider))
+                        const SizedBox(height: 20),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: l10n.authEmailLabel,
+                                hintText: l10n.authEmailHint,
+                                prefixIcon: const Icon(Icons.mail_outline),
+                              ),
+                              validator: _validateEmail,
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              textInputAction: TextInputAction.done,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: l10n.authPasswordLabel,
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                  ),
+                                  onPressed: _togglePassword,
+                                ),
+                              ),
+                              validator: _validatePassword,
+                              onFieldSubmitted: (_) => _submit(),
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed:
+                                  ref.watch(authLoadingProvider) ? null : _submit,
+                              child: Text(l10n.authLoginButton),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                           TextButton(
                             onPressed: ref.watch(authLoadingProvider)
                                 ? null
