@@ -1647,22 +1647,20 @@ extension DetailScreenNavigationX on BuildContext {
       final speciesId = pendingEvolutionNavigation.remove(slug);
       final favoritesController = ref.read(favoritesControllerProvider);
       PokemonListItem? cachedPokemon;
-      if (favoritesController != null) {
-        if (speciesId != null) {
-          cachedPokemon = favoritesController.getCachedPokemon(speciesId);
-        }
-        if (cachedPokemon == null) {
-          for (final PokemonListItem pokemon in favoritesController.favorites) {
-            if (pokemon.name == slug) {
-              cachedPokemon = pokemon;
-              break;
-            }
+      if (speciesId != null) {
+        cachedPokemon = favoritesController.getCachedPokemon(speciesId);
+      }
+      if (cachedPokemon == null) {
+        for (final PokemonListItem pokemon in favoritesController.favorites) {
+          if (pokemon.name == slug) {
+            cachedPokemon = pokemon;
+            break;
           }
         }
-        if (cachedPokemon != null) {
-          cachedPokemon =
-              favoritesController.applyFavoriteState(cachedPokemon);
-        }
+      }
+      if (cachedPokemon != null) {
+        cachedPokemon =
+            favoritesController.applyFavoriteState(cachedPokemon);
       }
       return Navigator.of(this).push<T>(
         MaterialPageRoute<T>(

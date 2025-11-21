@@ -274,7 +274,7 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final PokemonListItem? pokemon = _currentPokemon;
-    final bool isLoading = ref.watch(triviaLoadingProvider) ?? false;
+    final bool isLoading = ref.watch(triviaLoadingProvider);
     final bool filterActive = !_showSolution;
 
     final appBar = AppBar(
