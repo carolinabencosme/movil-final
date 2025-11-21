@@ -1846,7 +1846,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
     );
     final textColor = Colors.white;
     final displayTypes =
-        pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
+        pokemon.types.isNotEmpty ? pokemon.types : const <String>['unknown'];
     final statBadges = pokemon.stats.take(3).toList();
 
     final semanticLabel = l10n.pokedexCardSemanticLabel(pokemon.name);
