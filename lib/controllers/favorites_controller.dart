@@ -66,8 +66,10 @@ class FavoritesScope extends InheritedNotifier<FavoritesController> {
   /// Lanza un error si no se encuentra un FavoritesScope en el árbol
   static FavoritesController of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<FavoritesScope>();
-    assert(scope != null,
-        'FavoritesScope.of() called with a context that does not contain a FavoritesScope.');
+    assert(
+      scope != null,
+      'FavoritesScope.of() called with a context that does not contain a FavoritesScope.',
+    );
     if (scope == null) {
       throw StateError(
         'FavoritesScope.of() called with a context that does not contain a FavoritesScope.',
