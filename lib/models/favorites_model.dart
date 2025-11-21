@@ -45,7 +45,7 @@ class FavoritePokemonAdapter extends TypeAdapter<FavoritePokemon> {
       id: fields[0] as int,
       name: fields[1] as String,
       imageUrl: fields[2] as String,
-      types: (fields[3] as List).cast<String>(),
+      types: List<String>.from(fields[3] as List),
     );
   }
 

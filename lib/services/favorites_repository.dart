@@ -7,7 +7,7 @@ import '../models/favorites_model.dart';
 class FavoritesRepository extends ChangeNotifier {
   FavoritesRepository._(this._favoritesBox);
 
-  static const _favoritesBoxName = 'favorites_box';
+  static const String favoritesBoxName = 'favorites_box';
 
   final Box<FavoritePokemon> _favoritesBox;
 
@@ -18,7 +18,7 @@ class FavoritesRepository extends ChangeNotifier {
       Hive.registerAdapter(adapter);
     }
 
-    final favoritesBox = await Hive.openBox<FavoritePokemon>(_favoritesBoxName);
+    final favoritesBox = await Hive.openBox<FavoritePokemon>(favoritesBoxName);
     return FavoritesRepository._(favoritesBox);
   }
 

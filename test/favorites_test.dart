@@ -13,7 +13,7 @@ void main() {
 
   tearDown(() async {
     // Clean up Hive boxes after each test
-    await Hive.deleteBoxFromDisk('favorites_box');
+    await Hive.deleteBoxFromDisk(FavoritesRepository.favoritesBoxName);
   });
 
   group('FavoritePokemon Model', () {
