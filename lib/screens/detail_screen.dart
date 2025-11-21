@@ -663,7 +663,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     _primaryScrollController = ScrollController();
   }
   
-  /// Alterna entre sprite normal y shiny
+  /// Toggles between normal and shiny sprite
   void _toggleShiny() {
     final currentPokemon = _getCurrentPokemonData();
     if (currentPokemon.hasShinySprite) {
@@ -673,7 +673,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     }
   }
   
-  /// Cambia la forma seleccionada
+  /// Changes the selected form
   void _selectForm(int index) {
     if (widget.pokemon.forms != null && 
         index >= 0 && 
@@ -688,7 +688,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     }
   }
   
-  /// Obtiene los datos del Pokémon actual (forma base o forma seleccionada)
+  /// Gets the current Pokemon data (base form or selected form)
   _PokemonData _getCurrentPokemonData() {
     if (widget.pokemon.forms != null && 
         widget.pokemon.forms!.isNotEmpty &&
@@ -706,7 +706,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       );
     }
     
-    // Datos de la forma base (del PokemonDetail)
+    // Base form data (from PokemonDetail)
     return _PokemonData(
       imageUrl: widget.pokemon.imageUrl,
       shinyImageUrl: widget.pokemon.shinyImageUrl,
@@ -719,11 +719,11 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     );
   }
   
-  /// Crea un PokemonDetail modificado con los datos de la forma actual
+  /// Creates a modified PokemonDetail with current form data
   PokemonDetail _getCurrentPokemon() {
     final currentData = _getCurrentPokemonData();
     
-    // Si no hay formas o estamos en la forma base, devolver el pokemon original
+    // If no forms or we are in base form, return the original pokemon
     if (widget.pokemon.forms == null || 
         widget.pokemon.forms!.isEmpty ||
         _selectedFormIndex >= widget.pokemon.forms!.length ||
@@ -731,7 +731,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       return widget.pokemon;
     }
     
-    // Crear una copia del pokemon con los datos de la forma seleccionada
+    // Create a copy of the pokemon with selected form data
     return PokemonDetail(
       id: widget.pokemon.id,
       name: widget.pokemon.name,
@@ -1239,7 +1239,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
-                // Selector de formas (solo si hay formas alternativas)
+                // Forms selector (only if there are alternative forms)
                 if (forms != null && forms!.length > 1)
                   Positioned(
                     top: 16,
@@ -1260,7 +1260,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                       ),
                     ),
                   ),
-                // Botón de toggle shiny (solo si hay sprite shiny disponible)
+                // Shiny toggle button (only if shiny sprite is available)
                 if (currentData.hasShinySprite)
                   Positioned(
                     top: 16,
@@ -1324,7 +1324,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _HeroHeaderDelegate oldDelegate) {
-    // Rebuild si cambian inputs críticos (evita repaints innecesarios)
+    // Rebuild if critical inputs change (avoids unnecessary repaints)
     return oldDelegate.pokemon != pokemon ||
         oldDelegate.currentData != currentData ||
         oldDelegate.theme != theme ||

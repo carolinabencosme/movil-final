@@ -291,7 +291,7 @@ class PokemonDetail {
   /// List of available forms/variants for this Pokemon
   final List<PokemonForm>? forms;
 
-  /// Obtiene la URL del sprite según el estado shiny
+  /// Gets the sprite URL based on shiny state
   String getSpriteUrl({bool isShiny = false}) {
     if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
       return shinyImageUrl!;
@@ -299,11 +299,11 @@ class PokemonDetail {
     return imageUrl;
   }
 
-  /// Verifica si hay sprite shiny disponible
+  /// Checks if shiny sprite is available
   bool get hasShinySprite => 
       shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
   
-  /// Verifica si hay formas alternativas disponibles
+  /// Checks if alternative forms are available
   bool get hasForms => forms != null && forms!.length > 1;
 
   /// Construye el detalle a partir del JSON principal del Pokémon.
@@ -468,12 +468,12 @@ class PokemonDetail {
     final typeMatchups =
         _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
 
-    // Extrae sprites normales y shiny
+    // Extract normal and shiny sprites
     final spriteData = json['pokemon_v2_pokemonsprites'];
     final normalUrl = _extractSpriteUrl(spriteData);
     final shinyUrl = extractSpriteUrlWithShiny(spriteData, isShiny: true);
 
-    // Parse formas/variantes del Pokémon desde la especie
+    // Parse Pokemon forms/variants from species
     final forms = _parsePokemonForms(species);
 
     return PokemonDetail(
@@ -859,11 +859,11 @@ class PokemonForm {
   /// URL del sprite shiny (si está disponible)
   final String? shinyImageUrl;
   
-  /// Verifica si hay sprite shiny disponible
+  /// Checks if shiny sprite is available
   bool get hasShinySprite => 
       shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
   
-  /// Obtiene la URL del sprite según el estado shiny
+  /// Gets the sprite URL based on shiny state
   String getSpriteUrl({bool isShiny = false}) {
     if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
       return shinyImageUrl!;
@@ -1017,7 +1017,7 @@ List<PokemonForm> _parsePokemonForms(Map<String, dynamic>? species) {
       }
     }
     
-    // Si no hay nombre localizado, usar el nombre del Pokémon formateado
+    // If no localized name, use formatted Pokemon name
     if (displayName == pokemonName && formName.isNotEmpty) {
       displayName = _formatGraphqlLabel(formName);
     }
@@ -1139,7 +1139,7 @@ List<PokemonForm> _parsePokemonForms(Map<String, dynamic>? species) {
     );
   }
 
-  // Ordenar: la forma default primero, luego las demás
+  // Sort: default form first, then others
   forms.sort((a, b) {
     if (a.isDefault && !b.isDefault) return -1;
     if (!a.isDefault && b.isDefault) return 1;
