@@ -13,6 +13,7 @@ import '../features/locations/screens/locations_tab.dart';
 import '../features/share/services/card_capture_service.dart';
 import '../features/share/widgets/pokemon_share_card.dart';
 import '../providers/favorites_provider.dart';
+import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
@@ -552,13 +553,13 @@ class _OfflineDetailView extends StatelessWidget {
   }
 }
 
-class _DetailFavoriteButton extends StatelessWidget {
+class _DetailFavoriteButton extends ConsumerWidget {
   const _DetailFavoriteButton({required this.pokemon});
 
   final PokemonListItem pokemon;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final favoritesController = ref.watch(favoritesControllerProvider);
     final PokemonListItem resolvedPokemon =
@@ -1645,7 +1646,9 @@ extension DetailScreenNavigationX on BuildContext {
     if (location.startsWith('/pokedex/')) {
       final slug = location.substring('/pokedex/'.length);
       final speciesId = pendingEvolutionNavigation.remove(slug);
-      final favoritesController = ref.read(favoritesControllerProvider);
+      final favoritesController =
+          ProviderScope.containerOf(this, listen: false)
+              .read(favoritesControllerProvider);
       PokemonListItem? cachedPokemon;
       if (speciesId != null) {
         cachedPokemon = favoritesController.getCachedPokemon(speciesId);

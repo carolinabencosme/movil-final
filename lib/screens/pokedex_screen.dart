@@ -8,6 +8,7 @@ import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:graphql/client.dart' show LinkException;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../controllers/favorites_controller.dart';
 import '../providers/favorites_provider.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
