@@ -134,15 +134,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                          TextButton(
-                            onPressed: ref.watch(authLoadingProvider)
-                                ? null
-                                : widget.onShowRegister,
-                            child: Text(l10n.authNoAccountCta),
-                          ),
-                        ],
-                      );
-                    },
+                      TextButton(
+                        onPressed: ref.watch(authLoadingProvider)
+                            ? null
+                            : widget.onShowRegister,
+                        child: Text(l10n.authNoAccountCta),
+                      ),
+                    ],
                   ),
                 ),
               ),
