@@ -1799,7 +1799,11 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   Widget build(BuildContext context) {
     final favoritesController = FavoritesScope.maybeOf(context);
     if (favoritesController == null) {
-      return _buildTile(context, isFavorite: false);
+      return _buildTile(
+        context,
+        isFavorite: false,
+        favoritesController: null,
+      );
     }
 
     return AnimatedBuilder(
@@ -1809,6 +1813,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
         return _buildTile(
           context,
           isFavorite: isFavorite,
+          favoritesController: favoritesController,
           onToggleFavorite: () {
             favoritesController.toggleFavorite(widget.pokemon);
           },
@@ -1820,12 +1825,12 @@ class _PokemonListTileState extends State<_PokemonListTile> {
   Widget _buildTile(
     BuildContext context, {
     required bool isFavorite,
+    required FavoritesController? favoritesController,
     VoidCallback? onToggleFavorite,
   }) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final favoritesController = FavoritesScope.of(context);
-    final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
+    final pokemon = favoritesController?.applyFavoriteState(widget.pokemon) ?? widget.pokemon;
     final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
@@ -1841,7 +1846,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
     );
     final textColor = Colors.white;
     final displayTypes =
-        pokemon.types.isNotEmpty ? pokemon.types : const <String>['desconocido'];
+        pokemon.types.isNotEmpty ? pokemon.types : const <String>['unknown'];
     final statBadges = pokemon.stats.take(3).toList();
 
     final semanticLabel = l10n.pokedexCardSemanticLabel(pokemon.name);
@@ -1906,18 +1911,16 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                       splashRadius: 22,
                       padding: EdgeInsets.zero,
                       icon: Icon(
-                        pokemon.isFavorite
+                        isFavorite
                             ? Icons.favorite
                             : Icons.favorite_border,
                         color:
-                            pokemon.isFavorite ? Colors.redAccent : Colors.white,
+                            isFavorite ? Colors.redAccent : Colors.white,
                       ),
-                      tooltip: pokemon.isFavorite
-                          ? 'Quitar de favoritos'
-                          : 'Agregar a favoritos',
-                      onPressed: () async {
-                        await favoritesController.toggleFavorite(pokemon);
-                      },
+                      tooltip: isFavorite
+                          ? l10n.detailFavoriteRemoveTooltip
+                          : l10n.detailFavoriteAddTooltip,
+                      onPressed: onToggleFavorite,
                     ),
                   ),
                 ),
