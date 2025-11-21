@@ -579,6 +579,42 @@ class _DetailFavoriteButton extends StatelessWidget {
 }
 
 /// ===============================
+/// POKEMON DATA HELPER
+/// ===============================
+/// Helper class to hold current Pokemon data (base or selected form)
+class _PokemonData {
+  const _PokemonData({
+    required this.imageUrl,
+    this.shinyImageUrl,
+    required this.types,
+    required this.stats,
+    required this.abilities,
+    required this.moves,
+    required this.height,
+    required this.weight,
+  });
+
+  final String imageUrl;
+  final String? shinyImageUrl;
+  final List<String> types;
+  final List<PokemonStat> stats;
+  final List<PokemonAbilityDetail> abilities;
+  final List<PokemonMove> moves;
+  final int height;
+  final int weight;
+
+  bool get hasShinySprite => 
+      shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
+
+  String getSpriteUrl({bool isShiny = false}) {
+    if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
+      return shinyImageUrl!;
+    }
+    return imageUrl;
+  }
+}
+
+/// ===============================
 /// DETAIL BODY (LAYOUT + TABS)
 /// ===============================
 /// Orquesta:
@@ -610,6 +646,12 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late final ScrollController _primaryScrollController;
+  
+  // State for shiny toggle
+  bool _isShiny = false;
+  
+  // State for selected form (index in forms list)
+  int _selectedFormIndex = 0;
 
   static const int _locationsTabIndex = 5;
 
@@ -619,6 +661,100 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     // 6 pestañas: Info, Stats, Matchups, Evolución, Movimientos, Ubicaciones
     _tabController = TabController(length: 6, vsync: this);
     _primaryScrollController = ScrollController();
+  }
+  
+  /// Toggles between normal and shiny sprite
+  void _toggleShiny() {
+    final currentPokemon = _getCurrentPokemonData();
+    if (currentPokemon.hasShinySprite) {
+      setState(() {
+        _isShiny = !_isShiny;
+      });
+    }
+  }
+  
+  /// Changes the selected form
+  void _selectForm(int index) {
+    if (widget.pokemon.forms != null && 
+        index >= 0 && 
+        index < widget.pokemon.forms!.length) {
+      setState(() {
+        _selectedFormIndex = index;
+        // Reset shiny cuando cambia la forma si la nueva forma no tiene shiny
+        if (_isShiny && !_getCurrentPokemonData().hasShinySprite) {
+          _isShiny = false;
+        }
+      });
+    }
+  }
+  
+  /// Gets the current Pokemon data (base form or selected form)
+  _PokemonData _getCurrentPokemonData() {
+    if (widget.pokemon.forms != null && 
+        widget.pokemon.forms!.isNotEmpty &&
+        _selectedFormIndex < widget.pokemon.forms!.length) {
+      final form = widget.pokemon.forms![_selectedFormIndex];
+      return _PokemonData(
+        imageUrl: form.imageUrl,
+        shinyImageUrl: form.shinyImageUrl,
+        types: form.types,
+        stats: form.stats,
+        abilities: form.abilities,
+        moves: form.moves,
+        height: form.height,
+        weight: form.weight,
+      );
+    }
+    
+    // Base form data (from PokemonDetail)
+    return _PokemonData(
+      imageUrl: widget.pokemon.imageUrl,
+      shinyImageUrl: widget.pokemon.shinyImageUrl,
+      types: widget.pokemon.types,
+      stats: widget.pokemon.stats,
+      abilities: widget.pokemon.abilities,
+      moves: widget.pokemon.moves,
+      height: widget.pokemon.characteristics.height,
+      weight: widget.pokemon.characteristics.weight,
+    );
+  }
+  
+  /// Creates a modified PokemonDetail with current form data
+  PokemonDetail _getCurrentPokemon() {
+    final currentData = _getCurrentPokemonData();
+    
+    // If no forms or we are in base form, return the original pokemon
+    if (widget.pokemon.forms == null || 
+        widget.pokemon.forms!.isEmpty ||
+        _selectedFormIndex >= widget.pokemon.forms!.length ||
+        _selectedFormIndex == 0) {
+      return widget.pokemon;
+    }
+    
+    // Create a copy of the pokemon with selected form data
+    return PokemonDetail(
+      id: widget.pokemon.id,
+      name: widget.pokemon.name,
+      imageUrl: currentData.imageUrl,
+      types: currentData.types,
+      abilities: currentData.abilities,
+      stats: currentData.stats,
+      characteristics: PokemonCharacteristics(
+        height: currentData.height,
+        weight: currentData.weight,
+        baseExperience: widget.pokemon.characteristics.baseExperience,
+        captureRate: widget.pokemon.characteristics.captureRate,
+        category: widget.pokemon.characteristics.category,
+        eggGroups: widget.pokemon.characteristics.eggGroups,
+      ),
+      typeMatchups: widget.pokemon.typeMatchups,
+      moves: currentData.moves,
+      evolutionChain: widget.pokemon.evolutionChain,
+      speciesId: widget.pokemon.speciesId,
+      shinyImageUrl: currentData.shinyImageUrl,
+      spriteData: widget.pokemon.spriteData,
+      forms: widget.pokemon.forms,
+    );
   }
 
   @override
@@ -690,6 +826,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     required PokemonDetail pokemon,
     required Color typeColor,
     required Color onTypeColor,
+    required _PokemonData currentData,
   }) {
     final mediaQuery = MediaQuery.of(context);
     final size = mediaQuery.size;
@@ -711,6 +848,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       pinned: false, // no queda fija; se desplaza con el scroll
       delegate: _HeroHeaderDelegate(
         pokemon: pokemon,
+        currentData: currentData,
         theme: theme,
         typeColor: typeColor,
         onTypeColor: onTypeColor,
@@ -718,6 +856,11 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         expandedHeight: headerHeight,
         collapsedHeight: collapsedHeight,
         capitalize: widget.capitalize,
+        isShiny: _isShiny,
+        onShinyToggle: _toggleShiny,
+        forms: pokemon.forms,
+        selectedFormIndex: _selectedFormIndex,
+        onFormSelected: _selectForm,
       ),
     );
   }
@@ -742,10 +885,14 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
+    
+    // Get current data (base form or selected form)
+    final currentData = _getCurrentPokemonData();
 
+    final currentPokemon = _getCurrentPokemon();
     // Habilidad “principal” para mostrar en el bloque de info
     final mainAbilityDetail =
-    pokemon.abilities.isNotEmpty ? pokemon.abilities.first : null;
+    currentData.abilities.isNotEmpty ? currentData.abilities.first : null;
     final mainAbility =
     mainAbilityDetail != null ? _formatLabel(mainAbilityDetail.name) : null;
     final abilitySubtitle = mainAbilityDetail == null
@@ -754,17 +901,17 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
             ? l10n.detailHiddenAbilityLabel
             : l10n.detailMainAbilityLabel);
 
-    // Paleta reactiva según el primer tipo del Pokémon
+    // Reactive palette based on Pokemon primary type
     final colorScheme = theme.colorScheme;
-    final typeColor = pokemon.types.isNotEmpty
-        ? _resolveTypeColor(pokemon.types.first, colorScheme)
+    final typeColor = currentData.types.isNotEmpty
+        ? _resolveTypeColor(currentData.types.first, colorScheme)
         : colorScheme.primary;
     final onTypeColor =
     ThemeData.estimateBrightnessForColor(typeColor) == Brightness.dark
         ? Colors.white
         : Colors.black87;
 
-    // Colores de fondo secciones (tintes del color de tipo)
+    // Section background colors (type color tints)
     final backgroundTint =
     Color.alphaBlend(typeColor.withOpacity(0.04), colorScheme.surface);
     final sectionBackground =
@@ -799,6 +946,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
                 pokemon: pokemon,
                 typeColor: typeColor,
                 onTypeColor: onTypeColor,
+                currentData: currentData,
               ),
             ),
             _buildTabBar(theme, typeColor),
@@ -898,6 +1046,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
 class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
   _HeroHeaderDelegate({
     required this.pokemon,
+    required this.currentData,
     required this.theme,
     required this.typeColor,
     required this.onTypeColor,
@@ -905,9 +1054,15 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.expandedHeight,
     required this.collapsedHeight,
     required this.capitalize,
+    required this.isShiny,
+    required this.onShinyToggle,
+    this.forms,
+    required this.selectedFormIndex,
+    required this.onFormSelected,
   });
 
   final PokemonDetail pokemon;
+  final _PokemonData currentData;
   final ThemeData theme;
   final Color typeColor;
   final Color onTypeColor;
@@ -915,6 +1070,11 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double expandedHeight;
   final double collapsedHeight;
   final String Function(String) capitalize;
+  final bool isShiny;
+  final VoidCallback onShinyToggle;
+  final List<PokemonForm>? forms;
+  final int selectedFormIndex;
+  final void Function(int) onFormSelected;
 
   @override
   double get maxExtent => expandedHeight;
@@ -1068,7 +1228,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                       scale: imageScale,
                       child: PokemonArtwork(
                         heroTag: heroTag,
-                        imageUrl: pokemon.imageUrl,
+                        imageUrl: currentData.getSpriteUrl(isShiny: isShiny),
                         size: imageSize,
                         borderRadius: 36,
                         padding: EdgeInsets.symmetric(
@@ -1079,6 +1239,81 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Forms selector (only if there are alternative forms)
+                if (forms != null && forms!.length > 1)
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Opacity(
+                      opacity: (1 - (0.4 * progress)).clamp(0.0, 1.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: _FormsDropdown(
+                          forms: forms!,
+                          selectedIndex: selectedFormIndex,
+                          onFormSelected: onFormSelected,
+                          backgroundColor: onTypeColor.withOpacity(0.15),
+                          borderColor: onTypeColor.withOpacity(0.3),
+                          textColor: onTypeColor,
+                          theme: theme,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Shiny toggle button (only if shiny sprite is available)
+                if (currentData.hasShinySprite)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Opacity(
+                      opacity: (1 - (0.4 * progress)).clamp(0.0, 1.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onShinyToggle,
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: onTypeColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: onTypeColor.withOpacity(0.3),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isShiny ? Icons.auto_awesome : Icons.auto_awesome_outlined,
+                                  color: isShiny 
+                                      ? const Color(0xFFFFD700) // Gold for shiny
+                                      : onTypeColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isShiny ? 'Shiny' : 'Normal',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: onTypeColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -1089,14 +1324,17 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _HeroHeaderDelegate oldDelegate) {
-    // Rebuild si cambian inputs críticos (evita repaints innecesarios)
+    // Rebuild if critical inputs change (avoids unnecessary repaints)
     return oldDelegate.pokemon != pokemon ||
+        oldDelegate.currentData != currentData ||
         oldDelegate.theme != theme ||
         oldDelegate.typeColor != typeColor ||
         oldDelegate.onTypeColor != onTypeColor ||
         oldDelegate.heroTag != heroTag ||
         oldDelegate.expandedHeight != expandedHeight ||
-        oldDelegate.collapsedHeight != collapsedHeight;
+        oldDelegate.collapsedHeight != collapsedHeight ||
+        oldDelegate.isShiny != isShiny ||
+        oldDelegate.selectedFormIndex != selectedFormIndex;
   }
 }
 
@@ -1230,6 +1468,131 @@ class _DetailTabScrollView extends StatelessWidget {
           sliver: SliverToBoxAdapter(child: child),
         ),
       ],
+    );
+  }
+}
+
+/// ===============================
+/// FORMS DROPDOWN SELECTOR
+/// ===============================
+/// Widget for selecting different Pokemon forms (Alolan, Galarian, Mega, etc.)
+class _FormsDropdown extends StatelessWidget {
+  const _FormsDropdown({
+    required this.forms,
+    required this.selectedIndex,
+    required this.onFormSelected,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.textColor,
+    required this.theme,
+  });
+
+  final List<PokemonForm> forms;
+  final int selectedIndex;
+  final void Function(int) onFormSelected;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color textColor;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    // Bounds check to prevent index out of range
+    final safeIndex = selectedIndex.clamp(0, forms.length - 1);
+    final selectedForm = forms[safeIndex];
+    
+    return PopupMenuButton<int>(
+      initialValue: selectedIndex,
+      onSelected: onFormSelected,
+      offset: const Offset(0, 48),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      itemBuilder: (context) => forms.asMap().entries.map((entry) {
+        final index = entry.key;
+        final form = entry.value;
+        final isSelected = index == selectedIndex;
+        
+        return PopupMenuItem<int>(
+          value: index,
+          child: Row(
+            children: [
+              if (isSelected)
+                Icon(
+                  Icons.check_circle,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                )
+              else
+                const SizedBox(width: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  form.displayName,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (form.isMega)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.electric_bolt,
+                    size: 16,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: borderColor,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_awesome_mosaic,
+              color: textColor,
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: Text(
+                selectedForm.displayName,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              color: textColor,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
