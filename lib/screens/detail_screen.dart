@@ -5,13 +5,14 @@ import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import '../features/locations/screens/locations_tab.dart';
 import '../features/share/services/card_capture_service.dart';
 import '../features/share/widgets/pokemon_share_card.dart';
-import '../controllers/favorites_controller.dart';
+import '../providers/favorites_provider.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
@@ -30,7 +31,7 @@ import '../services/pokemon_cache_service.dart';
 /// - Tabs con secciones (Info, Stats, Matchups, Evolución, Movimientos)
 /// - Carga de datos con GraphQL: manejo de loading, error y datos parciales
 /// - Pull-to-refresh (refetch)
-class DetailScreen extends StatefulWidget {
+class DetailScreen extends ConsumerStatefulWidget {
   /// Requiere `pokemonId` o `pokemonName`. Si llega `initialPokemon`, se usa como preview.
   DetailScreen({
     super.key,
@@ -56,10 +57,10 @@ class DetailScreen extends StatefulWidget {
   final String? heroTag;
 
   @override
-  State<DetailScreen> createState() => _DetailScreenState();
+  ConsumerState<DetailScreen> createState() => _DetailScreenState();
 }
 
-class _DetailScreenState extends State<DetailScreen> {
+class _DetailScreenState extends ConsumerState<DetailScreen> {
   bool _isOfflineMode = false;
   bool _offlineSnackShown = false;
   bool _hasConnection = true;
@@ -231,7 +232,7 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final favoritesController = FavoritesScope.of(context);
+    final favoritesController = ref.watch(favoritesControllerProvider);
 
     final resolvedHeroTag = widget.heroTag ??
         'pokemon-artwork-${widget.pokemonId ?? widget.pokemonName ?? 'unknown'}';
@@ -559,7 +560,7 @@ class _DetailFavoriteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final favoritesController = FavoritesScope.of(context);
+    final favoritesController = ref.watch(favoritesControllerProvider);
     final PokemonListItem resolvedPokemon =
         favoritesController.applyFavoriteState(pokemon);
 
@@ -1644,7 +1645,7 @@ extension DetailScreenNavigationX on BuildContext {
     if (location.startsWith('/pokedex/')) {
       final slug = location.substring('/pokedex/'.length);
       final speciesId = pendingEvolutionNavigation.remove(slug);
-      final favoritesController = FavoritesScope.maybeOf(this);
+      final favoritesController = ref.read(favoritesControllerProvider);
       PokemonListItem? cachedPokemon;
       if (favoritesController != null) {
         if (speciesId != null) {

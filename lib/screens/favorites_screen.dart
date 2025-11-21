@@ -1,6 +1,6 @@
 part of 'pokedex_screen.dart';
 
-class FavoritesScreen extends StatefulWidget {
+class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({
     super.key,
     this.heroTag,
@@ -12,60 +12,18 @@ class FavoritesScreen extends StatefulWidget {
   final Color? accentColor;
   final String? title;
 
-  @override
-  State<FavoritesScreen> createState() => _FavoritesScreenState();
-}
-
-class _FavoritesScreenState extends State<FavoritesScreen> {
-  FavoritesController? _favoritesController;
-  List<PokemonListItem> _favorites = <PokemonListItem>[];
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final FavoritesController controller = FavoritesScope.of(context);
-    if (!identical(controller, _favoritesController)) {
-      _favoritesController?.removeListener(_handleFavoritesChanged);
-      _favoritesController = controller;
-      _favorites = controller.favorites;
-      controller.addListener(_handleFavoritesChanged);
-    }
-  }
-
-  @override
-  void dispose() {
-    _favoritesController?.removeListener(_handleFavoritesChanged);
-    super.dispose();
-  }
-
-  void _handleFavoritesChanged() {
-    final FavoritesController? controller = _favoritesController;
-    if (!mounted || controller == null) return;
-    setState(() {
-      _favorites = controller.favorites;
-    });
-  }
-
   Future<void> _handleRefresh() async {
-    final FavoritesController? controller = _favoritesController;
-    if (controller == null) return;
     await Future<void>.delayed(const Duration(milliseconds: 280));
-    if (!mounted) return;
-    setState(() {
-      _favorites = controller.favorites;
-    });
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final Color accentColor = widget.accentColor ?? const Color(0xFFE94256);
-    final heroTag = widget.heroTag;
-    final title = widget.title ?? l10n.favoritesDefaultTitle;
-    final List<PokemonListItem> favorites = _favoritesController == null
-        ? const <PokemonListItem>[]
-        : _favoritesController!.applyFavoriteStateToList(_favorites);
+    final Color accentColor = this.accentColor ?? const Color(0xFFE94256);
+    final heroTag = this.heroTag;
+    final title = this.title ?? l10n.favoritesDefaultTitle;
+    final favorites = ref.watch(favoritePokemonsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F1E7),

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
-import '../controllers/auth_controller.dart';
-import '../controllers/locale_controller.dart';
-import '../theme/theme_controller.dart';
+import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/locale_provider.dart';
 import 'profile_settings_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   static const List<Locale> _languageOptions = [
@@ -14,13 +15,13 @@ class SettingsScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final controller = AuthScope.of(context);
-    final themeController = ThemeScope.of(context);
-    final themeMode = themeController.themeMode;
+    final currentEmail = ref.watch(currentUserEmailProvider);
+    final isLoading = ref.watch(authLoadingProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final textTheme = Theme.of(context).textTheme;
-    final localeController = LocaleScope.of(context);
+    final currentLocale = ref.watch(currentLocaleProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -45,10 +46,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    controller.currentEmail ?? l10n.settingsNoEmail,
+                    currentEmail ?? l10n.settingsNoEmail,
                     style: textTheme.bodyLarge,
                   ),
-                  if (controller.isLoading) ...[
+                  if (isLoading) ...[
                     const SizedBox(height: 16),
                     const LinearProgressIndicator(),
                   ],
@@ -57,15 +58,13 @@ class SettingsScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: FilledButton.tonal(
-                          onPressed: controller.currentEmail == null
+                          onPressed: currentEmail == null
                               ? null
                               : () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          ProfileSettingsScreen(
-                                        controller: controller,
-                                      ),
+                                          const ProfileSettingsScreen(),
                                     ),
                                   );
                                 },
@@ -75,11 +74,11 @@ class SettingsScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          onPressed: controller.isLoading
+                          onPressed: isLoading
                               ? null
                               : () async {
                                   final navigator = Navigator.of(context);
-                                  await controller.logout();
+                                  await ref.read(authControllerProvider).logout();
                                   if (!navigator.mounted) {
                                     return;
                                   }
@@ -113,7 +112,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.light_mode_outlined,
                   value: ThemeMode.light,
                   groupValue: themeMode,
-                  onChanged: themeController.updateThemeMode,
+                  onChanged: (mode) => ref.read(themeControllerProvider).updateThemeMode(mode),
                 ),
                 const Divider(height: 0),
                 _ThemeOptionTile(
@@ -122,17 +121,15 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.dark_mode_outlined,
                   value: ThemeMode.dark,
                   groupValue: themeMode,
-                  onChanged: themeController.updateThemeMode,
+                  onChanged: (mode) => ref.read(themeControllerProvider).updateThemeMode(mode),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          AnimatedBuilder(
-            animation: localeController,
-            builder: (context, _) {
-              final selectedLanguageCode =
-                  localeController.locale?.languageCode;
+          Builder(
+            builder: (context) {
+              final selectedLanguageCode = currentLocale?.languageCode;
               Locale? selectedLocale;
               for (final locale in _languageOptions) {
                 if (locale.languageCode == selectedLanguageCode) {
@@ -173,7 +170,7 @@ class SettingsScreen extends StatelessWidget {
                             .toList(),
                         onChanged: (locale) {
                           if (locale != null) {
-                            localeController.updateLocale(locale);
+                            ref.read(localeControllerProvider).updateLocale(locale);
                           }
                         },
                       ),
