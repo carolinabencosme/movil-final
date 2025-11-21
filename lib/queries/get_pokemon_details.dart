@@ -90,6 +90,95 @@ const String getPokemonDetailsQuery = r'''
             }
           }
         }
+
+        # Todos los Pokémon de esta especie (formas/variantes)
+        pokemon_v2_pokemons(order_by: {id: asc}) {
+          id
+          name
+          height
+          weight
+          
+          pokemon_v2_pokemontypes(order_by: {slot: asc}) {
+            pokemon_v2_type { 
+              id
+              name
+            }
+          }
+
+          pokemon_v2_pokemonforms(limit: 1) {
+            id
+            form_name
+            is_default
+            is_mega
+            is_battle_only
+            
+            pokemon_v2_pokemonformnames(
+              where: {language_id: {_in: $languageIds}}
+              order_by: {language_id: asc}
+              limit: 2
+            ) {
+              name
+              pokemon_name
+            }
+          }
+
+          pokemon_v2_pokemonsprites(limit: 1) { 
+            sprites 
+          }
+
+          pokemon_v2_pokemonstats(order_by: {pokemon_v2_stat: {id: asc}}) {
+            base_stat
+            pokemon_v2_stat { name }
+          }
+
+          pokemon_v2_pokemonabilities(order_by: {slot: asc}) {
+            is_hidden
+            pokemon_v2_ability {
+              name
+              pokemon_v2_abilitynames(
+                where: {language_id: {_in: $languageIds}}
+                order_by: {language_id: asc}
+                limit: 2
+              ) {
+                language_id
+                name
+              }
+              pokemon_v2_abilityeffecttexts(
+                where: {language_id: {_in: $languageIds}}
+                order_by: {language_id: asc}
+                limit: 4
+              ) {
+                language_id
+                short_effect
+                effect
+              }
+            }
+          }
+
+          pokemon_v2_pokemonmoves(
+            order_by: [
+              {level: asc_nulls_last}
+              {pokemon_v2_move: {name: asc}}
+            ]
+          ) {
+            level
+            pokemon_v2_movelearnmethod { name }
+            pokemon_v2_versiongroup { id name }
+            pokemon_v2_move {
+              id
+              name
+              pokemon_v2_movenames(
+                where: {language_id: {_in: $languageIds}}
+                order_by: {language_id: asc}
+                limit: 2
+              ) {
+                language_id
+                name
+              }
+              pokemon_v2_type { id name }
+            }
+          }
+        }
       }
 
       pokemon_v2_pokemonstats(order_by: {pokemon_v2_stat: {id: asc}}) {
