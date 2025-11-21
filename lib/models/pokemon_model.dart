@@ -265,6 +265,9 @@ class PokemonDetail {
     required this.moves,
     this.evolutionChain,
     this.speciesId,
+    this.shinyImageUrl,
+    this.spriteData,
+    this.forms,
   });
 
   final int id;
@@ -278,6 +281,30 @@ class PokemonDetail {
   final List<PokemonMove> moves;
   final PokemonEvolutionChain? evolutionChain;
   final int? speciesId;
+  
+  /// URL of the Pokemon's shiny sprite (if available)
+  final String? shinyImageUrl;
+  
+  /// Raw sprite data for future use (optional)
+  final dynamic spriteData;
+  
+  /// List of available forms/variants for this Pokemon
+  final List<PokemonForm>? forms;
+
+  /// Gets the sprite URL based on shiny state
+  String getSpriteUrl({bool isShiny = false}) {
+    if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
+      return shinyImageUrl!;
+    }
+    return imageUrl;
+  }
+
+  /// Checks if shiny sprite is available
+  bool get hasShinySprite => 
+      shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
+  
+  /// Checks if alternative forms are available
+  bool get hasForms => forms != null && forms!.length > 1;
 
   /// Construye el detalle a partir del JSON principal del Pokémon.
   ///
@@ -441,10 +468,18 @@ class PokemonDetail {
     final typeMatchups =
         _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
 
+    // Extract normal and shiny sprites
+    final spriteData = json['pokemon_v2_pokemonsprites'];
+    final normalUrl = _extractSpriteUrl(spriteData);
+    final shinyUrl = extractSpriteUrlWithShiny(spriteData, isShiny: true);
+
+    // Parse Pokemon forms/variants from species
+    final forms = _parsePokemonForms(species);
+
     return PokemonDetail(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
-      imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
+      imageUrl: normalUrl,
       types: types,
       abilities: abilities,
       stats: stats,
@@ -453,6 +488,9 @@ class PokemonDetail {
       moves: moves,
       evolutionChain: evolutionChain,
       speciesId: speciesId,
+      shinyImageUrl: shinyUrl.isNotEmpty ? shinyUrl : null,
+      spriteData: spriteData,
+      forms: forms.isNotEmpty ? forms : null,
     );
   }
 }
@@ -753,6 +791,87 @@ class _EvolutionSpeciesData {
   final String imageUrl;
 }
 
+/// Modelo para representar una forma/variante de un Pokémon
+/// 
+/// Incluye formas regionales (Alolan, Galarian), Mega evoluciones,
+/// formas alternativas (Deoxys, Rotom), etc.
+class PokemonForm {
+  const PokemonForm({
+    required this.pokemonId,
+    required this.pokemonName,
+    required this.formName,
+    required this.displayName,
+    required this.imageUrl,
+    required this.types,
+    required this.stats,
+    required this.abilities,
+    required this.moves,
+    required this.height,
+    required this.weight,
+    this.isDefault = false,
+    this.isMega = false,
+    this.isBattleOnly = false,
+    this.shinyImageUrl,
+  });
+
+  /// ID del Pokémon específico
+  final int pokemonId;
+  
+  /// Nombre interno del Pokémon (ej: "pikachu", "pikachu-alola")
+  final String pokemonName;
+  
+  /// Nombre de la forma (ej: "alola", "galar", "mega")
+  final String formName;
+  
+  /// Nombre localizado para mostrar (ej: "Alolan", "Galarian Form")
+  final String displayName;
+  
+  /// URL de la imagen del Pokémon en esta forma
+  final String imageUrl;
+  
+  /// Tipos del Pokémon en esta forma
+  final List<String> types;
+  
+  /// Estadísticas base en esta forma
+  final List<PokemonStat> stats;
+  
+  /// Habilidades en esta forma
+  final List<PokemonAbilityDetail> abilities;
+  
+  /// Movimientos disponibles en esta forma
+  final List<PokemonMove> moves;
+  
+  /// Altura en esta forma
+  final int height;
+  
+  /// Peso en esta forma
+  final int weight;
+  
+  /// Si es la forma por defecto
+  final bool isDefault;
+  
+  /// Si es una Mega evolución
+  final bool isMega;
+  
+  /// Si la forma solo aparece en batalla
+  final bool isBattleOnly;
+  
+  /// URL del sprite shiny (si está disponible)
+  final String? shinyImageUrl;
+  
+  /// Checks if shiny sprite is available
+  bool get hasShinySprite => 
+      shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
+  
+  /// Gets the sprite URL based on shiny state
+  String getSpriteUrl({bool isShiny = false}) {
+    if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
+      return shinyImageUrl!;
+    }
+    return imageUrl;
+  }
+}
+
 /// Modelo de estadística de un Pokémon
 /// 
 /// Representa una estadística base (HP, Attack, Defense, etc.) con
@@ -852,6 +971,182 @@ class TypeMatchup {
   final String type;
   /// Multiplicador total (0.5, 2.0, 4.0, etc.).
   final double multiplier;
+}
+
+/// Parsea las formas/variantes de un Pokémon desde los datos de especie.
+///
+/// Extrae todas las formas disponibles (Alolan, Galarian, Mega, etc.) y 
+/// devuelve una lista con sus datos completos (sprites, tipos, stats, habilidades).
+List<PokemonForm> _parsePokemonForms(Map<String, dynamic>? species) {
+  if (species == null) {
+    return const <PokemonForm>[];
+  }
+
+  final pokemons = species['pokemon_v2_pokemons'] as List<dynamic>? ?? [];
+  if (pokemons.isEmpty) {
+    return const <PokemonForm>[];
+  }
+
+  final List<PokemonForm> forms = <PokemonForm>[];
+
+  for (final dynamic pokemonEntry in pokemons) {
+    final pokemon = pokemonEntry as Map<String, dynamic>?;
+    if (pokemon == null) continue;
+
+    final pokemonId = pokemon['id'] as int? ?? 0;
+    final pokemonName = pokemon['name'] as String? ?? '';
+    
+    // Extraer información de la forma
+    final formsList = pokemon['pokemon_v2_pokemonforms'] as List<dynamic>? ?? [];
+    final formData = formsList.isNotEmpty ? formsList.first as Map<String, dynamic>? : null;
+    
+    final formName = formData?['form_name'] as String? ?? '';
+    final isDefault = formData?['is_default'] as bool? ?? false;
+    final isMega = formData?['is_mega'] as bool? ?? false;
+    final isBattleOnly = formData?['is_battle_only'] as bool? ?? false;
+    
+    // Nombre localizado de la forma
+    String displayName = pokemonName;
+    final formNames = formData?['pokemon_v2_pokemonformnames'] as List<dynamic>? ?? [];
+    if (formNames.isNotEmpty) {
+      final formNameData = formNames.first as Map<String, dynamic>?;
+      final localizedName = formNameData?['pokemon_name'] as String? ?? 
+                           formNameData?['name'] as String?;
+      if (localizedName != null && localizedName.isNotEmpty) {
+        displayName = localizedName;
+      }
+    }
+    
+    // If no localized name, use formatted Pokemon name
+    if (displayName == pokemonName && formName.isNotEmpty) {
+      displayName = _formatGraphqlLabel(formName);
+    }
+
+    // Extraer tipos
+    final typeEntries = pokemon['pokemon_v2_pokemontypes'] as List<dynamic>? ?? [];
+    final types = typeEntries
+        .map((dynamic typeEntry) {
+          final type = typeEntry as Map<String, dynamic>?;
+          final typeInfo = type?['pokemon_v2_type'] as Map<String, dynamic>?;
+          final name = typeInfo?['name'];
+          return name is String ? name : null;
+        })
+        .whereType<String>()
+        .toList();
+
+    // Extraer stats
+    final statsEntries = pokemon['pokemon_v2_pokemonstats'] as List<dynamic>? ?? [];
+    final stats = statsEntries
+        .map((dynamic statEntry) {
+          final stat = statEntry as Map<String, dynamic>?;
+          final baseStat = stat?['base_stat'];
+          final statInfo = stat?['pokemon_v2_stat'] as Map<String, dynamic>?;
+          final statName = statInfo?['name'];
+          if (baseStat is int && statName is String) {
+            return PokemonStat(name: statName, baseStat: baseStat);
+          }
+          return null;
+        })
+        .whereType<PokemonStat>()
+        .toList();
+
+    // Extraer habilidades
+    final abilitiesEntries = pokemon['pokemon_v2_pokemonabilities'] as List<dynamic>? ?? [];
+    final abilities = abilitiesEntries
+        .map((dynamic abilityEntry) {
+          final ability = abilityEntry as Map<String, dynamic>?;
+          final abilityInfo = ability?['pokemon_v2_ability'] as Map<String, dynamic>?;
+          if (abilityInfo == null) return null;
+
+          // Nombre localizado
+          final localizedNames = abilityInfo['pokemon_v2_abilitynames'] as List<dynamic>? ?? [];
+          String displayAbilityName = abilityInfo['name'] as String? ?? '';
+          for (final dynamic nameEntry in localizedNames) {
+            final map = nameEntry as Map<String, dynamic>?;
+            final localized = map?['name'];
+            if (localized is String && localized.isNotEmpty) {
+              displayAbilityName = localized;
+              break;
+            }
+          }
+
+          // Descripción
+          final effectTexts = abilityInfo['pokemon_v2_abilityeffecttexts'] as List<dynamic>? ?? [];
+          String description = '';
+          for (final dynamic effectEntry in effectTexts) {
+            final effect = effectEntry as Map<String, dynamic>?;
+            final shortEffect = effect?['short_effect'];
+            final fullEffect = effect?['effect'];
+            if (shortEffect is String && shortEffect.isNotEmpty) {
+              description = shortEffect;
+              break;
+            }
+            if (fullEffect is String && fullEffect.isNotEmpty) {
+              description = fullEffect;
+            }
+          }
+
+          if (description.isEmpty) {
+            description = 'Sin descripción disponible.';
+          }
+
+          final isHidden = ability?['is_hidden'];
+          description = description
+              .replaceAll('\n', ' ')
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+
+          return PokemonAbilityDetail(
+            name: displayAbilityName,
+            description: description,
+            isHidden: isHidden is bool ? isHidden : false,
+          );
+        })
+        .whereType<PokemonAbilityDetail>()
+        .toList();
+
+    // Extraer movimientos
+    final moves = _parsePokemonMoves(
+      pokemon['pokemon_v2_pokemonmoves'] as List<dynamic>? ?? const [],
+    );
+
+    // Extraer sprites
+    final spriteData = pokemon['pokemon_v2_pokemonsprites'];
+    final normalUrl = _extractSpriteUrl(spriteData);
+    final shinyUrl = extractSpriteUrlWithShiny(spriteData, isShiny: true);
+    
+    final height = pokemon['height'] as int? ?? 0;
+    final weight = pokemon['weight'] as int? ?? 0;
+
+    forms.add(
+      PokemonForm(
+        pokemonId: pokemonId,
+        pokemonName: pokemonName,
+        formName: formName,
+        displayName: displayName,
+        imageUrl: normalUrl,
+        types: types,
+        stats: stats,
+        abilities: abilities,
+        moves: moves,
+        height: height,
+        weight: weight,
+        isDefault: isDefault,
+        isMega: isMega,
+        isBattleOnly: isBattleOnly,
+        shinyImageUrl: shinyUrl.isNotEmpty ? shinyUrl : null,
+      ),
+    );
+  }
+
+  // Sort: default form first, then others
+  forms.sort((a, b) {
+    if (a.isDefault && !b.isDefault) return -1;
+    if (!a.isDefault && b.isDefault) return 1;
+    return a.pokemonName.compareTo(b.pokemonName);
+  });
+
+  return forms;
 }
 
 /// Parsea los movimientos aprendibles y evita duplicados.
@@ -1329,4 +1624,66 @@ String? _normalizeSpriteUrl(String? value) {
     return value.replaceFirst('http://', 'https://');
   }
   return value;
+}
+
+/// Extrae la URL del sprite específico (normal o shiny) desde los datos de sprites.
+/// 
+/// Parámetros:
+/// - [spriteEntries]: Lista de objetos de sprites desde GraphQL
+/// - [isShiny]: Si es true, prioriza sprites shiny; si es false, prioriza normales
+/// 
+/// Devuelve la mejor URL disponible según la preferencia de shiny.
+String extractSpriteUrlWithShiny(dynamic spriteEntries, {bool isShiny = false}) {
+  final sprites = spriteEntries as List<dynamic>?;
+  if (sprites == null || sprites.isEmpty) {
+    return '';
+  }
+
+  for (final entry in sprites) {
+    if (entry is! Map<String, dynamic>) {
+      continue;
+    }
+
+    final decoded = _decodeSprites(entry['sprites']);
+    if (decoded == null) {
+      continue;
+    }
+
+    final candidate = isShiny 
+        ? _selectShinySpriteFromMap(decoded) 
+        : _selectSpriteFromMap(decoded);
+    if (candidate != null) {
+      return candidate;
+    }
+  }
+
+  return '';
+}
+
+/// Selecciona la mejor URL disponible de sprite shiny de un mapa de sprites.
+///
+/// Orden de preferencia para shiny:
+/// 1) other.official-artwork.front_shiny
+/// 2) other.home.front_shiny
+/// 3) front_shiny
+/// 4) Fallback a versión normal si no hay shiny
+String? _selectShinySpriteFromMap(Map<String, dynamic> decoded) {
+  final rawCandidates = <String?>[
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_shiny']),
+    _getNestedString(decoded, ['other', 'home', 'front_shiny']),
+    _asNonEmptyString(decoded['front_shiny']),
+    // Fallback a versión normal si no hay shiny disponible
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
+    _getNestedString(decoded, ['other', 'home', 'front_default']),
+    _asNonEmptyString(decoded['front_default']),
+  ];
+
+  for (final candidate in rawCandidates) {
+    final normalized = _normalizeSpriteUrl(candidate);
+    if (normalized != null) {
+      return normalized;
+    }
+  }
+
+  return null;
 }
