@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../controllers/auth_controller.dart';
-import '../controllers/trivia_controller.dart';
+import '../providers/auth_provider.dart';
+import '../providers/trivia_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/pokemon_model.dart';
 import '../models/trivia_achievement.dart';
@@ -12,14 +13,14 @@ import '../services/trivia_repository.dart';
 import 'trivia_achievements_screen.dart';
 import 'trivia_ranking_screen.dart';
 
-class PokemonTriviaScreen extends StatefulWidget {
+class PokemonTriviaScreen extends ConsumerStatefulWidget {
   const PokemonTriviaScreen({super.key});
 
   @override
-  State<PokemonTriviaScreen> createState() => _PokemonTriviaScreenState();
+  ConsumerState<PokemonTriviaScreen> createState() => _PokemonTriviaScreenState();
 }
 
-class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
+class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
   final TextEditingController _answerController = TextEditingController();
   Timer? _timer;
   int _remainingSeconds = 20;
@@ -28,9 +29,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   int _questionsPlayed = 0;
   int _correctAnswers = 0;
   int _streak = 0;
-  TriviaRepository? _triviaRepository;
-  AuthController? _authController;
-  TriviaController? _triviaController;
+
   PokemonListItem? _currentPokemon;
   List<String> _currentOptions = <String>[];
   int? _currentPokemonId;
@@ -45,15 +44,13 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
   void _requestSessionLoad() {
     if (_sessionRequested) return;
-    final controller = _triviaController;
-    if (controller == null) return;
+    final controller = ref.read(triviaControllerProvider);
     _sessionRequested = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => controller.loadSession());
   }
 
   void _syncCurrentPokemon() {
-    final controller = _triviaController;
-    if (controller == null) return;
+    final controller = ref.read(triviaControllerProvider);
     final pokemon = controller.currentPokemon;
     if (pokemon != null) {
       _onControllerChanged();
@@ -61,9 +58,9 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   void _onControllerChanged() {
-    final controller = _triviaController;
-    final pokemon = controller?.currentPokemon;
-    final int served = controller?.questionsServed ?? _lastServedCount;
+    final controller = ref.read(triviaControllerProvider);
+    final pokemon = controller.currentPokemon;
+    final int served = controller.questionsServed;
     if (pokemon == null) return;
 
     if (_currentPokemonId == pokemon.id && _lastServedCount == served) return;
@@ -91,14 +88,9 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _triviaRepository = TriviaRepositoryScope.maybeOf(context);
-    _authController = AuthScope.maybeOf(context);
-    final TriviaController? controller = TriviaScope.maybeOf(context);
-    if (controller != _triviaController) {
-      _triviaController?.removeListener(_onControllerChanged);
-      _triviaController = controller;
-      _triviaController?.addListener(_onControllerChanged);
-      _sessionRequested = false;
+    final controller = ref.read(triviaControllerProvider);
+    controller.addListener(_onControllerChanged);
+    _sessionRequested = false;
       _requestSessionLoad();
       _syncCurrentPokemon();
     }
@@ -110,7 +102,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     _answerController.dispose();
     _achievementSubscription?.cancel();
     _achievementEvents.close();
-    _triviaController?.removeListener(_onControllerChanged);
+    ref.read(triviaControllerProvider).removeListener(_onControllerChanged);
     super.dispose();
   }
 
@@ -128,8 +120,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   List<String> _buildOptionsForPokemon(PokemonListItem pokemon) {
-    final controller = _triviaController;
-    final List<PokemonListItem> pool = controller?.pool ?? const <PokemonListItem>[];
+    final controller = ref.read(triviaControllerProvider);
+    final List<PokemonListItem> pool = controller.pool;
     final List<PokemonListItem> candidates =
         pool.where((p) => p.id != pokemon.id).toList(growable: true);
     candidates.shuffle(_random);
@@ -161,7 +153,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
   void _advanceQuestion() {
     _timer?.cancel();
-    _triviaController?.loadNextPokemon();
+    ref.read(triviaControllerProvider).loadNextPokemon();
   }
 
   void _submitAnswer([String? selected]) {
@@ -225,7 +217,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
   Future<void> _saveSession() async {
     final l10n = AppLocalizations.of(context)!;
-    final TriviaRepository? repository = _triviaRepository;
+    final TriviaRepository? repository = ref.read(triviaRepositoryProvider);
     if (repository == null) {
       _showFeedback(
         message: l10n.triviaSaveUnavailableMessage,
@@ -243,7 +235,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     }
 
     final String playerName =
-        _authController?.currentEmail ?? l10n.triviaGuestPlayerName;
+        ref.watch(currentUserEmailProvider) ?? l10n.triviaGuestPlayerName;
     await repository.saveSession(
       playerName: playerName,
       score: _score,
@@ -282,7 +274,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final PokemonListItem? pokemon = _currentPokemon;
-    final bool isLoading = _triviaController?.isLoading ?? false;
+    final bool isLoading = ref.watch(triviaLoadingProvider);
     final bool filterActive = !_showSolution;
 
     final appBar = AppBar(
@@ -505,7 +497,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   }
 
   Future<void> _evaluateAchievements({required bool isCorrect}) async {
-    final TriviaRepository? repository = _triviaRepository;
+    final TriviaRepository? repository = ref.read(triviaRepositoryProvider);
     if (repository == null) return;
 
     Future<void> tryUnlock(String id) async {

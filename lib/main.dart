@@ -1,14 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
-import 'controllers/auth_controller.dart';
-import 'controllers/favorites_controller.dart';
-import 'controllers/trivia_controller.dart';
 import 'screens/detail_screen.dart';
 import 'widgets/detail/detail_constants.dart';
-import 'controllers/locale_controller.dart';
 import 'graphql_config.dart';
 import 'screens/auth/auth_gate.dart';
 import 'services/auth_repository.dart';
@@ -16,123 +13,71 @@ import 'services/favorites_repository.dart';
 import 'services/pokemon_cache_service.dart';
 import 'services/trivia_repository.dart';
 import 'theme/app_theme.dart';
-import 'theme/theme_controller.dart';
+import 'providers/auth_provider.dart';
+import 'providers/favorites_provider.dart';
+import 'providers/trivia_provider.dart';
+import 'providers/theme_provider.dart';
+import 'providers/locale_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initHiveForFlutter();
   final clientNotifier = await initGraphQLClient();
   final pokemonCacheService = await PokemonCacheService.init();
-  final themeController = ThemeController();
-  final localeController = LocaleController();
   final authRepository = await AuthRepository.init();
-  final authController = AuthController(repository: authRepository);
   final favoritesRepository = await FavoritesRepository.init(pokemonCacheService);
-  final favoritesController =
-      FavoritesController(repository: favoritesRepository);
   final triviaRepository = await TriviaRepository.init();
-  final triviaController = TriviaController(
-    graphQLClient: clientNotifier.value,
-    cacheService: pokemonCacheService,
-    triviaRepository: triviaRepository,
-  );
 
   runApp(
-    MyApp(
-      clientNotifier: clientNotifier,
-      themeController: themeController,
-      localeController: localeController,
-      authController: authController,
-      favoritesController: favoritesController,
-      triviaController: triviaController,
-      triviaRepository: triviaRepository,
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(authRepository),
+        favoritesRepositoryProvider.overrideWithValue(favoritesRepository),
+        triviaRepositoryProvider.overrideWithValue(triviaRepository),
+        graphQLClientProvider.overrideWithValue(clientNotifier.value),
+        pokemonCacheServiceProvider.overrideWithValue(pokemonCacheService),
+      ],
+      child: MyApp(clientNotifier: clientNotifier),
     ),
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({
     super.key,
     required this.clientNotifier,
-    required this.themeController,
-    required this.localeController,
-    required this.authController,
-    required this.favoritesController,
-    required this.triviaController,
-    required this.triviaRepository,
   });
 
   final ValueNotifier<GraphQLClient> clientNotifier;
-  final ThemeController themeController;
-  final LocaleController localeController;
-  final AuthController authController;
-  final FavoritesController favoritesController;
-  final TriviaController triviaController;
-  final TriviaRepository triviaRepository;
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   @override
   void dispose() {
-    widget.themeController.dispose();
-    widget.localeController.dispose();
-    widget.authController.dispose();
-    widget.favoritesController.dispose();
-    widget.triviaController.dispose();
-    widget.triviaRepository.dispose();
     widget.clientNotifier.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeController = widget.themeController;
-    final authController = widget.authController;
-    final favoritesController = widget.favoritesController;
-    final triviaController = widget.triviaController;
-
-    return ThemeScope(
-      notifier: themeController,
-      child: LocaleScope(
-        notifier: widget.localeController,
-        child: AuthScope(
-          notifier: authController,
-          child: FavoritesScope(
-            notifier: favoritesController,
-            child: TriviaRepositoryScope(
-              notifier: widget.triviaRepository,
-              child: TriviaScope(
-                notifier: triviaController,
-                child: AnimatedBuilder(
-                  animation: Listenable.merge(
-                    [themeController, widget.localeController],
-                  ),
-                  builder: (context, _) {
-                    final localizations = AppLocalizations.of(context);
-                    return GraphQLProvider(
-                      client: widget.clientNotifier,
-                      child: MaterialApp(
-                        debugShowCheckedModeBanner: false,
-                        title: localizations?.appTitle ?? 'Pokédex GraphQL',
-                        themeMode: themeController.themeMode,
-                        theme: AppTheme.light,
-                        darkTheme: AppTheme.dark,
-                        locale: widget.localeController.locale,
-                        localizationsDelegates:
-                            AppLocalizations.localizationsDelegates,
-                        supportedLocales: AppLocalizations.supportedLocales,
-                        home: AuthGate(controller: authController),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
+    final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(currentLocaleProvider);
+    
+    return GraphQLProvider(
+      client: widget.clientNotifier,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Pokédex GraphQL',
+        themeMode: themeMode,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const AuthGate(),
       ),
     );
   }

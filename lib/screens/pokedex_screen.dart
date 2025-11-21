@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 import 'package:graphql/client.dart' show LinkException;
 import 'package:graphql_flutter/graphql_flutter.dart';
 
-import '../controllers/favorites_controller.dart';
+import '../providers/favorites_provider.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
