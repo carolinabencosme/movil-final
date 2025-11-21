@@ -718,6 +718,44 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       weight: widget.pokemon.characteristics.weight,
     );
   }
+  
+  /// Crea un PokemonDetail modificado con los datos de la forma actual
+  PokemonDetail _getCurrentPokemon() {
+    final currentData = _getCurrentPokemonData();
+    
+    // Si no hay formas o estamos en la forma base, devolver el pokemon original
+    if (widget.pokemon.forms == null || 
+        widget.pokemon.forms!.isEmpty ||
+        _selectedFormIndex >= widget.pokemon.forms!.length ||
+        _selectedFormIndex == 0) {
+      return widget.pokemon;
+    }
+    
+    // Crear una copia del pokemon con los datos de la forma seleccionada
+    return PokemonDetail(
+      id: widget.pokemon.id,
+      name: widget.pokemon.name,
+      imageUrl: currentData.imageUrl,
+      types: currentData.types,
+      abilities: currentData.abilities,
+      stats: currentData.stats,
+      characteristics: PokemonCharacteristics(
+        height: currentData.height,
+        weight: currentData.weight,
+        baseExperience: widget.pokemon.characteristics.baseExperience,
+        captureRate: widget.pokemon.characteristics.captureRate,
+        category: widget.pokemon.characteristics.category,
+        eggGroups: widget.pokemon.characteristics.eggGroups,
+      ),
+      typeMatchups: widget.pokemon.typeMatchups,
+      moves: currentData.moves,
+      evolutionChain: widget.pokemon.evolutionChain,
+      speciesId: widget.pokemon.speciesId,
+      shinyImageUrl: currentData.shinyImageUrl,
+      spriteData: widget.pokemon.spriteData,
+      forms: widget.pokemon.forms,
+    );
+  }
 
   @override
   void dispose() {
@@ -833,6 +871,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       Color typeColor,
       ) {
     return SliverPersistentHeader(
+    final currentPokemon = _getCurrentPokemon();
       pinned: true,
       delegate: _TabBarHeaderDelegate(
         tabController: _tabController,
@@ -848,7 +887,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     final theme = Theme.of(context);
     final pokemon = widget.pokemon;
     
-    // Obtener datos actuales (forma base o forma seleccionada)
+    // Get current data (base form or selected form)
     final currentData = _getCurrentPokemonData();
 
     // Habilidad “principal” para mostrar en el bloque de info
@@ -862,7 +901,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
             ? l10n.detailHiddenAbilityLabel
             : l10n.detailMainAbilityLabel);
 
-    // Paleta reactiva según el primer tipo del Pokémon
+    // Reactive palette based on Pokemon primary type
     final colorScheme = theme.colorScheme;
     final typeColor = currentData.types.isNotEmpty
         ? _resolveTypeColor(currentData.types.first, colorScheme)
@@ -872,7 +911,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         ? Colors.white
         : Colors.black87;
 
-    // Colores de fondo secciones (tintes del color de tipo)
+    // Section background colors (type color tints)
     final backgroundTint =
     Color.alphaBlend(typeColor.withOpacity(0.04), colorScheme.surface);
     final sectionBackground =
@@ -1458,7 +1497,9 @@ class _FormsDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedForm = forms[selectedIndex];
+    // Bounds check to prevent index out of range
+    final safeIndex = selectedIndex.clamp(0, forms.length - 1);
+    final selectedForm = forms[safeIndex];
     
     return PopupMenuButton<int>(
       initialValue: selectedIndex,
