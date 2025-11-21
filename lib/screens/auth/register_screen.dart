@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
-import '../../controllers/auth_controller.dart';
+import '../../providers/auth_provider.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({
     super.key,
-    required this.controller,
     required this.onShowLogin,
   });
 
   static const String routeName = '/register';
 
-  final AuthController controller;
   final VoidCallback onShowLogin;
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -91,9 +90,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 28),
-                          if (widget.controller.isLoading)
+                          if (ref.watch(authLoadingProvider))
                             const LinearProgressIndicator(),
-                          if (widget.controller.isLoading)
+                          if (ref.watch(authLoadingProvider))
                             const SizedBox(height: 20),
                           Form(
                             key: _formKey,
@@ -152,7 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 FilledButton(
-                                  onPressed: widget.controller.isLoading
+                                  onPressed: ref.watch(authLoadingProvider)
                                       ? null
                                       : _submit,
                                   child: Text(l10n.authCreateAccountButton),
@@ -162,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 20),
                           TextButton(
-                            onPressed: widget.controller.isLoading
+                            onPressed: ref.watch(authLoadingProvider)
                                 ? null
                                 : widget.onShowLogin,
                             child: Text(l10n.authAlreadyHaveAccountCta),
@@ -187,7 +186,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     FocusScope.of(context).unfocus();
-    final success = await widget.controller.register(
+    final controller = ref.read(authControllerProvider);
+    final success = await controller.register(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -196,7 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    final message = widget.controller.errorMessage ?? l10n.authRegisterError;
+    final message = ref.read(authErrorProvider) ?? l10n.authRegisterError;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );

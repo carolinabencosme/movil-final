@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import '../controllers/auth_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 import '../services/auth_repository.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 
-class ProfileSettingsScreen extends StatefulWidget {
-  const ProfileSettingsScreen({
-    super.key,
-    required this.controller,
-  });
-
-  final AuthController controller;
+class ProfileSettingsScreen extends ConsumerStatefulWidget {
+  const ProfileSettingsScreen({super.key});
 
   @override
-  State<ProfileSettingsScreen> createState() => _ProfileSettingsScreenState();
+  ConsumerState<ProfileSettingsScreen> createState() => _ProfileSettingsScreenState();
 }
 
-class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
+class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
@@ -27,7 +23,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   void initState() {
     super.initState();
     _emailController = TextEditingController(
-      text: widget.controller.currentEmail ?? '',
+      text: ref.read(currentUserEmailProvider) ?? '',
     );
     _passwordController = TextEditingController();
   }
@@ -35,7 +31,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   @override
   void didUpdateWidget(covariant ProfileSettingsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final currentEmail = widget.controller.currentEmail ?? '';
+    final currentEmail = ref.read(currentUserEmailProvider) ?? '';
     if (_emailController.text != currentEmail) {
       _emailController.text = currentEmail;
     }
@@ -54,10 +50,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       appBar: AppBar(
         title: Text(l10n.settingsEditProfile),
       ),
-      body: AnimatedBuilder(
-        animation: widget.controller,
-        builder: (context, _) {
-          final isLoading = widget.controller.isLoading;
+      body: Builder(
+        builder: (context) {
+          final isLoading = ref.watch(authLoadingProvider);
           final textTheme = Theme.of(context).textTheme;
 
           return ListView(
@@ -141,8 +136,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       return;
     }
 
-    final controller = widget.controller;
-    final currentEmail = controller.currentEmail;
+    final currentEmail = ref.read(currentUserEmailProvider);
     if (currentEmail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -158,7 +152,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final newPassword = _passwordController.text.trim();
 
     try {
-      await controller.updateProfile(
+      await ref.read(authControllerProvider).updateProfile(
         email: currentEmail,
         newEmail: newEmail,
         newPassword: newPassword.isEmpty ? null : newPassword,

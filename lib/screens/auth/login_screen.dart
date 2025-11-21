@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
-import '../../controllers/auth_controller.dart';
+import '../../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({
     super.key,
-    required this.controller,
     required this.onShowRegister,
   });
 
   static const String routeName = '/login';
 
-  final AuthController controller;
   final VoidCallback onShowRegister;
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -88,9 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 28),
-                          if (widget.controller.isLoading)
+                          if (ref.watch(authLoadingProvider))
                             const LinearProgressIndicator(),
-                          if (widget.controller.isLoading)
+                          if (ref.watch(authLoadingProvider))
                             const SizedBox(height: 20),
                           Form(
                             key: _formKey,
@@ -130,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 FilledButton(
-                                  onPressed: widget.controller.isLoading
+                                  onPressed: ref.watch(authLoadingProvider)
                                       ? null
                                       : _submit,
                                   child: Text(l10n.authLoginButton),
@@ -140,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           TextButton(
-                            onPressed: widget.controller.isLoading
+                            onPressed: ref.watch(authLoadingProvider)
                                 ? null
                                 : widget.onShowRegister,
                             child: Text(l10n.authNoAccountCta),
@@ -165,7 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     FocusScope.of(context).unfocus();
-    final success = await widget.controller.login(
+    final controller = ref.read(authControllerProvider);
+    final success = await controller.login(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final message =
-        widget.controller.errorMessage ?? l10n.authLoginError;
+        ref.read(authErrorProvider) ?? l10n.authLoginError;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
