@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import '../controllers/auth_controller.dart';
+import '../controllers/trivia_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../models/pokemon_model.dart';
 import '../models/trivia_achievement.dart';
 import '../services/trivia_repository.dart';
 import 'trivia_achievements_screen.dart';
@@ -20,7 +23,6 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   final TextEditingController _answerController = TextEditingController();
   Timer? _timer;
   int _remainingSeconds = 20;
-  int _currentIndex = 0;
   bool _showSolution = false;
   bool _isAnimating = false;
   int _questionsPlayed = 0;
@@ -28,16 +30,60 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   int _streak = 0;
   TriviaRepository? _triviaRepository;
   AuthController? _authController;
+  TriviaController? _triviaController;
+  PokemonListItem? _currentPokemon;
+  List<String> _currentOptions = <String>[];
+  int? _currentPokemonId;
+  bool _sessionRequested = false;
+  int _lastServedCount = 0;
+  final Random _random = Random();
   final StreamController<TriviaAchievement> _achievementEvents =
       StreamController<TriviaAchievement>.broadcast();
   StreamSubscription<TriviaAchievement>? _achievementSubscription;
 
   int get _score => _correctAnswers * 100;
 
+  void _requestSessionLoad() {
+    if (_sessionRequested) return;
+    final controller = _triviaController;
+    if (controller == null) return;
+    _sessionRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.loadSession());
+  }
+
+  void _syncCurrentPokemon() {
+    final controller = _triviaController;
+    if (controller == null) return;
+    final pokemon = controller.currentPokemon;
+    if (pokemon != null) {
+      _onControllerChanged();
+    }
+  }
+
+  void _onControllerChanged() {
+    final controller = _triviaController;
+    final pokemon = controller?.currentPokemon;
+    final int served = controller?.questionsServed ?? _lastServedCount;
+    if (pokemon == null) return;
+
+    if (_currentPokemonId == pokemon.id && _lastServedCount == served) return;
+
+    setState(() {
+      _currentPokemon = pokemon;
+      _currentPokemonId = pokemon.id;
+      _lastServedCount = served;
+      _currentOptions = _buildOptionsForPokemon(pokemon);
+      _showSolution = false;
+      _isAnimating = false;
+      _remainingSeconds = 20;
+      _answerController.clear();
+    });
+    _startTimer();
+  }
+
   @override
   void initState() {
     super.initState();
-    _startTimer();
     _achievementSubscription =
         _achievementEvents.stream.listen(_showAchievementBanner);
   }
@@ -47,6 +93,15 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     super.didChangeDependencies();
     _triviaRepository = TriviaRepositoryScope.maybeOf(context);
     _authController = AuthScope.maybeOf(context);
+    final TriviaController? controller = TriviaScope.maybeOf(context);
+    if (controller != _triviaController) {
+      _triviaController?.removeListener(_onControllerChanged);
+      _triviaController = controller;
+      _triviaController?.addListener(_onControllerChanged);
+      _sessionRequested = false;
+      _requestSessionLoad();
+      _syncCurrentPokemon();
+    }
   }
 
   @override
@@ -55,10 +110,12 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     _answerController.dispose();
     _achievementSubscription?.cancel();
     _achievementEvents.close();
+    _triviaController?.removeListener(_onControllerChanged);
     super.dispose();
   }
 
   void _startTimer() {
+    if (_currentPokemon == null) return;
     _timer?.cancel();
     setState(() => _remainingSeconds = 20);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -70,77 +127,50 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     });
   }
 
+  List<String> _buildOptionsForPokemon(PokemonListItem pokemon) {
+    final controller = _triviaController;
+    final List<PokemonListItem> pool = controller?.pool ?? const <PokemonListItem>[];
+    final List<PokemonListItem> candidates =
+        pool.where((p) => p.id != pokemon.id).toList(growable: true);
+    candidates.shuffle(_random);
+
+    const int totalOptions = 3;
+    final List<String> options = <String>[pokemon.name];
+
+    while (options.length < totalOptions && candidates.isNotEmpty) {
+      options.add(candidates.removeAt(0).name);
+    }
+
+    options.shuffle(_random);
+    return options;
+  }
+
   void _handleTimeout() {
     final l10n = AppLocalizations.of(context)!;
+    final String pokemonName = _currentPokemon?.name ?? l10n.triviaTitle;
     _timer?.cancel();
     _questionsPlayed += 1;
     _streak = 0;
     _showFeedback(
-      message: l10n.triviaTimeoutMessage(_currentQuestion.name),
+      message: l10n.triviaTimeoutMessage(pokemonName),
       isSuccess: false,
     );
     _evaluateAchievements(isCorrect: false);
     _advanceQuestion();
   }
 
-  List<_TriviaQuestion> get _localizedQuestions {
-    final l10n = AppLocalizations.of(context)!;
-    return [
-      _TriviaQuestion(
-        name: l10n.triviaOptionPikachu,
-        prompt: l10n.triviaQuestionPikachuPrompt,
-        imageUrl:
-            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
-        options: [
-          l10n.triviaOptionPikachu,
-          l10n.triviaOptionRaichu,
-          l10n.triviaOptionPichu,
-        ],
-      ),
-      _TriviaQuestion(
-        name: l10n.triviaOptionBulbasaur,
-        prompt: l10n.triviaQuestionBulbasaurPrompt,
-        imageUrl:
-            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png',
-        options: [
-          l10n.triviaOptionBulbasaur,
-          l10n.triviaOptionIvysaur,
-          l10n.triviaOptionOddish,
-        ],
-      ),
-      _TriviaQuestion(
-        name: l10n.triviaOptionCharizard,
-        prompt: l10n.triviaQuestionCharizardPrompt,
-        imageUrl:
-            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
-        options: [
-          l10n.triviaOptionCharizard,
-          l10n.triviaOptionAerodactyl,
-          l10n.triviaOptionCharmeleon,
-        ],
-      ),
-    ];
-  }
-
-  _TriviaQuestion get _currentQuestion =>
-      _localizedQuestions[_currentIndex % _localizedQuestions.length];
-
   void _advanceQuestion() {
-    setState(() {
-      _currentIndex = (_currentIndex + 1) % _localizedQuestions.length;
-      _showSolution = false;
-      _isAnimating = false;
-      _answerController.clear();
-    });
-    _startTimer();
+    _timer?.cancel();
+    _triviaController?.loadNextPokemon();
   }
 
   void _submitAnswer([String? selected]) {
     final l10n = AppLocalizations.of(context)!;
+    final PokemonListItem? pokemon = _currentPokemon;
     final normalizedInput = (selected ?? _answerController.text).trim().toLowerCase();
-    if (normalizedInput.isEmpty || _isAnimating) return;
+    if (normalizedInput.isEmpty || _isAnimating || pokemon == null) return;
 
-    final correctAnswer = _currentQuestion.name.toLowerCase();
+    final correctAnswer = pokemon.name.toLowerCase();
     final isCorrect = normalizedInput == correctAnswer;
     _timer?.cancel();
     setState(() {
@@ -157,7 +187,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 
     _showFeedback(
       message: isCorrect
-          ? l10n.triviaCorrectMessage(_currentQuestion.name)
+          ? l10n.triviaCorrectMessage(pokemon.name)
           : l10n.triviaIncorrectMessage,
       isSuccess: isCorrect,
     );
@@ -251,30 +281,46 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final question = _currentQuestion;
-    final filterActive = !_showSolution;
+    final PokemonListItem? pokemon = _currentPokemon;
+    final bool isLoading = _triviaController?.isLoading ?? false;
+    final bool filterActive = !_showSolution;
+
+    final appBar = AppBar(
+      title: Text(l10n.triviaTitle),
+      actions: [
+        IconButton(
+          onPressed: _openRanking,
+          icon: const Icon(Icons.leaderboard_outlined),
+          tooltip: l10n.triviaRankingTooltip,
+        ),
+        IconButton(
+          onPressed: _openAchievements,
+          icon: const Icon(Icons.emoji_events_outlined),
+          tooltip: l10n.triviaAchievementsTooltip,
+        ),
+        IconButton(
+          onPressed: _saveSession,
+          icon: const Icon(Icons.save_alt),
+          tooltip: l10n.triviaSaveSessionTooltip,
+        ),
+      ],
+    );
+
+    if (pokemon == null) {
+      return Scaffold(
+        appBar: appBar,
+        body: SafeArea(
+          child: Center(
+            child: isLoading
+                ? const CircularProgressIndicator()
+                : Text(l10n.triviaPlayCardSubtitle),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.triviaTitle),
-        actions: [
-          IconButton(
-            onPressed: _openRanking,
-            icon: const Icon(Icons.leaderboard_outlined),
-            tooltip: l10n.triviaRankingTooltip,
-          ),
-          IconButton(
-            onPressed: _openAchievements,
-            icon: const Icon(Icons.emoji_events_outlined),
-            tooltip: l10n.triviaAchievementsTooltip,
-          ),
-          IconButton(
-            onPressed: _saveSession,
-            icon: const Icon(Icons.save_alt),
-            tooltip: l10n.triviaSaveSessionTooltip,
-          ),
-        ],
-      ),
+      appBar: appBar,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -286,7 +332,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
               _buildStats(theme, l10n),
               const SizedBox(height: 16),
               Text(
-                question.prompt,
+                l10n.triviaGuessPrompt(pokemon.id),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -297,8 +343,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 450),
                     child: _PokemonSilhouette(
-                      key: ValueKey(question.name + filterActive.toString()),
-                      question: question,
+                      key: ValueKey('${pokemon.id}-$filterActive'),
+                      pokemon: pokemon,
                       filterActive: filterActive,
                     ),
                   ),
@@ -308,7 +354,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
                 duration: const Duration(milliseconds: 300),
                 child: _showSolution
                     ? Text(
-                        question.name.toUpperCase(),
+                        pokemon.name.toUpperCase(),
                         style: theme.textTheme.titleLarge?.copyWith(
                           letterSpacing: 1.2,
                           color: theme.colorScheme.primary,
@@ -318,7 +364,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
                     : const SizedBox.shrink(),
               ),
               const SizedBox(height: 16),
-              _buildOptions(theme, question),
+              _buildOptions(theme),
               const SizedBox(height: 12),
               _buildInput(theme, l10n),
               const SizedBox(height: 12),
@@ -422,11 +468,11 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
     );
   }
 
-  Widget _buildOptions(ThemeData theme, _TriviaQuestion question) {
+  Widget _buildOptions(ThemeData theme) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: question.options
+      children: _currentOptions
           .map(
             (option) => ChoiceChip(
               label: Text(option),
@@ -552,11 +598,11 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen> {
 class _PokemonSilhouette extends StatelessWidget {
   const _PokemonSilhouette({
     super.key,
-    required this.question,
+    required this.pokemon,
     required this.filterActive,
   });
 
-  final _TriviaQuestion question;
+  final PokemonListItem pokemon;
   final bool filterActive;
 
   @override
@@ -599,7 +645,7 @@ class _PokemonSilhouette extends StatelessWidget {
                       : const ColorFilter.mode(
                           Colors.transparent, BlendMode.multiply),
                   child: Image.network(
-                    question.imageUrl,
+                    pokemon.imageUrl,
                     fit: BoxFit.contain,
                     height: 240,
                   ),
@@ -675,16 +721,3 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _TriviaQuestion {
-  const _TriviaQuestion({
-    required this.name,
-    required this.prompt,
-    required this.imageUrl,
-    this.options = const [],
-  });
-
-  final String name;
-  final String prompt;
-  final String imageUrl;
-  final List<String> options;
-}

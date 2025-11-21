@@ -333,6 +333,15 @@
   "@triviaQuestionCharizardPrompt": {
     "description": "Pregunta mostrada para la silueta de Charizard."
   },
+  "triviaGuessPrompt": "¿Quién es este Pokémon? ¡Intenta adivinar el N.º {id}!",
+  "@triviaGuessPrompt": {
+    "description": "Pregunta genérica para adivinar el Pokémon según su número",
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "triviaOptionPikachu": "Pikachu",
   "@triviaOptionPikachu": {
     "description": "Etiqueta localizada de Pikachu utilizada en opciones y respuestas de trivia."
