@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
+import 'package:pokedex/screens/detail_screen.dart';
 
 
 
@@ -500,7 +501,7 @@ class EvolutionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           onTap: () {
             pendingEvolutionNavigation[species.name] = species.id;
-            Navigator.of(context).pushNamed('/pokedex/${species.name}');
+            context.push('/pokedex/${species.name}');
           },
           child: card,
         ),
@@ -892,7 +893,7 @@ class _EvolutionStageCardState extends State<EvolutionStageCard>
             onTap: () {
               pendingEvolutionNavigation[widget.node.slug] =
                   widget.node.speciesId;
-              Navigator.of(context).pushNamed('/pokedex/${widget.node.slug}');
+              context.push('/pokedex/${widget.node.slug}');
             },
             child: card,
           ),
