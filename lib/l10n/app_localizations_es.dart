@@ -279,7 +279,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String triviaAchievementsUnlockedLabel(String date) {
-    return 'Desbloqueado · ${date}';
+    return 'Desbloqueado · $date';
   }
 
   @override
@@ -448,8 +448,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get triviaSessionSavedMessage => 'Sesión guardada en el ranking';
 
   @override
-  String get triviaAchievementUnlockedTitle =>
-      '¡Logro desbloqueado! 🎉';
+  String get triviaAchievementUnlockedTitle => '¡Logro desbloqueado! 🎉';
 
   @override
   String homeSectionCardSemanticLabel(String sectionName) {

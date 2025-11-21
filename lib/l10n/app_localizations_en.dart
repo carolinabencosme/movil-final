@@ -262,7 +262,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get triviaAchievementsCardSubtitle =>
-      "Review the badges you've earned during trivia sessions.";
+      'Review the badges you\'ve earned during trivia sessions.';
 
   @override
   String get triviaAchievementsTitle => 'Trivia achievements';
@@ -275,7 +275,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String triviaAchievementsUnlockedLabel(String date) {
-    return 'Unlocked · ${date}';
+    return 'Unlocked · $date';
   }
 
   @override
@@ -425,12 +425,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get triviaIncorrectMessage =>
-      'Incorrect answer. Try the next one.';
+  String get triviaIncorrectMessage => 'Incorrect answer. Try the next one.';
 
   @override
   String get triviaSaveUnavailableMessage =>
-      "Couldn't access the ranking right now.";
+      'Couldn\'t access the ranking right now.';
 
   @override
   String get triviaSaveNoQuestionsMessage =>
@@ -443,8 +442,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get triviaSessionSavedMessage => 'Session saved to the ranking';
 
   @override
-  String get triviaAchievementUnlockedTitle =>
-      'Achievement unlocked! 🎉';
+  String get triviaAchievementUnlockedTitle => 'Achievement unlocked! 🎉';
 
   @override
   String homeSectionCardSemanticLabel(String sectionName) {

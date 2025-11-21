@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// Subtitle encouraging users to review their trivia achievements.
   ///
   /// In en, this message translates to:
-  /// **"Review the badges you've earned during trivia sessions."**
+  /// **'Review the badges you\'ve earned during trivia sessions.'**
   String get triviaAchievementsCardSubtitle;
 
   /// App bar title for the trivia achievements screen.
@@ -875,7 +875,7 @@ abstract class AppLocalizations {
   /// Snackbar message shown when the ranking repository is unavailable.
   ///
   /// In en, this message translates to:
-  /// **"Couldn't access the ranking right now."**
+  /// **'Couldn\'t access the ranking right now.'**
   String get triviaSaveUnavailableMessage;
 
   /// Snackbar message shown when trying to save a trivia session without playing.
