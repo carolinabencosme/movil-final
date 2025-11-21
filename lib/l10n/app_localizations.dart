@@ -728,6 +728,12 @@ abstract class AppLocalizations {
   /// **'Fire-breathing dragon from Kanto.'**
   String get triviaQuestionCharizardPrompt;
 
+  /// Generic trivia prompt that hints the Pokémon id.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s that Pokémon? Try to guess No. {id}!'**
+  String triviaGuessPrompt(int id);
+
   /// Localized label for Pikachu used in trivia options and answers.
   ///
   /// In en, this message translates to:
