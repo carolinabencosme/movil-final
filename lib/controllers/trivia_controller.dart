@@ -51,6 +51,7 @@ class TriviaController extends ChangeNotifier {
   int get correctAnswers => _correctAnswers;
   int get questionsServed => _questionsServed;
   bool get isLoading => _isLoading;
+  List<PokemonListItem> get pool => List<PokemonListItem>.unmodifiable(_pool);
 
   Future<void> loadSession() async {
     if (_isLoading) return;

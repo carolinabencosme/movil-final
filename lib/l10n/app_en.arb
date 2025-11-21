@@ -333,6 +333,15 @@
   "@triviaQuestionCharizardPrompt": {
     "description": "Prompt shown for the Charizard silhouette question."
   },
+  "triviaGuessPrompt": "Who's that Pokémon? Try to guess No. {id}!",
+  "@triviaGuessPrompt": {
+    "description": "Generic trivia prompt that hints the Pokémon id",
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "triviaOptionPikachu": "Pikachu",
   "@triviaOptionPikachu": {
     "description": "Localized label for Pikachu used in trivia options and answers."
