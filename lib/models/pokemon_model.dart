@@ -265,6 +265,8 @@ class PokemonDetail {
     required this.moves,
     this.evolutionChain,
     this.speciesId,
+    this.shinyImageUrl,
+    this.spriteData,
   });
 
   final int id;
@@ -278,6 +280,24 @@ class PokemonDetail {
   final List<PokemonMove> moves;
   final PokemonEvolutionChain? evolutionChain;
   final int? speciesId;
+  
+  /// URL del sprite shiny del Pokémon (si está disponible)
+  final String? shinyImageUrl;
+  
+  /// Datos crudos de sprites para uso posterior (opcional)
+  final dynamic spriteData;
+
+  /// Obtiene la URL del sprite según el estado shiny
+  String getSpriteUrl({bool isShiny = false}) {
+    if (isShiny && shinyImageUrl != null && shinyImageUrl!.isNotEmpty) {
+      return shinyImageUrl!;
+    }
+    return imageUrl;
+  }
+
+  /// Verifica si hay sprite shiny disponible
+  bool get hasShinySprite => 
+      shinyImageUrl != null && shinyImageUrl!.isNotEmpty;
 
   /// Construye el detalle a partir del JSON principal del Pokémon.
   ///
@@ -441,10 +461,15 @@ class PokemonDetail {
     final typeMatchups =
         _buildTypeMatchups(typeIds, typeEfficacies.whereType<Map<String, dynamic>>());
 
+    // Extrae sprites normales y shiny
+    final spriteData = json['pokemon_v2_pokemonsprites'];
+    final normalUrl = _extractSpriteUrl(spriteData);
+    final shinyUrl = extractSpriteUrlWithShiny(spriteData, isShiny: true);
+
     return PokemonDetail(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
-      imageUrl: _extractSpriteUrl(json['pokemon_v2_pokemonsprites']),
+      imageUrl: normalUrl,
       types: types,
       abilities: abilities,
       stats: stats,
@@ -453,6 +478,8 @@ class PokemonDetail {
       moves: moves,
       evolutionChain: evolutionChain,
       speciesId: speciesId,
+      shinyImageUrl: shinyUrl.isNotEmpty ? shinyUrl : null,
+      spriteData: spriteData,
     );
   }
 }
@@ -1329,4 +1356,66 @@ String? _normalizeSpriteUrl(String? value) {
     return value.replaceFirst('http://', 'https://');
   }
   return value;
+}
+
+/// Extrae la URL del sprite específico (normal o shiny) desde los datos de sprites.
+/// 
+/// Parámetros:
+/// - [spriteEntries]: Lista de objetos de sprites desde GraphQL
+/// - [isShiny]: Si es true, prioriza sprites shiny; si es false, prioriza normales
+/// 
+/// Devuelve la mejor URL disponible según la preferencia de shiny.
+String extractSpriteUrlWithShiny(dynamic spriteEntries, {bool isShiny = false}) {
+  final sprites = spriteEntries as List<dynamic>?;
+  if (sprites == null || sprites.isEmpty) {
+    return '';
+  }
+
+  for (final entry in sprites) {
+    if (entry is! Map<String, dynamic>) {
+      continue;
+    }
+
+    final decoded = _decodeSprites(entry['sprites']);
+    if (decoded == null) {
+      continue;
+    }
+
+    final candidate = isShiny 
+        ? _selectShinySpriteFromMap(decoded) 
+        : _selectSpriteFromMap(decoded);
+    if (candidate != null) {
+      return candidate;
+    }
+  }
+
+  return '';
+}
+
+/// Selecciona la mejor URL disponible de sprite shiny de un mapa de sprites.
+///
+/// Orden de preferencia para shiny:
+/// 1) other.official-artwork.front_shiny
+/// 2) other.home.front_shiny
+/// 3) front_shiny
+/// 4) Fallback a versión normal si no hay shiny
+String? _selectShinySpriteFromMap(Map<String, dynamic> decoded) {
+  final rawCandidates = <String?>[
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_shiny']),
+    _getNestedString(decoded, ['other', 'home', 'front_shiny']),
+    _asNonEmptyString(decoded['front_shiny']),
+    // Fallback a versión normal si no hay shiny disponible
+    _getNestedString(decoded, ['other', 'official-artwork', 'front_default']),
+    _getNestedString(decoded, ['other', 'home', 'front_default']),
+    _asNonEmptyString(decoded['front_default']),
+  ];
+
+  for (final candidate in rawCandidates) {
+    final normalized = _normalizeSpriteUrl(candidate);
+    if (normalized != null) {
+      return normalized;
+    }
+  }
+
+  return null;
 }

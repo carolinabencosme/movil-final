@@ -610,6 +610,9 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late final ScrollController _primaryScrollController;
+  
+  // Estado para el toggle shiny
+  bool _isShiny = false;
 
   static const int _locationsTabIndex = 5;
 
@@ -619,6 +622,15 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     // 6 pestañas: Info, Stats, Matchups, Evolución, Movimientos, Ubicaciones
     _tabController = TabController(length: 6, vsync: this);
     _primaryScrollController = ScrollController();
+  }
+  
+  /// Alterna entre sprite normal y shiny
+  void _toggleShiny() {
+    if (widget.pokemon.hasShinySprite) {
+      setState(() {
+        _isShiny = !_isShiny;
+      });
+    }
   }
 
   @override
@@ -718,6 +730,8 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
         expandedHeight: headerHeight,
         collapsedHeight: collapsedHeight,
         capitalize: widget.capitalize,
+        isShiny: _isShiny,
+        onShinyToggle: _toggleShiny,
       ),
     );
   }
@@ -905,6 +919,8 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.expandedHeight,
     required this.collapsedHeight,
     required this.capitalize,
+    required this.isShiny,
+    required this.onShinyToggle,
   });
 
   final PokemonDetail pokemon;
@@ -915,6 +931,8 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double expandedHeight;
   final double collapsedHeight;
   final String Function(String) capitalize;
+  final bool isShiny;
+  final VoidCallback onShinyToggle;
 
   @override
   double get maxExtent => expandedHeight;
@@ -1068,7 +1086,7 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                       scale: imageScale,
                       child: PokemonArtwork(
                         heroTag: heroTag,
-                        imageUrl: pokemon.imageUrl,
+                        imageUrl: pokemon.getSpriteUrl(isShiny: isShiny),
                         size: imageSize,
                         borderRadius: 36,
                         padding: EdgeInsets.symmetric(
@@ -1079,6 +1097,60 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                 ),
+                // Botón de toggle shiny (solo si hay sprite shiny disponible)
+                if (pokemon.hasShinySprite)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Opacity(
+                      opacity: (1 - (0.4 * progress)).clamp(0.0, 1.0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onShinyToggle,
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: onTypeColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: onTypeColor.withOpacity(0.3),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isShiny ? Icons.auto_awesome : Icons.auto_awesome_outlined,
+                                  color: isShiny 
+                                      ? const Color(0xFFFFD700) // Gold for shiny
+                                      : onTypeColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isShiny ? 'Shiny' : 'Normal',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: onTypeColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -1096,7 +1168,8 @@ class _HeroHeaderDelegate extends SliverPersistentHeaderDelegate {
         oldDelegate.onTypeColor != onTypeColor ||
         oldDelegate.heroTag != heroTag ||
         oldDelegate.expandedHeight != expandedHeight ||
-        oldDelegate.collapsedHeight != collapsedHeight;
+        oldDelegate.collapsedHeight != collapsedHeight ||
+        oldDelegate.isShiny != isShiny;
   }
 }
 
