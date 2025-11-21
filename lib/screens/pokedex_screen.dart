@@ -1920,11 +1920,7 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                       tooltip: isFavorite
                           ? l10n.detailFavoriteRemoveTooltip
                           : l10n.detailFavoriteAddTooltip,
-                      onPressed: onToggleFavorite != null
-                          ? () async {
-                              onToggleFavorite();
-                            }
-                          : null,
+                      onPressed: onToggleFavorite,
                     ),
                   ),
                 ),
