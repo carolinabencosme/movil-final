@@ -282,13 +282,13 @@ class PokemonDetail {
   final PokemonEvolutionChain? evolutionChain;
   final int? speciesId;
   
-  /// URL del sprite shiny del Pokémon (si está disponible)
+  /// URL of the Pokemon's shiny sprite (if available)
   final String? shinyImageUrl;
   
-  /// Datos crudos de sprites para uso posterior (opcional)
+  /// Raw sprite data for future use (optional)
   final dynamic spriteData;
   
-  /// Lista de formas/variantes disponibles para este Pokémon
+  /// List of available forms/variants for this Pokemon
   final List<PokemonForm>? forms;
 
   /// Obtiene la URL del sprite según el estado shiny

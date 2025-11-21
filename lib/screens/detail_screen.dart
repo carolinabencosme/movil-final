@@ -647,10 +647,10 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
   late TabController _tabController;
   late final ScrollController _primaryScrollController;
   
-  // Estado para el toggle shiny
+  // State for shiny toggle
   bool _isShiny = false;
   
-  // Estado para la forma seleccionada (índice en la lista de formas)
+  // State for selected form (index in forms list)
   int _selectedFormIndex = 0;
 
   static const int _locationsTabIndex = 5;
@@ -871,7 +871,6 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       Color typeColor,
       ) {
     return SliverPersistentHeader(
-    final currentPokemon = _getCurrentPokemon();
       pinned: true,
       delegate: _TabBarHeaderDelegate(
         tabController: _tabController,
@@ -890,6 +889,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
     // Get current data (base form or selected form)
     final currentData = _getCurrentPokemonData();
 
+    final currentPokemon = _getCurrentPokemon();
     // Habilidad “principal” para mostrar en el bloque de info
     final mainAbilityDetail =
     currentData.abilities.isNotEmpty ? currentData.abilities.first : null;

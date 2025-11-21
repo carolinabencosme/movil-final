@@ -91,7 +91,7 @@ const String getPokemonDetailsQuery = r'''
           }
         }
 
-        # Todos los Pokémon de esta especie (formas/variantes)
+        # All Pokemon of this species (forms/variants)
         pokemon_v2_pokemons(order_by: {id: asc}) {
           id
           name
