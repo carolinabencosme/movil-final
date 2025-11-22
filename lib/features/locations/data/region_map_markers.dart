@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import 'region_map_data.dart';
+
 /// Coordenadas X/Y para marcadores en los mapas de regiones Pokémon
 ///
 /// Los datos fueron extraídos de la PokéAPI usando los endpoints de
@@ -27,6 +31,65 @@ class RegionMarker {
 
 /// Alias para agrupar marcadores por versión de juego
 typedef VersionedMarkers = Map<String, RegionMarker>;
+
+RegionMapData? _resolveMapDataForVersion(String regionName, String? gameVersion) {
+  final normalizedRegion = regionName.toLowerCase().trim();
+  final versions = getRegionMapVersions(normalizedRegion);
+
+  if (versions.isEmpty) return getRegionMapData(normalizedRegion);
+
+  if (gameVersion != null) {
+    final normalizedVersion = _normalizeVersionName(gameVersion);
+
+    for (final data in versions) {
+      final candidateVersion = _normalizeVersionName(data.gameVersion);
+      if (candidateVersion == normalizedVersion ||
+          candidateVersion.contains(normalizedVersion) ||
+          normalizedVersion.contains(candidateVersion)) {
+        return data;
+      }
+    }
+  }
+
+  return versions.first;
+}
+
+RegionMarker _scaleMarkerToMap(
+  RegionMarker marker,
+  String regionName,
+  String? gameVersion,
+) {
+  final baseSize = _markerBaseSizes[regionName];
+  final targetSize = _resolveMapDataForVersion(regionName, gameVersion)?.mapSize;
+
+  if (baseSize == null || targetSize == null) {
+    return marker;
+  }
+
+  final scaleX = targetSize.width / baseSize.width;
+  final scaleY = targetSize.height / baseSize.height;
+
+  return RegionMarker(
+    marker.x * scaleX,
+    marker.y * scaleY,
+    marker.area,
+    marker.game,
+  );
+}
+
+/// Dimensiones base usadas para escalar los marcadores al tamaño real del mapa
+const Map<String, Size> _markerBaseSizes = {
+  'kanto': Size(1024, 768),
+  'johto': Size(1200, 900),
+  'hoenn': Size(1500, 1100),
+  'sinnoh': Size(1400, 1000),
+  'unova': Size(1600, 1200),
+  'kalos': Size(1800, 1400),
+  'alola': Size(1600, 1200),
+  'galar': Size(2000, 1500),
+  'hisui': Size(2000, 1500),
+  'paldea': Size(2200, 1600),
+};
 
 /// Mapa de marcadores por región → área → versión
 ///
@@ -910,11 +973,15 @@ RegionMarker? getRegionMarker(
 
   if (normalizedVersion != null) {
     final directMatch = _findMarkerByVersion(areaMarkers, normalizedVersion);
-    if (directMatch != null) return directMatch;
+    if (directMatch != null) {
+      return _scaleMarkerToMap(directMatch, normalizedRegion, gameVersion);
+    }
   }
 
   // Fallback al marcador por defecto si existe, o la primera entrada conocida
-  return areaMarkers['default'] ?? areaMarkers.values.first;
+  final marker = areaMarkers['default'] ?? areaMarkers.values.first;
+
+  return _scaleMarkerToMap(marker, normalizedRegion, gameVersion);
 }
 
 RegionMarker? _findMarkerByVersion(
