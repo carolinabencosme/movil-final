@@ -63,6 +63,11 @@ This implementation provides comprehensive Pokémon region maps covering **all o
 **Hisui (1 map)**
 - `assets/maps/regions/hisui/hisui_legends.png` - Legends: Arceus (2000x1500px)
 
+**Notas de assets actualizados**
+- Se retiraron los SVG vectoriales provisionales (`*_vector.svg`) en favor de las capturas oficiales de cada juego/DLC.
+- Las dimensiones de `RegionMapData.mapSize` reflejan los píxeles reales de cada PNG (obtenidos directamente de los archivos en `assets/maps/regions/**`).
+- Los marcadores ahora se escalan en tiempo de ejecución usando el tamaño exacto del mapa seleccionado, evitando descuadres al alternar entre versiones con resoluciones distintas (ej. Paldea base 2200x1600 → DLC 1800x1400).
+
 **Map Features:**
 - Authentic Pokémon color palettes (grass, water, mountains, cities)
 - Geographical features (routes, cities, forests, water bodies)

@@ -121,16 +121,25 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       }
     }
 
-    // Fallback a un SVG vectorial coherente con la convención de nombres usada
-    // en assets/maps/regions/<region>/<region>_vector.svg. Esto evita rutas
-    // inexistentes como assets/maps/regions/<region>.png que no están en el
-    // bundle final.
-    return 'assets/maps/regions/$normalizedRegion/${normalizedRegion}_vector.svg';
+    final versions = regionMapsByVersion[normalizedRegion];
+    if (versions != null && versions.isNotEmpty) {
+      return versions.first.assetPath;
+    }
+
+    return 'assets/maps/regions/$normalizedRegion/${normalizedRegion}.png';
   }
 
   /// Obtiene el tamaño del mapa
   Size _getMapSize() {
-    return _currentMapData?.mapSize ?? const Size(800, 600);
+    if (_currentMapData != null) return _currentMapData!.mapSize;
+
+    final normalizedRegion = widget.region.toLowerCase().trim();
+    final versions = regionMapsByVersion[normalizedRegion];
+    if (versions != null && versions.isNotEmpty) {
+      return versions.first.mapSize;
+    }
+
+    return const Size(800, 600);
   }
 
   /// Construye los marcadores sobre el mapa
@@ -188,7 +197,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       final pokemon = spawn['pokemon'] as String? ?? 'Unknown';
 
       // Validar que las coordenadas estén dentro de los límites del mapa
-      if (x < 0 || x > 1000 || y < 0 || y > 1000) {
+      final mapSize = _getMapSize();
+      if (x < 0 || x > mapSize.width || y < 0 || y > mapSize.height) {
         debugPrint('Warning: Spawn point $i ($pokemon) has invalid coordinates: ($x, $y)');
         continue;
       }
