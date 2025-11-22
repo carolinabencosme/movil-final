@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../models/pokemon_model.dart';
+import '../../../screens/detail_screen.dart';
 import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
 import '../models/pokemon_location.dart';
@@ -581,6 +583,7 @@ class _MarkerPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasSprite = encounter.spriteUrl.isNotEmpty;
 
     return Card(
       elevation: 8,
@@ -625,55 +628,145 @@ class _MarkerPopup extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Juegos donde aparece
-            if (encounter.allVersions.isNotEmpty) ...[
-              Row(
+            GestureDetector(
+              onTap: () => _openDetail(context),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.videogame_asset,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
+                  if (hasSprite)
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.network(
+                        encounter.spriteUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.catching_pokemon,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  if (hasSprite) const SizedBox(width: 12),
                   Expanded(
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: encounter.allVersions.take(3).map((version) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatPokemonName(encounter.pokemonName),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _formatVersion(version),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: encounter.pokemonTypes
+                              .map((type) => _TypeChip(type: type))
+                              .toList(),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              if (encounter.allVersions.length > 3) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '  +${encounter.allVersions.length - 3} más',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
+            ),
+            const SizedBox(height: 12),
+
+            if (encounter.methodSummaries.isNotEmpty) ...[
+              Text(
+                'Métodos de encuentro',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...encounter.versionDetails.map((versionDetail) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        versionDetail.displayVersion,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...versionDetail.encounterDetails.map(
+                        (detail) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.catching_pokemon,
+                                size: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '${detail.displayMethod} · ${detail.chance}% · ${detail.levelRange}',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (encounter.allVersions.isNotEmpty)
+                  Text(
+                    _buildVersionsLabel(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: () => _openDetail(context),
+                  icon: const Icon(Icons.open_in_new, size: 18),
+                  label: const Text('Ver detalles'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
               ],
-            ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DetailScreen(
+          pokemonId: encounter.pokemonId,
+          pokemonName: encounter.pokemonName,
+          initialPokemon: PokemonListItem(
+            id: encounter.pokemonId,
+            name: encounter.pokemonName,
+            imageUrl: encounter.spriteUrl,
+            types: encounter.pokemonTypes,
+          ),
         ),
       ),
     );
@@ -681,6 +774,20 @@ class _MarkerPopup extends StatelessWidget {
 
   String _formatVersion(String version) {
     return version
+        .split('-')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
+  String _buildVersionsLabel() {
+    final primary = encounter.allVersions.take(2).map(_formatVersion).join(', ');
+    final hasMore = encounter.allVersions.length > 2;
+    return 'Versiones: $primary${hasMore ? ' +' : ''}';
+  }
+
+  String _formatPokemonName(String name) {
+    if (name.isEmpty) return 'Desconocido';
+    return name
         .split('-')
         .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
@@ -720,5 +827,40 @@ class _MapControlButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalizedType = _formatType(type);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+      ),
+      child: Text(
+        normalizedType,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+
+  String _formatType(String value) {
+    return value
+        .split('-')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 }

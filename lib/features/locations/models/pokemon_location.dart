@@ -13,6 +13,10 @@ class PokemonEncounter {
     required this.versionDetails,
     this.region,
     this.coordinates,
+    this.pokemonId = 0,
+    this.pokemonName = 'unknown',
+    this.spriteUrl = '',
+    this.pokemonTypes = const [],
   });
 
   /// Nombre del área de ubicación (ej: "route-1-area", "viridian-forest-area")
@@ -27,8 +31,23 @@ class PokemonEncounter {
   /// Coordenadas X/Y en el mapa de región si están disponibles
   final MapCoordinates? coordinates;
 
+  /// ID del Pokémon al que pertenece el encuentro
+  final int pokemonId;
+
+  /// Nombre del Pokémon
+  final String pokemonName;
+
+  /// Sprite del Pokémon (oficial o mini)
+  final String spriteUrl;
+
+  /// Tipos del Pokémon
+  final List<String> pokemonTypes;
+
   /// Factory para crear desde JSON de PokéAPI
-  factory PokemonEncounter.fromJson(Map<String, dynamic> json) {
+  factory PokemonEncounter.fromJson(
+    Map<String, dynamic> json, {
+    EncounterPokemonInfo? pokemon,
+  }) {
     final locationArea = json['location_area'] as Map<String, dynamic>?;
     final locationAreaName = locationArea?['name'] as String? ?? 'unknown';
 
@@ -44,6 +63,10 @@ class PokemonEncounter {
       locationArea: locationAreaName,
       versionDetails: versionDetails,
       region: region,
+      pokemonId: pokemon?.id ?? 0,
+      pokemonName: pokemon?.name ?? 'unknown',
+      spriteUrl: pokemon?.spriteUrl ?? '',
+      pokemonTypes: pokemon?.types ?? const [],
     );
   }
 
@@ -86,6 +109,50 @@ class PokemonEncounter {
         .map((detail) => detail.version)
         .toSet()
         .toList();
+  }
+
+  /// Resumen plano de métodos de encuentro para mostrar en UI.
+  List<EncounterMethodSummary> get methodSummaries {
+    final List<EncounterMethodSummary> summaries = [];
+
+    for (final versionDetail in versionDetails) {
+      for (final detail in versionDetail.encounterDetails) {
+        summaries.add(
+          EncounterMethodSummary(
+            version: versionDetail.displayVersion,
+            method: detail.displayMethod,
+            chance: detail.chance,
+            levelRange: detail.levelRange,
+          ),
+        );
+      }
+    }
+
+    summaries.sort((a, b) => b.chance.compareTo(a.chance));
+    return summaries;
+  }
+
+  /// Crea una copia con modificaciones de campos opcionales.
+  PokemonEncounter copyWith({
+    String? locationArea,
+    List<EncounterVersionDetail>? versionDetails,
+    String? region,
+    MapCoordinates? coordinates,
+    int? pokemonId,
+    String? pokemonName,
+    String? spriteUrl,
+    List<String>? pokemonTypes,
+  }) {
+    return PokemonEncounter(
+      locationArea: locationArea ?? this.locationArea,
+      versionDetails: versionDetails ?? this.versionDetails,
+      region: region ?? this.region,
+      coordinates: coordinates ?? this.coordinates,
+      pokemonId: pokemonId ?? this.pokemonId,
+      pokemonName: pokemonName ?? this.pokemonName,
+      spriteUrl: spriteUrl ?? this.spriteUrl,
+      pokemonTypes: pokemonTypes ?? this.pokemonTypes,
+    );
   }
 }
 
@@ -183,6 +250,36 @@ class EncounterDetail {
     if (minLevel == maxLevel) return 'Lv. $minLevel';
     return 'Lv. ${minLevel ?? '?'}-${maxLevel ?? '?'}';
   }
+}
+
+/// Información básica del Pokémon asociada al encuentro
+class EncounterPokemonInfo {
+  const EncounterPokemonInfo({
+    required this.id,
+    required this.name,
+    required this.spriteUrl,
+    this.types = const [],
+  });
+
+  final int id;
+  final String name;
+  final String spriteUrl;
+  final List<String> types;
+}
+
+/// Resumen plano de un método de encuentro
+class EncounterMethodSummary {
+  const EncounterMethodSummary({
+    required this.version,
+    required this.method,
+    required this.chance,
+    required this.levelRange,
+  });
+
+  final String version;
+  final String method;
+  final int chance;
+  final String levelRange;
 }
 
 /// Datos agrupados de ubicaciones por región
