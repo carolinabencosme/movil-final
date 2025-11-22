@@ -100,8 +100,15 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   /// Obtiene el path del asset de la imagen del mapa
   String _getMapAssetPath() {
-    return _currentMapData?.assetPath ?? 
-           'assets/maps/regions/${widget.region.toLowerCase()}.png';
+    if (_currentMapData != null) return _currentMapData!.assetPath;
+
+    final normalizedRegion = widget.region.toLowerCase();
+
+    // Fallback a un SVG vectorial coherente con la convención de nombres usada
+    // en assets/maps/regions/<region>/<region>_vector.svg. Esto evita rutas
+    // inexistentes como assets/maps/regions/<region>.png que no están en el
+    // bundle final.
+    return 'assets/maps/regions/$normalizedRegion/${normalizedRegion}_vector.svg';
   }
 
   /// Obtiene el tamaño del mapa

@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokedex/features/locations/data/region_coordinates.dart';
 import 'package:pokedex/features/locations/data/region_map_data.dart';
 import 'package:pokedex/features/locations/data/region_map_markers.dart';
 import 'package:pokedex/features/locations/models/pokemon_location.dart';
+import 'package:pokedex/features/locations/widgets/region_map_viewer.dart';
 
 void main() {
   group('Region Map Data', () {
@@ -51,13 +56,13 @@ void main() {
     test('should return multiple versions for a region', () {
       final kantoVersions = getRegionMapVersions('kanto');
       expect(kantoVersions, isNotEmpty);
-      expect(kantoVersions.length, equals(3)); // RBY, FRLG, Let's Go
-      
+      expect(kantoVersions.length, equals(4)); // RBY, FRLG, Let's Go, Vector
+
       final johtoVersions = getRegionMapVersions('johto');
-      expect(johtoVersions.length, equals(2)); // GSC, HGSS
-      
+      expect(johtoVersions.length, equals(3)); // GSC, HGSS, Vector
+
       final galarVersions = getRegionMapVersions('galar');
-      expect(galarVersions.length, equals(3)); // SwSh, IoA, CT
+      expect(galarVersions.length, equals(4)); // SwSh, IoA, CT, Vector
     });
 
     test('should return empty list for unknown region versions', () {
@@ -82,24 +87,24 @@ void main() {
     });
 
     test('should count versions correctly', () {
-      expect(getRegionMapVersionCount('kanto'), equals(3));
-      expect(getRegionMapVersionCount('johto'), equals(2));
-      expect(getRegionMapVersionCount('kalos'), equals(1));
-      expect(getRegionMapVersionCount('hisui'), equals(1));
+      expect(getRegionMapVersionCount('kanto'), equals(4));
+      expect(getRegionMapVersionCount('johto'), equals(3));
+      expect(getRegionMapVersionCount('kalos'), equals(2));
+      expect(getRegionMapVersionCount('hisui'), equals(2));
       expect(getRegionMapVersionCount('unknown'), equals(0));
     });
 
     test('should include Hisui region', () {
       expect(getRegionMapData('hisui'), isNotNull);
       final hisuiVersions = getRegionMapVersions('hisui');
-      expect(hisuiVersions.length, equals(1));
+      expect(hisuiVersions.length, equals(2));
       expect(hisuiVersions.first.gameVersion, equals('Legends: Arceus'));
     });
 
     test('should have all Paldea DLC maps', () {
       final paldeaVersions = getRegionMapVersions('paldea');
-      expect(paldeaVersions.length, equals(3));
-      
+      expect(paldeaVersions.length, equals(4));
+
       final versionNames = paldeaVersions.map((v) => v.gameVersion).toList();
       expect(versionNames, contains('Scarlet/Violet'));
       expect(versionNames, contains('The Teal Mask'));
@@ -108,7 +113,7 @@ void main() {
 
     test('should have all Galar DLC maps', () {
       final galarVersions = getRegionMapVersions('galar');
-      expect(galarVersions.length, equals(3));
+      expect(galarVersions.length, equals(4));
       
       final versionNames = galarVersions.map((v) => v.gameVersion).toList();
       expect(versionNames, contains('Sword/Shield'));
@@ -152,6 +157,71 @@ void main() {
       expect(regions.length, greaterThanOrEqualTo(9));
       expect(regions, contains('kanto'));
       expect(regions, contains('johto'));
+    });
+  });
+
+  group('Region map assets bundle', () {
+    testWidgets('asset manifest includes all defined map assets', (tester) async {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
+
+      final missingAssets = <String>[];
+
+      for (final regionEntry in regionMapsByVersion.values) {
+        for (final map in regionEntry) {
+          if (!manifest.containsKey(map.assetPath)) {
+            missingAssets.add(map.assetPath);
+          }
+        }
+      }
+
+      expect(
+        missingAssets,
+        isEmpty,
+        reason: 'Missing map assets in manifest: ${missingAssets.join(', ')}',
+      );
+    });
+
+    testWidgets('RegionMapViewer renders Kanto map without errorBuilder', (tester) async {
+      const encounters = [
+        PokemonEncounter(
+          locationArea: 'pallet-town-area',
+          versionDetails: [
+            EncounterVersionDetail(
+              version: 'red',
+              maxChance: 100,
+              encounterDetails: [
+                EncounterDetail(
+                  chance: 100,
+                  method: 'walk',
+                ),
+              ],
+            ),
+          ],
+          coordinates: MapCoordinates(100, 100),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'kanto',
+              encounters: encounters,
+              height: 200,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Imagen del mapa no disponible'), findsNothing);
+
+      final image = tester.widget<Image>(find.byType(Image));
+      final assetImage = image.image as AssetImage;
+      expect(assetImage.assetName, startsWith('assets/maps/regions/kanto/'));
     });
   });
 
