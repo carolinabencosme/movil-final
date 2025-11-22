@@ -759,6 +759,10 @@
   "@detailTabMoves": {
     "description": "Etiqueta de la pestaña de detalle que lista los movimientos del Pokémon."
   },
+  "detailTabLocations": "Ubicaciones",
+  "@detailTabLocations": {
+    "description": "Etiqueta de la pestaña de detalle que muestra las ubicaciones donde se puede encontrar el Pokémon."
+  },
   "detailMovesTitle": "Movimientos",
   "@detailMovesTitle": {
     "description": "Título de la sección de movimientos en la pantalla de detalles del Pokémon."

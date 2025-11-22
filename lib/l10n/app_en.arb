@@ -759,6 +759,10 @@
   "@detailTabMoves": {
     "description": "Label for the detail tab that lists Pokémon moves."
   },
+  "detailTabLocations": "Locations",
+  "@detailTabLocations": {
+    "description": "Label for the detail tab that shows locations where the Pokémon can be found."
+  },
   "detailMovesTitle": "Moves",
   "@detailMovesTitle": {
     "description": "Section title for the moves tab on the Pokémon detail screen."
