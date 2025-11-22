@@ -37,8 +37,9 @@ class RegionMapData {
 /// Mapas de regiones Pokémon oficiales extraídos de los juegos
 ///
 /// Organizado por región y versión de juego para soportar múltiples
-/// generaciones y remakes. Los tamaños son aproximados basados en
-/// las imágenes oficiales de los juegos.
+/// generaciones y remakes. Las dimensiones corresponden a las capturas
+/// que se incluyen en `assets/maps/regions/**` y se midieron directamente
+/// de cada PNG/SVG para evitar valores aproximados.
 final Map<String, List<RegionMapData>> regionMapsByVersion = {
   'kanto': [
     const RegionMapData(
