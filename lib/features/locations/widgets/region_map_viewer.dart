@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../models/pokemon_model.dart';
 import '../../../screens/detail_screen.dart';
+import '../../../theme/pokemon_type_colors.dart';
 import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
 import '../models/pokemon_location.dart';
@@ -144,41 +145,68 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   /// Construye los marcadores sobre el mapa
   List<Widget> _buildMarkers() {
-    final List<Widget> markers = [];
+    if (widget.encounters.isEmpty) return [];
+
+    final Map<String, _MarkerGroup> groupedMarkers = {};
 
     for (final encounter in widget.encounters) {
-      // Obtener coordenadas del marcador, respetando la versión del mapa
       final marker = getRegionMarker(
         widget.region,
         encounter.locationArea,
         gameVersion: _currentMapData?.gameVersion,
       );
-      
-      if (marker != null) {
-        markers.add(
-          Positioned(
-            left: marker.x - 20, // Centrar el marcador (40/2)
-            top: marker.y - 20,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedEncounter = _selectedEncounter == encounter 
-                      ? null 
-                      : encounter;
-                });
-                widget.onMarkerTap?.call(encounter);
-              },
-              child: RegionMarkerWidget(
-                isSelected: _selectedEncounter == encounter,
-                color: widget.markerColor,
-              ),
-            ),
-          ),
-        );
-      }
+
+      if (marker == null) continue;
+
+      final key = '${marker.x}-${marker.y}-${_currentMapData?.gameVersion ?? 'default'}';
+      groupedMarkers.putIfAbsent(
+        key,
+        () => _MarkerGroup(marker: marker, encounters: []),
+      );
+      groupedMarkers[key]!.encounters.add(encounter);
     }
 
-    return markers;
+    final mapSize = _getMapSize();
+    final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
+    final markerSize = 44.0 * normalizedScale;
+
+    return groupedMarkers.values.map((group) {
+      final isSelected = _selectedEncounter != null &&
+          group.encounters.contains(_selectedEncounter);
+
+      return Positioned(
+        left: group.marker.x,
+        top: group.marker.y,
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              final currentIndex = group.encounters.indexOf(_selectedEncounter);
+
+              if (group.encounters.length == 1) {
+                _selectedEncounter = currentIndex != -1
+                    ? null
+                    : group.encounters.first;
+              } else {
+                final nextIndex = currentIndex == -1
+                    ? 0
+                    : (currentIndex + 1) % group.encounters.length;
+                _selectedEncounter = group.encounters[nextIndex];
+              }
+            });
+
+            if (_selectedEncounter != null) {
+              widget.onMarkerTap?.call(_selectedEncounter!);
+            }
+          },
+          child: RegionMarkerWidget(
+            encounters: group.encounters,
+            isSelected: isSelected,
+            color: widget.markerColor,
+            size: markerSize,
+          ),
+        ),
+      );
+    }).toList();
   }
 
   /// Construye marcadores de debug para spawn points
@@ -541,43 +569,176 @@ class _VersionChip extends StatelessWidget {
 class RegionMarkerWidget extends StatelessWidget {
   const RegionMarkerWidget({
     super.key,
+    required this.encounters,
     this.isSelected = false,
     this.color = const Color(0xFFEF5350),
     this.size = 40.0,
   });
 
+  final List<PokemonEncounter> encounters;
   final bool isSelected;
   final Color color;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final visibleEncounters = encounters.take(3).toList();
+    final markerScale = isSelected ? 1.12 : 1.0;
+    final spriteSize = size * markerScale;
+    final overlapOffset = spriteSize * 0.32;
+    final markerWidth = spriteSize + overlapOffset * (visibleEncounters.length - 1);
+    final markerHeight = spriteSize;
+
+    Widget badge() {
+      if (encounters.length <= visibleEncounters.length) return const SizedBox();
+
+      return Positioned(
+        right: -4,
+        bottom: -4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white, width: 1.5),
+          ),
+          child: Text(
+            '+${encounters.length - visibleEncounters.length}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      );
+    }
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: size * (isSelected ? 1.2 : 1.0),
-      height: size * (isSelected ? 1.2 : 1.0),
+      width: markerWidth,
+      height: markerHeight,
+      transform: Matrix4.translationValues(-markerWidth / 2, -markerHeight / 2, 0),
       decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+        color: color.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(markerHeight / 2),
         border: Border.all(
           color: Colors.white,
-          width: 3,
+          width: 2.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: isSelected ? 12 : 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: isSelected ? 14 : 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Icon(
-        Icons.place,
-        color: Colors.white,
-        size: size * 0.6 * (isSelected ? 1.2 : 1.0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visibleEncounters.length; i++)
+            Positioned(
+              left: overlapOffset * i,
+              child: _SpriteBubble(
+                encounter: visibleEncounters[i],
+                size: spriteSize,
+                isSelected: isSelected,
+              ),
+            ),
+          badge(),
+        ],
       ),
     );
   }
+}
+
+class _SpriteBubble extends StatelessWidget {
+  const _SpriteBubble({
+    required this.encounter,
+    required this.size,
+    required this.isSelected,
+  });
+
+  final PokemonEncounter encounter;
+  final double size;
+  final bool isSelected;
+
+  Color _typeColor() {
+    if (encounter.pokemonTypes.isEmpty) {
+      return pokemonTypeColors['unknown'] ?? Colors.grey.shade600;
+    }
+
+    final primaryType = encounter.pokemonTypes.first.toLowerCase();
+    return pokemonTypeColors[primaryType] ?? Colors.grey.shade600;
+  }
+
+  Widget _buildFallbackIcon(Color accent) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            accent.withOpacity(0.14),
+            accent.withOpacity(0.42),
+          ],
+        ),
+      ),
+      child: Icon(
+        Icons.catching_pokemon,
+        color: accent,
+        size: size * 0.55,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _typeColor();
+    final hasSprite = encounter.spriteUrl.isNotEmpty;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(
+          color: accent.withOpacity(isSelected ? 0.9 : 0.65),
+          width: isSelected ? 3 : 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.35),
+            blurRadius: isSelected ? 12 : 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: hasSprite
+            ? Image.network(
+                encounter.spriteUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(accent),
+              )
+            : _buildFallbackIcon(accent),
+      ),
+    );
+  }
+}
+
+class _MarkerGroup {
+  _MarkerGroup({
+    required this.marker,
+    required this.encounters,
+  });
+
+  final RegionMarker marker;
+  final List<PokemonEncounter> encounters;
 }
 
 /// Popup que se muestra al tocar un marcador
