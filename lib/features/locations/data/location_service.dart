@@ -12,7 +12,10 @@ class LocationService {
   ///
   /// Retorna una lista de [PokemonEncounter] con información sobre
   /// dónde se puede encontrar el Pokémon en los diferentes juegos.
-  Future<List<PokemonEncounter>> fetchPokemonEncounters(int pokemonId) async {
+  Future<List<PokemonEncounter>> fetchPokemonEncounters(
+    int pokemonId, {
+    EncounterPokemonInfo? pokemon,
+  }) async {
     try {
       final url = Uri.parse('$_baseUrl/pokemon/$pokemonId/encounters');
       final response = await http.get(url);
@@ -21,7 +24,8 @@ class LocationService {
         final List<dynamic> data = json.decode(response.body) as List<dynamic>;
         
         return data
-            .map((json) => PokemonEncounter.fromJson(json as Map<String, dynamic>))
+            .map((json) =>
+                PokemonEncounter.fromJson(json as Map<String, dynamic>, pokemon: pokemon))
             .toList();
       } else if (response.statusCode == 404) {
         // No se encontraron encuentros para este Pokémon
@@ -76,8 +80,11 @@ class LocationService {
   ///
   /// Método de conveniencia que combina fetchPokemonEncounters
   /// y groupEncountersByRegion en una sola llamada.
-  Future<List<LocationsByRegion>> fetchLocationsByRegion(int pokemonId) async {
-    final encounters = await fetchPokemonEncounters(pokemonId);
+  Future<List<LocationsByRegion>> fetchLocationsByRegion(
+    int pokemonId, {
+    EncounterPokemonInfo? pokemon,
+  }) async {
+    final encounters = await fetchPokemonEncounters(pokemonId, pokemon: pokemon);
     return groupEncountersByRegion(encounters);
   }
 }

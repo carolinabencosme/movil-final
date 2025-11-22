@@ -246,6 +246,62 @@ void main() {
       final assetImage = image.image as AssetImage;
       expect(assetImage.assetName, 'assets/maps/regions/kanto/kanto_rby.png');
     });
+
+    testWidgets('shows sprite, types and encounter methods in popup',
+        (tester) async {
+      const encounter = PokemonEncounter(
+        locationArea: 'route-1-area',
+        versionDetails: [
+          EncounterVersionDetail(
+            version: 'red',
+            maxChance: 50,
+            encounterDetails: [
+              EncounterDetail(
+                chance: 50,
+                method: 'walk',
+                minLevel: 2,
+                maxLevel: 5,
+              ),
+            ],
+          ),
+        ],
+        region: 'kanto',
+        pokemonId: 25,
+        pokemonName: 'pikachu',
+        spriteUrl: 'https://img.pokemondb.net/sprites/home/normal/pikachu.png',
+        pokemonTypes: ['electric'],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'kanto',
+              encounters: const [encounter],
+              height: 300,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.tap(find.byType(RegionMarkerWidget));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pikachu'), findsOneWidget);
+      expect(find.text('Electric'), findsOneWidget);
+      expect(find.textContaining('Walk · 50% · Lv. 2-5'), findsOneWidget);
+
+      final imageFinder = find.byWidgetPredicate(
+        (widget) => widget is Image && widget.image is NetworkImage,
+      );
+      expect(imageFinder, findsOneWidget);
+      final image = tester.widget<Image>(imageFinder);
+      expect(
+        (image.image as NetworkImage).url,
+        equals('https://img.pokemondb.net/sprites/home/normal/pikachu.png'),
+      );
+    });
   });
 
   group('PokemonEncounter Model', () {

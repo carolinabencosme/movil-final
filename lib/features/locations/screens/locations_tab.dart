@@ -53,6 +53,12 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
     try {
       final locations = await _locationService.fetchLocationsByRegion(
         widget.pokemon.id,
+        pokemon: EncounterPokemonInfo(
+          id: widget.pokemon.id,
+          name: widget.pokemon.name,
+          spriteUrl: widget.pokemon.imageUrl,
+          types: widget.pokemon.types,
+        ),
       );
       
       if (mounted) {
