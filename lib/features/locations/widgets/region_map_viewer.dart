@@ -104,6 +104,21 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
     final normalizedRegion = widget.region.toLowerCase();
 
+    // Si no hay datos de versión cargados, usar la primera entrada conocida
+    // para la región antes de construir una ruta manual.
+    final regionVersions = regionMapsByVersion[normalizedRegion];
+    if (regionVersions != null && regionVersions.isNotEmpty) {
+      return regionVersions.first.assetPath;
+    }
+
+    // Último recurso: tomar el primer mapa disponible en el bundle para evitar
+    // renderizar el contenedor de error.
+    for (final entry in regionMapsByVersion.entries) {
+      if (entry.value.isNotEmpty) {
+        return entry.value.first.assetPath;
+      }
+    }
+
     // Fallback a un SVG vectorial coherente con la convención de nombres usada
     // en assets/maps/regions/<region>/<region>_vector.svg. Esto evita rutas
     // inexistentes como assets/maps/regions/<region>.png que no están en el

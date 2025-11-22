@@ -223,6 +223,29 @@ void main() {
       final assetImage = image.image as AssetImage;
       expect(assetImage.assetName, startsWith('assets/maps/regions/kanto/'));
     });
+
+    testWidgets('RegionMapViewer renders fallback map when no version data', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'unknown-region',
+              encounters: [],
+              height: 200,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Imagen del mapa no disponible'), findsNothing);
+
+      final image = tester.widget<Image>(find.byType(Image));
+      final assetImage = image.image as AssetImage;
+      expect(assetImage.assetName, 'assets/maps/regions/kanto/kanto_rby.png');
+    });
   });
 
   group('PokemonEncounter Model', () {
