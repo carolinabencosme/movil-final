@@ -5,6 +5,15 @@ Este módulo implementa mapas interactivos de regiones Pokémon para mostrar las
 > **Nota**: Este módulo fue actualizado para usar mapas de regiones Pokémon en vez de OpenStreetMap.
 > Ver `REGION_MAPS_IMPLEMENTATION.md` en la raíz del proyecto para detalles completos.
 
+## Actualización de mapas oficiales
+
+- Se usan capturas oficiales por generación en `assets/maps/regions/**` (RBY, FRLG, etc.).
+- `region_map_data.dart` referencia las dimensiones reales medidas de cada asset.
+- `region_map_markers.dart` recalibra las coordenadas al tamaño real de cada captura
+  para que `RegionMapViewer` posicione los marcadores sobre las ubicaciones del juego.
+- Habilita el modo debug del visor (ver `examples/spawn_debug_example.dart`) para validar
+  visualmente nuevos marcadores o assets.
+
 ## Estructura
 
 ```
