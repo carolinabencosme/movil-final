@@ -136,8 +136,12 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     final List<Widget> markers = [];
 
     for (final encounter in widget.encounters) {
-      // Obtener coordenadas del marcador
-      final marker = getRegionMarker(widget.region, encounter.locationArea);
+      // Obtener coordenadas del marcador, respetando la versión del mapa
+      final marker = getRegionMarker(
+        widget.region,
+        encounter.locationArea,
+        gameVersion: _currentMapData?.gameVersion,
+      );
       
       if (marker != null) {
         markers.add(

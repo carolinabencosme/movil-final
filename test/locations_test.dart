@@ -379,6 +379,23 @@ void main() {
   });
 
   group('RegionMapMarkers', () {
+    test('should select marker by version when provided', () {
+      final redMarker = getRegionMarker('kanto', 'route-1', gameVersion: 'Red');
+      final frlgMarker =
+          getRegionMarker('kanto', 'route-1', gameVersion: 'FireRed/LeafGreen');
+
+      expect(redMarker?.game, equals('Red'));
+      expect(frlgMarker?.game, equals('FireRed'));
+    });
+
+    test('should fallback to default marker when version is missing', () {
+      final marker =
+          getRegionMarker('kanto', 'route-1', gameVersion: 'unknown-version');
+
+      expect(marker, isNotNull);
+      expect(marker?.area, equals('Route 1'));
+    });
+
     test('should return marker for known areas', () {
       final marker = getRegionMarker('kanto', 'route-1');
       expect(marker, isNotNull);
@@ -429,6 +446,54 @@ void main() {
       final marker = getDefaultRegionMarker('test-region');
       expect(marker.x, equals(400));
       expect(marker.y, equals(300));
+    });
+
+    test('should have markers for every API area per supported version', () {
+      final apiAreasByVersion = <String, Map<String, List<String>>>{
+        'kanto': {
+          'red': regionMarkersByRegion['kanto']!.keys.toList(),
+          'firered': regionMarkersByRegion['kanto']!.keys.toList(),
+          'lets-go-pikachu': regionMarkersByRegion['kanto']!.keys.toList(),
+        },
+        'johto': {
+          'gold': regionMarkersByRegion['johto']!.keys.toList(),
+          'heartgold': regionMarkersByRegion['johto']!.keys.toList(),
+        },
+        'hoenn': {
+          'ruby': regionMarkersByRegion['hoenn']!.keys.toList(),
+          'emerald': regionMarkersByRegion['hoenn']!.keys.toList(),
+        },
+        'sinnoh': {
+          'diamond': regionMarkersByRegion['sinnoh']!.keys.toList(),
+          'platinum': regionMarkersByRegion['sinnoh']!.keys.toList(),
+          'brilliant-diamond': regionMarkersByRegion['sinnoh']!.keys.toList(),
+        },
+        'unova': {
+          'black': regionMarkersByRegion['unova']!.keys.toList(),
+          'black-2': regionMarkersByRegion['unova']!.keys.toList(),
+        },
+        'kalos': {
+          'x': regionMarkersByRegion['kalos']!.keys.toList(),
+        },
+        'alola': {
+          'sun': regionMarkersByRegion['alola']!.keys.toList(),
+          'ultra-sun': regionMarkersByRegion['alola']!.keys.toList(),
+        },
+        'galar': {
+          'sword': regionMarkersByRegion['galar']!.keys.toList(),
+        },
+      };
+
+      apiAreasByVersion.forEach((region, versions) {
+        versions.forEach((version, areas) {
+          for (final area in areas) {
+            final marker =
+                getRegionMarker(region, area, gameVersion: version);
+            expect(marker, isNotNull,
+                reason: 'Missing marker for $region/$version -> $area');
+          }
+        });
+      });
     });
   });
 
