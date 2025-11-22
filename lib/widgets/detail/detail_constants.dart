@@ -86,6 +86,10 @@ List<DetailTabConfig> buildDetailTabConfigs(AppLocalizations l10n) => [
         icon: Icons.sports_martial_arts_rounded,
         label: l10n.detailTabMoves,
       ),
+      DetailTabConfig(
+        icon: Icons.map_outlined,
+        label: l10n.detailTabLocations,
+      ),
     ];
 
 // Constants for evolution stage card sizing
