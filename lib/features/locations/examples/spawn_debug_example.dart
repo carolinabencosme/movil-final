@@ -42,6 +42,18 @@ class _SpawnDebugExampleState extends State<SpawnDebugExample> {
         _debugSpawns = spawns.cast<Map<String, dynamic>>();
         _isLoading = false;
       });
+    } on FlutterError catch (e) {
+      debugPrint('File not found: ${e.message}');
+      setState(() {
+        _debugSpawns = null;
+        _isLoading = false;
+      });
+    } on FormatException catch (e) {
+      debugPrint('Invalid JSON format: ${e.message}');
+      setState(() {
+        _debugSpawns = null;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error loading spawn data: $e');
       setState(() {

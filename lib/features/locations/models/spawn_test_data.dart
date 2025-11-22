@@ -89,6 +89,7 @@ class SpawnPoint {
   /// Nombre del Pokémon formateado
   String get displayName {
     if (pokemon.isEmpty) return '';
+    if (pokemon.length == 1) return pokemon.toUpperCase();
     return pokemon[0].toUpperCase() + pokemon.substring(1);
   }
 }

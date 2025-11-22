@@ -159,6 +159,12 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       final y = (spawn['y'] as num).toDouble();
       final pokemon = spawn['pokemon'] as String? ?? 'Unknown';
 
+      // Validar que las coordenadas estén dentro de los límites del mapa
+      if (x < 0 || x > 1000 || y < 0 || y > 1000) {
+        debugPrint('Warning: Spawn point $i ($pokemon) has invalid coordinates: ($x, $y)');
+        continue;
+      }
+
       markers.add(
         Positioned(
           left: x - 15, // Centro del círculo (30/2)
@@ -168,7 +174,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               // Mostrar tooltip o popup con info del spawn
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('$pokemon at ($x, $y)'),
+                  content: Text('Pokémon: $pokemon, Coordinates: ($x, $y)'),
                   duration: const Duration(seconds: 2),
                 ),
               );
