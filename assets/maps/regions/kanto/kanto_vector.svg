@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="Stylized Kanto region map">
+  <defs>
+    <linearGradient id="kanto-sea" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#5ba3d9"/>
+      <stop offset="100%" stop-color="#3d7fb8"/>
+    </linearGradient>
+    <linearGradient id="kanto-land" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7cb85f"/>
+      <stop offset="100%" stop-color="#5a9745"/>
+    </linearGradient>
+    <linearGradient id="kanto-mountain" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#9b8370"/>
+      <stop offset="100%" stop-color="#756049"/>
+    </linearGradient>
+    <linearGradient id="kanto-city" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e8d4a8"/>
+      <stop offset="100%" stop-color="#d4bc8f"/>
+    </linearGradient>
+    <radialGradient id="kanto-glow" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0%" stop-color="#a8d8ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#5ba3d9" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="kanto-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Ocean background -->
+  <rect width="1000" height="1000" fill="url(#kanto-sea)"/>
+  <rect width="1000" height="1000" fill="url(#kanto-glow)" opacity="0.4"/>
+
+  <!-- Main landmass -->
+  <g id="kanto-land" filter="url(#kanto-shadow)">
+    <!-- Pallet Town area (south) -->
+    <path d="M380 820c-45-30-60-85-35-135 28-55 85-90 145-102 68-14 142-8 195 22 48 27 75 75 68 125-7 52-45 95-95 115-55 22-120 28-180 18-42-7-78-25-98-43z" fill="url(#kanto-land)"/>
+    
+    <!-- Viridian - Pewter connection (west) -->
+    <path d="M220 420c-35-48-28-115 18-162 48-48 125-68 195-58 65 9 125 42 158 92 30 45 32 102 5 149-28 48-78 82-135 95-62 14-130 8-181-28-28-20-48-52-60-88z" fill="url(#kanto-land)"/>
+    
+    <!-- Central Kanto (Cerulean - Saffron area) -->
+    <path d="M450 280c58-22 128-20 185 5 52 23 95 65 115 115 18 45 18 95-2 138-22 48-65 85-115 102-55 18-118 15-172-8-48-20-88-58-108-105-18-42-20-90-5-135 15-42 48-85 102-112z" fill="url(#kanto-land)"/>
+    
+    <!-- Eastern Kanto (Lavender - Fuschia) -->
+    <path d="M720 480c42-38 105-52 162-38 52 13 98 48 120 95 20 42 18 92-5 132-25 42-68 72-118 85-55 14-115 8-162-18-42-23-75-62-88-108-12-42-8-88 15-125 18-28 48-52 76-23z" fill="url(#kanto-land)"/>
+    
+    <!-- Indigo Plateau (north-west) -->
+    <path d="M180 200c32-48 92-75 155-75 58 0 115 25 152 65 32 35 48 82 42 128-6 48-32 92-72 120-45 32-105 45-160 35-52-9-98-42-125-88-25-42-30-95-15-145 8-22 18-32 23-40z" fill="url(#kanto-mountain)"/>
+    
+    <!-- Mt. Moon area -->
+    <path d="M480 320c28-18 65-22 98-12 30 9 58 30 72 58 12 25 12 55 0 80-13 28-40 48-72 58-35 10-75 5-105-15-28-18-48-48-52-82-4-32 5-68 30-85 8-7 18-12 29-2z" fill="url(#kanto-mountain)" opacity="0.8"/>
+    
+    <!-- Rock Tunnel area -->
+    <path d="M650 350c22-15 52-18 78-8 24 9 45 28 55 52 9 22 8 48-3 68-12 22-35 38-62 43-28 6-58 0-80-18-20-16-33-42-32-68 1-24 15-50 44-69z" fill="url(#kanto-mountain)" opacity="0.8"/>
+    
+    <!-- Cinnabar Island (south-west) -->
+    <path d="M180 750c18-28 52-42 85-38 30 4 58 22 72 48 12 23 12 52 0 75-13 25-40 42-70 45-32 3-65-8-85-32-18-22-22-52-15-78 5-18 8-15 13-20z" fill="url(#kanto-mountain)" opacity="0.7"/>
+    
+    <!-- Cities -->
+    <ellipse cx="400" cy="850" rx="35" ry="25" fill="url(#kanto-city)"/><!-- Pallet Town -->
+    <ellipse cx="350" cy="680" rx="45" ry="32" fill="url(#kanto-city)"/><!-- Viridian City -->
+    <ellipse cx="330" cy="520" rx="42" ry="30" fill="url(#kanto-city)"/><!-- Pewter City -->
+    <ellipse cx="480" cy="400" rx="48" ry="35" fill="url(#kanto-city)"/><!-- Cerulean City -->
+    <ellipse cx="520" cy="580" rx="52" ry="38" fill="url(#kanto-city)"/><!-- Saffron City -->
+    <ellipse cx="720" cy="520" rx="45" ry="32" fill="url(#kanto-city)"/><!-- Lavender Town -->
+    <ellipse cx="650" cy="720" rx="50" ry="36" fill="url(#kanto-city)"/><!-- Fuchsia City -->
+    <ellipse cx="180" cy="750" rx="38" ry="28" fill="url(#kanto-city)"/><!-- Cinnabar Island -->
+  </g>
+
+  <!-- Routes (simplified paths) -->
+  <g fill="none" stroke="#f4d58d" stroke-width="8" stroke-linecap="round" opacity="0.6">
+    <path d="M400 850 L380 780 L350 680"/><!-- Route 1 -->
+    <path d="M350 680 L330 600 L330 520"/><!-- Route 2 -->
+    <path d="M330 520 L400 450 L480 400"/><!-- Route 3-4 -->
+    <path d="M480 400 L520 480 L520 580"/><!-- Route 5 -->
+    <path d="M520 580 L600 600 L650 680"/><!-- Route 12-13 -->
+    <path d="M650 720 L580 760 L480 800"/><!-- Route 19-20 -->
+    <path d="M480 800 L380 780"/><!-- Route 21 -->
+  </g>
+
+  <!-- Water bodies -->
+  <g fill="#4a8fc7" opacity="0.6">
+    <ellipse cx="280" cy="600" rx="40" ry="50"/><!-- Lake -->
+    <ellipse cx="580" cy="450" rx="35" ry="45"/><!-- Lake -->
+    <path d="M850 400 Q900 450 920 520 Q900 580 850 620 Q800 650 720 660 Q680 650 660 620 L660 400 Q680 370 720 360 Q800 370 850 400z"/><!-- Eastern sea -->
+  </g>
+
+  <!-- Clouds -->
+  <g fill="#fafcff" stroke="#e5ecf5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <path d="M150 120c22-32 78-28 102 2 32-20 82-6 96 24 35-8 78 20 72 54-5 34-56 48-100 28-30 28-106 20-126-14-28-5-46-30-38-58 3-14 11-26 24-36z"/>
+    <path d="M620 80c28-28 92-25 120 5 30-15 74 0 84 25 15 38-25 80-76 74-20 35-88 45-122 18-35 7-76-15-78-47-2-25 22-50 54-55 2-7 7-13 18-20z"/>
+    <path d="M280 880c26-26 86-22 106 8 37-17 94-2 106 32 22 62-74 100-132 62-37 35-128 13-135-40-5-37 30-70 76-62 0-10 3-18 12-25z"/>
+  </g>
+</svg>

@@ -1,0 +1,54 @@
+{
+  "region": "alola",
+  "mapSize": 1000,
+  "spawns": [
+    {
+      "pokemon": "pikachu",
+      "x": 260,
+      "y": 240,
+      "area": "Route 1"
+    },
+    {
+      "pokemon": "wingull",
+      "x": 650,
+      "y": 820,
+      "area": "Seafolk Village"
+    },
+    {
+      "pokemon": "yungoos",
+      "x": 320,
+      "y": 380,
+      "area": "Route 1"
+    },
+    {
+      "pokemon": "pikipek",
+      "x": 400,
+      "y": 320,
+      "area": "Melemele Meadow"
+    },
+    {
+      "pokemon": "cutiefly",
+      "x": 520,
+      "y": 280,
+      "area": "Melemele Meadow"
+    },
+    {
+      "pokemon": "rockruff",
+      "x": 430,
+      "y": 360,
+      "area": "Ten Carat Hill"
+    },
+    {
+      "pokemon": "magikarp",
+      "x": 580,
+      "y": 540,
+      "area": "Brooklet Hill"
+    },
+    {
+      "pokemon": "mareanie",
+      "x": 750,
+      "y": 620,
+      "area": "Route 9"
+    }
+  ]
+}

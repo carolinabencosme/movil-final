@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
@@ -17,6 +18,8 @@ class RegionMapViewer extends StatefulWidget {
     this.height = 300.0,
     this.markerColor = const Color(0xFF3B9DFF),
     this.onMarkerTap,
+    this.debugMode = false,
+    this.debugSpawns,
   });
 
   /// Nombre de la región (ej: "kanto", "johto")
@@ -33,6 +36,12 @@ class RegionMapViewer extends StatefulWidget {
 
   /// Callback cuando se toca un marcador
   final Function(PokemonEncounter)? onMarkerTap;
+
+  /// Modo debug para mostrar spawn test markers
+  final bool debugMode;
+
+  /// Lista de coordenadas de spawn para debug
+  final List<Map<String, dynamic>>? debugSpawns;
 
   @override
   State<RegionMapViewer> createState() => _RegionMapViewerState();
@@ -135,6 +144,140 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     return markers;
   }
 
+  /// Construye marcadores de debug para spawn points
+  List<Widget> _buildDebugSpawnMarkers() {
+    if (!widget.debugMode || widget.debugSpawns == null) {
+      return [];
+    }
+
+    final List<Widget> markers = [];
+    final spawns = widget.debugSpawns!;
+
+    for (var i = 0; i < spawns.length; i++) {
+      final spawn = spawns[i];
+      final x = (spawn['x'] as num).toDouble();
+      final y = (spawn['y'] as num).toDouble();
+      final pokemon = spawn['pokemon'] as String? ?? 'Unknown';
+
+      // Validar que las coordenadas estén dentro de los límites del mapa
+      if (x < 0 || x > 1000 || y < 0 || y > 1000) {
+        debugPrint('Warning: Spawn point $i ($pokemon) has invalid coordinates: ($x, $y)');
+        continue;
+      }
+
+      markers.add(
+        Positioned(
+          left: x - 15, // Centro del círculo (30/2)
+          top: y - 15,
+          child: GestureDetector(
+            onTap: () {
+              // Mostrar tooltip o popup con info del spawn
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Pokémon: $pokemon, Coordinates: ($x, $y)'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.7),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.orange,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '${i + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return markers;
+  }
+
+  /// Construye la imagen del mapa (PNG o SVG)
+  Widget _buildMapImage(ThemeData theme) {
+    final mapData = _currentMapData;
+    final assetPath = _getMapAssetPath();
+    final size = _getMapSize();
+
+    // Determinar si es SVG o PNG
+    final isSvg = mapData?.isSvg ?? assetPath.toLowerCase().endsWith('.svg');
+
+    Widget errorWidget = Container(
+      width: size.width,
+      height: size.height,
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.map,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Mapa de ${_formatRegionName(widget.region)}',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Imagen del mapa no disponible',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (isSvg) {
+      // Renderizar SVG
+      return SvgPicture.asset(
+        assetPath,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) => errorWidget,
+      );
+    } else {
+      // Renderizar PNG
+      return Image.asset(
+        assetPath,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => errorWidget,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -175,49 +318,12 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
             boundaryMargin: const EdgeInsets.all(20),
             child: Stack(
               children: [
-                // Imagen del mapa de la región
-                Image.asset(
-                  _getMapAssetPath(),
-                  width: _getMapSize().width,
-                  height: _getMapSize().height,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    final size = _getMapSize();
-                    return Container(
-                      width: size.width,
-                      height: size.height,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.map,
-                              size: 64,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Mapa de ${_formatRegionName(widget.region)}',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Imagen del mapa no disponible',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                // Imagen del mapa de la región (PNG o SVG)
+                _buildMapImage(theme),
                 // Marcadores posicionados sobre el mapa
                 ..._buildMarkers(),
+                // Marcadores de debug (si está habilitado)
+                ..._buildDebugSpawnMarkers(),
               ],
             ),
           ),

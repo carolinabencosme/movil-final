@@ -27,6 +27,11 @@ class RegionMapData {
   String get displayName {
     return region[0].toUpperCase() + region.substring(1);
   }
+
+  /// Determina si el asset es un archivo SVG
+  bool get isSvg {
+    return assetPath.toLowerCase().endsWith('.svg');
+  }
 }
 
 /// Mapas de regiones Pokémon oficiales extraídos de los juegos
@@ -54,6 +59,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       mapSize: Size(1024, 768),
       gameVersion: "Let's Go Pikachu/Eevee",
     ),
+    const RegionMapData(
+      region: 'kanto',
+      assetPath: 'assets/maps/regions/kanto/kanto_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
+    ),
   ],
   'johto': [
     const RegionMapData(
@@ -67,6 +78,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       assetPath: 'assets/maps/regions/johto/johto_hgss.png',
       mapSize: Size(1200, 900),
       gameVersion: 'HeartGold/SoulSilver',
+    ),
+    const RegionMapData(
+      region: 'johto',
+      assetPath: 'assets/maps/regions/johto/johto_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
     ),
   ],
   'hoenn': [
@@ -82,6 +99,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       mapSize: Size(1500, 1100),
       gameVersion: 'Omega Ruby/Alpha Sapphire',
     ),
+    const RegionMapData(
+      region: 'hoenn',
+      assetPath: 'assets/maps/regions/hoenn/hoenn_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
+    ),
   ],
   'sinnoh': [
     const RegionMapData(
@@ -95,6 +118,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       assetPath: 'assets/maps/regions/sinnoh/sinnoh_bdsp.png',
       mapSize: Size(1400, 1000),
       gameVersion: 'Brilliant Diamond/Shining Pearl',
+    ),
+    const RegionMapData(
+      region: 'sinnoh',
+      assetPath: 'assets/maps/regions/sinnoh/sinnoh_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
     ),
   ],
   'unova': [
@@ -110,6 +139,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       mapSize: Size(1600, 1200),
       gameVersion: 'Black 2/White 2',
     ),
+    const RegionMapData(
+      region: 'unova',
+      assetPath: 'assets/maps/regions/unova/unova_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
+    ),
   ],
   'kalos': [
     const RegionMapData(
@@ -117,6 +152,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       assetPath: 'assets/maps/regions/kalos/kalos_xy.png',
       mapSize: Size(1800, 1400),
       gameVersion: 'X/Y',
+    ),
+    const RegionMapData(
+      region: 'kalos',
+      assetPath: 'assets/maps/regions/kalos/kalos_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
     ),
   ],
   'alola': [
@@ -131,6 +172,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       assetPath: 'assets/maps/regions/alola/alola_usum.png',
       mapSize: Size(1600, 1200),
       gameVersion: 'Ultra Sun/Ultra Moon',
+    ),
+    const RegionMapData(
+      region: 'alola',
+      assetPath: 'assets/maps/regions/alola/alola_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
     ),
   ],
   'galar': [
@@ -152,6 +199,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       mapSize: Size(1500, 1200),
       gameVersion: 'The Crown Tundra',
     ),
+    const RegionMapData(
+      region: 'galar',
+      assetPath: 'assets/maps/regions/galar/galar_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
+    ),
   ],
   'paldea': [
     const RegionMapData(
@@ -172,6 +225,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       mapSize: Size(1800, 1400),
       gameVersion: 'The Indigo Disk',
     ),
+    const RegionMapData(
+      region: 'paldea',
+      assetPath: 'assets/maps/regions/paldea/paldea_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
+    ),
   ],
   'hisui': [
     const RegionMapData(
@@ -179,6 +238,12 @@ final Map<String, List<RegionMapData>> regionMapsByVersion = {
       assetPath: 'assets/maps/regions/hisui/hisui_legends.png',
       mapSize: Size(2000, 1500),
       gameVersion: 'Legends: Arceus',
+    ),
+    const RegionMapData(
+      region: 'hisui',
+      assetPath: 'assets/maps/regions/hisui/hisui_vector.svg',
+      mapSize: Size(1000, 1000),
+      gameVersion: 'Vector Map',
     ),
   ],
 };
