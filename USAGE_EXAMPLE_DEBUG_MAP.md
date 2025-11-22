@@ -288,10 +288,17 @@ All SVG maps use a **1000×1000** coordinate system:
 
 To find the right coordinates for spawns:
 
-1. **Use image editing software**: Open the SVG in Inkscape or Illustrator
-2. **Enable ruler/grid**: Most tools show X,Y when hovering
-3. **Click locations**: Note the X,Y coordinates
-4. **Add to JSON**: Use those coordinates in your test file
+1. **Use image editing software**: Open the SVG in Inkscape, Illustrator, or Figma
+2. **Understand SVG coordinate system**: 
+   - Origin (0,0) is at the **top-left** corner
+   - X increases from left to right
+   - Y increases from top to bottom (not bottom to top!)
+   - Check the SVG `viewBox` attribute (should be "0 0 1000 1000")
+3. **Enable ruler/grid**: Most tools show X,Y when hovering
+4. **Click locations**: Note the X,Y coordinates
+5. **Add to JSON**: Use those coordinates in your test file
+
+**Important**: SVG uses a top-left origin, so Y=0 is at the TOP of the image, not the bottom.
 
 ### Example Coordinates for Common Locations
 

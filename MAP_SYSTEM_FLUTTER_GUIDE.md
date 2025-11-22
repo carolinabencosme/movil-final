@@ -216,7 +216,8 @@ dependencies:
 | Feature | React Native | Flutter |
 |---------|-------------|---------|
 | SVG Library | `react-native-svg` + transformer | `flutter_svg` package |
-| Asset Loading | `require()` | `rootBundle.loadString()` |
+| SVG Asset Loading | `require('./file.svg')` | `SvgPicture.asset('path/to/file.svg')` |
+| JSON Asset Loading | `require('./file.json')` | `rootBundle.loadString('path/to/file.json')` |
 | Component Type | Function/Class Component | StatefulWidget |
 | Styling | StyleSheet API | Widget properties |
 | Rendering | React Native View | Flutter Widget tree |
