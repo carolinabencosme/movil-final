@@ -8,6 +8,9 @@ import 'region_coordinates.dart';
 class LocationService {
   static const String _baseUrl = 'https://pokeapi.co/api/v2';
 
+  /// Caché simple para regiones por URL de location_area
+  final Map<String, String?> _locationAreaRegionCache = {};
+
   /// Obtiene los encuentros de un Pokémon por ID
   ///
   /// Retorna una lista de [PokemonEncounter] con información sobre
@@ -23,10 +26,24 @@ class LocationService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body) as List<dynamic>;
         
-        return data
-            .map((json) =>
-                PokemonEncounter.fromJson(json as Map<String, dynamic>, pokemon: pokemon))
-            .toList();
+        final encounterFutures = data.map((json) async {
+          final encounterJson = json as Map<String, dynamic>;
+
+          final locationArea = encounterJson['location_area'] as Map<String, dynamic>?;
+          final locationAreaUrl = locationArea?['url'] as String?;
+
+          final region = await _getRegionForLocationArea(locationAreaUrl);
+          final coordinates = region != null ? getRegionCoordinates(region) : null;
+
+          return PokemonEncounter.fromJson(
+            encounterJson,
+            pokemon: pokemon,
+            region: region,
+            coordinates: coordinates,
+          );
+        }).toList();
+
+        return Future.wait(encounterFutures);
       } else if (response.statusCode == 404) {
         // No se encontraron encuentros para este Pokémon
         return [];
@@ -53,27 +70,21 @@ class LocationService {
     // Agrupar encuentros por región
     for (final encounter in encounters) {
       final region = encounter.region;
-      if (region != null && hasRegionCoordinates(region)) {
+      if (region != null) {
         byRegion.putIfAbsent(region, () => []).add(encounter);
       }
     }
 
     // Convertir a lista de LocationsByRegion con coordenadas
-    final List<LocationsByRegion> result = [];
-    for (final entry in byRegion.entries) {
+    return byRegion.entries.map((entry) {
       final coordinates = getRegionCoordinates(entry.key);
-      if (coordinates != null) {
-        result.add(
-          LocationsByRegion(
-            region: entry.key,
-            encounters: entry.value,
-            coordinates: coordinates,
-          ),
-        );
-      }
-    }
 
-    return result;
+      return LocationsByRegion(
+        region: entry.key,
+        encounters: entry.value,
+        coordinates: coordinates,
+      );
+    }).toList();
   }
 
   /// Obtiene encuentros agrupados por región para un Pokémon
@@ -86,6 +97,45 @@ class LocationService {
   }) async {
     final encounters = await fetchPokemonEncounters(pokemonId, pokemon: pokemon);
     return groupEncountersByRegion(encounters);
+  }
+
+  Future<String?> _getRegionForLocationArea(String? locationAreaUrl) async {
+    if (locationAreaUrl == null || locationAreaUrl.isEmpty) return null;
+
+    if (_locationAreaRegionCache.containsKey(locationAreaUrl)) {
+      return _locationAreaRegionCache[locationAreaUrl];
+    }
+
+    try {
+      final response = await http.get(Uri.parse(locationAreaUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+        final location = data['location'] as Map<String, dynamic>?;
+
+        final region = (location?['region'] as Map<String, dynamic>?)?['name'] as String?;
+        if (region != null) {
+          _locationAreaRegionCache[locationAreaUrl] = region;
+          return region;
+        }
+
+        final locationUrl = location?['url'] as String?;
+        if (locationUrl != null) {
+          final locationResponse = await http.get(Uri.parse(locationUrl));
+          if (locationResponse.statusCode == 200) {
+            final Map<String, dynamic> locationData =
+                json.decode(locationResponse.body) as Map<String, dynamic>;
+            final resolvedRegion =
+                (locationData['region'] as Map<String, dynamic>?)?['name'] as String?;
+
+            _locationAreaRegionCache[locationAreaUrl] = resolvedRegion;
+            return resolvedRegion;
+          }
+        }
+      }
+    } catch (_) {}
+
+    _locationAreaRegionCache[locationAreaUrl] = null;
+    return null;
   }
 }
 

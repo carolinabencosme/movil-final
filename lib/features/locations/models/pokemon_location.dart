@@ -47,6 +47,8 @@ class PokemonEncounter {
   factory PokemonEncounter.fromJson(
     Map<String, dynamic> json, {
     EncounterPokemonInfo? pokemon,
+    String? region,
+    MapCoordinates? coordinates,
   }) {
     final locationArea = json['location_area'] as Map<String, dynamic>?;
     final locationAreaName = locationArea?['name'] as String? ?? 'unknown';
@@ -56,42 +58,16 @@ class PokemonEncounter {
         .map((detail) => EncounterVersionDetail.fromJson(detail as Map<String, dynamic>))
         .toList();
 
-    // Intentar inferir la región del nombre del área
-    final region = _inferRegionFromLocationArea(locationAreaName);
-
     return PokemonEncounter(
       locationArea: locationAreaName,
       versionDetails: versionDetails,
       region: region,
+      coordinates: coordinates,
       pokemonId: pokemon?.id ?? 0,
       pokemonName: pokemon?.name ?? 'unknown',
       spriteUrl: pokemon?.spriteUrl ?? '',
       pokemonTypes: pokemon?.types ?? const [],
     );
-  }
-
-  /// Infiere la región desde el nombre del área
-  static String? _inferRegionFromLocationArea(String locationArea) {
-    // Mapeo simple basado en rutas y ubicaciones conocidas
-    if (locationArea.contains('route-') || locationArea.contains('viridian') ||
-        locationArea.contains('pewter') || locationArea.contains('cerulean')) {
-      final routeNum = _extractRouteNumber(locationArea);
-      if (routeNum != null) {
-        if (routeNum <= 28) return 'kanto';
-        if (routeNum <= 48) return 'johto';
-        if (routeNum <= 134) return 'hoenn';
-        if (routeNum <= 230) return 'sinnoh';
-      }
-    }
-    return null;
-  }
-
-  static int? _extractRouteNumber(String locationArea) {
-    final match = RegExp(r'route-(\d+)').firstMatch(locationArea);
-    if (match != null) {
-      return int.tryParse(match.group(1) ?? '');
-    }
-    return null;
   }
 
   /// Obtiene el nombre legible del área
@@ -287,7 +263,7 @@ class LocationsByRegion {
   const LocationsByRegion({
     required this.region,
     required this.encounters,
-    required this.coordinates,
+    this.coordinates,
   });
 
   /// Nombre de la región
@@ -297,7 +273,7 @@ class LocationsByRegion {
   final List<PokemonEncounter> encounters;
 
   /// Coordenadas X/Y del centro de la región en el mapa
-  final MapCoordinates coordinates;
+  final MapCoordinates? coordinates;
 
   /// Obtiene todas las versiones únicas en esta región
   List<String> get allVersions {

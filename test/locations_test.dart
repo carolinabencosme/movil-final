@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pokedex/features/locations/data/location_service.dart';
 import 'package:pokedex/features/locations/data/region_coordinates.dart';
 import 'package:pokedex/features/locations/data/region_map_data.dart';
 import 'package:pokedex/features/locations/data/region_map_markers.dart';
@@ -587,6 +588,28 @@ void main() {
       expect(location.allVersions, hasLength(2));
       expect(location.allVersions, containsAll(['red', 'blue']));
       expect(location.areaCount, equals(2));
+    });
+  });
+
+  group('LocationService grouping', () {
+    test('should keep encounters even when coordinates are missing', () {
+      final service = LocationService();
+
+      final encounters = [
+        PokemonEncounter.fromJson(
+          {
+            'location_area': {'name': 'hidden-area', 'url': ''},
+            'version_details': [],
+          },
+          region: 'unknown-region',
+        ),
+      ];
+
+      final grouped = service.groupEncountersByRegion(encounters);
+
+      expect(grouped, hasLength(1));
+      expect(grouped.first.region, equals('unknown-region'));
+      expect(grouped.first.coordinates, isNull);
     });
   });
 }
