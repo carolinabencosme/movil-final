@@ -180,7 +180,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         child: GestureDetector(
           onTap: () {
             setState(() {
-              final currentIndex = group.encounters.indexOf(_selectedEncounter);
+              final currentIndex = _selectedEncounter != null
+                  ? group.encounters.indexOf(_selectedEncounter!)
+                  : -1;
 
               if (group.encounters.length == 1) {
                 _selectedEncounter = currentIndex != -1
