@@ -4,9 +4,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../models/pokemon_model.dart';
 import '../../../screens/detail_screen.dart';
 import '../../../theme/pokemon_type_colors.dart';
+import '../data/map_parser.dart';
 import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
 import '../models/pokemon_location.dart';
+import '../models/parsed_map.dart';
 
 /// Widget que muestra un mapa de región Pokémon usando InteractiveViewer
 ///
@@ -22,6 +24,7 @@ class RegionMapViewer extends StatefulWidget {
     this.previewMode = false,
     this.markerColor = const Color(0xFF3B9DFF),
     this.onMarkerTap,
+    this.onAreaTap,
     this.debugMode = false,
     this.debugSpawns,
   });
@@ -44,6 +47,9 @@ class RegionMapViewer extends StatefulWidget {
   /// Callback cuando se toca un marcador
   final Function(PokemonEncounter)? onMarkerTap;
 
+  /// Callback cuando se toca un área definida en el mapa
+  final void Function(ClickableArea area)? onAreaTap;
+
   /// Modo debug para mostrar spawn test markers
   final bool debugMode;
 
@@ -60,6 +66,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   PokemonEncounter? _selectedEncounter;
   List<RegionMapData> _availableVersions = [];
   int _selectedVersionIndex = 0;
+  ParsedMap? _parsedMap;
+  final MapParser _mapParser = const MapParser();
 
   Future<void> _openFullscreenMap() async {
     await Navigator.of(context).push(
@@ -109,6 +117,23 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     setState(() {});
   }
 
+  Future<void> _loadParsedMap() async {
+    try {
+      final parsedMap = await _mapParser.load(widget.region);
+      if (!mounted) return;
+
+      setState(() {
+        _parsedMap = parsedMap;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _parsedMap = null;
+      });
+      debugPrint('Error loading map data for ${widget.region}: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +145,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         _availableVersions = [defaultMap];
       }
     }
+    _loadParsedMap();
   }
 
   @override
@@ -137,7 +163,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         }
         _transformationController.value = Matrix4.identity();
         _selectedEncounter = null;
+        _parsedMap = null;
       });
+      _loadParsedMap();
     }
   }
 
@@ -155,6 +183,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   /// Obtiene el path del asset de la imagen del mapa
   String _getMapAssetPath() {
+    if (_parsedMap != null) return _parsedMap!.imagePath;
     if (_currentMapData != null) return _currentMapData!.assetPath;
 
     final normalizedRegion = widget.region.toLowerCase();
@@ -184,6 +213,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   /// Obtiene el tamaño del mapa
   Size _getMapSize() {
+    if (_parsedMap != null) return _parsedMap!.mapSize;
     if (_currentMapData != null) return _currentMapData!.mapSize;
 
     final normalizedRegion = widget.region.toLowerCase().trim();
@@ -263,6 +293,100 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         ),
       );
     }).toList();
+  }
+
+  void _handleAreaTap(ClickableArea area) {
+    if (widget.onAreaTap != null) {
+      widget.onAreaTap!(area);
+      return;
+    }
+
+    if (area.href.isNotEmpty) {
+      debugPrint('Tapped area: ${area.href}');
+    }
+  }
+
+  List<Widget> _buildClickableAreas() {
+    final parsedMap = _parsedMap;
+    if (parsedMap == null || parsedMap.areas.isEmpty) return [];
+
+    return parsedMap.areas.map((area) {
+      switch (area.shape) {
+        case AreaShape.circle:
+          return _buildCircleArea(area);
+        case AreaShape.poly:
+          return _buildPolygonArea(area);
+        case AreaShape.rect:
+        default:
+          return _buildRectArea(area);
+      }
+    }).toList();
+  }
+
+  Widget _buildRectArea(ClickableArea area) {
+    final rect = area.rect ?? area.bounds;
+    return Positioned(
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => _handleAreaTap(area),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blueAccent.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: Colors.blueAccent.withOpacity(0.35),
+              width: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircleArea(ClickableArea area) {
+    final bounds = area.bounds;
+    final center = area.center ?? bounds.center;
+    final localCenter = center - Offset(bounds.left, bounds.top);
+    final radius = area.radius ?? bounds.width / 2;
+
+    return Positioned(
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.deferToChild,
+        onTap: () => _handleAreaTap(area),
+        child: CustomPaint(
+          painter: _CircleAreaPainter(
+            center: localCenter,
+            radius: radius,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolygonArea(ClickableArea area) {
+    final bounds = area.bounds;
+    final points = area.points
+        .map((point) => point - Offset(bounds.left, bounds.top))
+        .toList();
+
+    return Positioned(
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+      child: _PolygonAreaWidget(
+        points: points,
+        onTap: () => _handleAreaTap(area),
+      ),
+    );
   }
 
   /// Construye marcadores de debug para spawn points
@@ -512,6 +636,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                     children: [
                       // Imagen del mapa de la región (PNG o SVG)
                       _buildMapImage(theme),
+                      // Áreas clickeables provenientes del archivo de mapa
+                      ..._buildClickableAreas(),
                       // Marcadores posicionados sobre el mapa
                       ..._buildMarkers(scaleFactor: markerScaleFactor),
                       // Marcadores de debug (si está habilitado)
@@ -1110,6 +1236,102 @@ class _MarkerPopup extends StatelessWidget {
         .split('-')
         .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
+  }
+}
+
+class _PolygonAreaWidget extends StatelessWidget {
+  const _PolygonAreaWidget({required this.points, required this.onTap});
+
+  final List<Offset> points;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      onTap: onTap,
+      child: CustomPaint(
+        painter: _PolygonAreaPainter(points: points),
+      ),
+    );
+  }
+}
+
+class _PolygonAreaPainter extends CustomPainter {
+  _PolygonAreaPainter({required List<Offset> points})
+      : _points = points,
+        _path = _buildPath(points);
+
+  final List<Offset> _points;
+  final Path _path;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (_points.length < 3) return;
+
+    final fillPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawPath(_path, fillPaint);
+    canvas.drawPath(_path, borderPaint);
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return _points.length >= 3 && _path.contains(position);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PolygonAreaPainter oldDelegate) {
+    return oldDelegate._points != _points;
+  }
+
+  static Path _buildPath(List<Offset> points) {
+    final path = Path();
+    if (points.isEmpty) return path;
+
+    path.moveTo(points.first.dx, points.first.dy);
+    for (final point in points.skip(1)) {
+      path.lineTo(point.dx, point.dy);
+    }
+    path.close();
+    return path;
+  }
+}
+
+class _CircleAreaPainter extends CustomPainter {
+  const _CircleAreaPainter({required this.center, required this.radius});
+
+  final Offset center;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(center, radius, fillPaint);
+    canvas.drawCircle(center, radius, borderPaint);
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return (position - center).distance <= radius;
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircleAreaPainter oldDelegate) {
+    return oldDelegate.center != center || oldDelegate.radius != radius;
   }
 }
 
