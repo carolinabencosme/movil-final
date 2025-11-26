@@ -427,13 +427,13 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           final mapSize = _getMapSize();
           final isFullscreen = height == null || !showFullscreenButton;
           final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
-          final baseScale = constraints.maxWidth / mapSize.width;
-          const minScale = 1.0;
-          const maxScale = 4.0;
-          final boundaryMargin = EdgeInsets.symmetric(
-            horizontal: constraints.maxWidth * 0.5,
-            vertical: constraints.maxHeight * 0.5,
-          );
+          final fitScale = constraints.maxWidth / mapSize.width;
+          final minScale = fitScale;
+          final maxScale = fitScale * 4;
+
+          if (_transformationController.value == Matrix4.identity()) {
+            _transformationController.value = Matrix4.identity()..scale(fitScale);
+          }
 
           final List<Widget> controlButtons = [
             _MapControlButton(
@@ -485,21 +485,22 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 transformationController: _transformationController,
                 minScale: minScale,
                 maxScale: maxScale,
-                boundaryMargin: boundaryMargin,
+                constrained: false,
+                alignment: Alignment.topLeft,
+                boundaryMargin: EdgeInsets.zero,
                 clipBehavior: Clip.none,
-                child: Center(
-                  child: Transform.scale(
-                    scale: baseScale,
-                    child: Stack(
-                      children: [
-                        // Imagen del mapa de la región (PNG o SVG)
-                        _buildMapImage(theme),
-                        // Marcadores posicionados sobre el mapa
-                        ..._buildMarkers(scaleFactor: markerScaleFactor),
-                        // Marcadores de debug (si está habilitado)
-                        ..._buildDebugSpawnMarkers(),
-                      ],
-                    ),
+                child: SizedBox(
+                  width: mapSize.width,
+                  height: mapSize.height,
+                  child: Stack(
+                    children: [
+                      // Imagen del mapa de la región (PNG o SVG)
+                      _buildMapImage(theme),
+                      // Marcadores posicionados sobre el mapa
+                      ..._buildMarkers(scaleFactor: markerScaleFactor),
+                      // Marcadores de debug (si está habilitado)
+                      ..._buildDebugSpawnMarkers(),
+                    ],
                   ),
                 ),
               ),
