@@ -445,7 +445,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 final newScale = (currentScale * 1.5).clamp(minScale, maxScale);
 
                 final scaleFactor = newScale / currentScale;
-                final adjustedMatrix = Matrix4.copy(currentMatrix)..scale(scaleFactor);
+                final focal = Offset(
+                  constraints.maxWidth / 2,
+                  constraints.maxHeight / 2,
+                );
+                final adjustedMatrix = Matrix4.copy(currentMatrix)
+                  ..translate(focal.dx, focal.dy)
+                  ..scale(scaleFactor)
+                  ..translate(-focal.dx, -focal.dy);
 
                 _transformationController.value = adjustedMatrix;
               },
@@ -460,7 +467,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 final newScale = (currentScale / 1.5).clamp(minScale, maxScale);
 
                 final scaleFactor = newScale / currentScale;
-                final adjustedMatrix = Matrix4.copy(currentMatrix)..scale(scaleFactor);
+                final focal = Offset(
+                  constraints.maxWidth / 2,
+                  constraints.maxHeight / 2,
+                );
+                final adjustedMatrix = Matrix4.copy(currentMatrix)
+                  ..translate(focal.dx, focal.dy)
+                  ..scale(scaleFactor)
+                  ..translate(-focal.dx, -focal.dy);
 
                 _transformationController.value = adjustedMatrix;
               },
