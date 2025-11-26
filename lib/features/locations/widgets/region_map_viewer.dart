@@ -428,11 +428,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               icon: Icons.add,
               tooltip: 'Acercar',
               onPressed: () {
-                final currentScale =
-                    _transformationController.value.getMaxScaleOnAxis();
+                final currentMatrix = _transformationController.value;
+                final currentScale = currentMatrix.getMaxScaleOnAxis();
                 final newScale = (currentScale * 1.5).clamp(minScale, maxScale);
-                _transformationController.value =
-                    Matrix4.identity()..scale(newScale);
+
+                final scaleFactor = newScale / currentScale;
+                final adjustedMatrix = Matrix4.copy(currentMatrix)..scale(scaleFactor);
+
+                _transformationController.value = adjustedMatrix;
               },
             ),
             const SizedBox(height: 8),
@@ -440,11 +443,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               icon: Icons.remove,
               tooltip: 'Alejar',
               onPressed: () {
-                final currentScale =
-                    _transformationController.value.getMaxScaleOnAxis();
+                final currentMatrix = _transformationController.value;
+                final currentScale = currentMatrix.getMaxScaleOnAxis();
                 final newScale = (currentScale / 1.5).clamp(minScale, maxScale);
-                _transformationController.value =
-                    Matrix4.identity()..scale(newScale);
+
+                final scaleFactor = newScale / currentScale;
+                final adjustedMatrix = Matrix4.copy(currentMatrix)..scale(scaleFactor);
+
+                _transformationController.value = adjustedMatrix;
               },
             ),
           ];
