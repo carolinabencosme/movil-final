@@ -1,0 +1,58 @@
+<p align="center"><img border="0" src="/pokearth/kalos.png" usemap="#Kalos"><map name="Kalos">
+<area href="/pokearth/kalos/route1.shtml" shape="rect" coords="210, 163, 213, 173" title="Route 1">
+<area href="/pokearth/kalos/route2.shtml" shape="rect" coords="209, 140, 214, 150" title="Route 2">
+<area href="/pokearth/kalos/route3.shtml" shape="poly" coords="203,124, 200,124, 206,132, 209,131" title="Route 3">
+<area href="/pokearth/kalos/route4.shtml" shape="poly" coords="176,90, 173,90, 190,114, 193,114" title="Route 4">
+<area href="/pokearth/kalos/route5.shtml" shape="poly" coords="137,115, 133,115, 154,89, 157,92" title="Route 5">
+<area href="/pokearth/kalos/route6.shtml" shape="poly" coords="100,95, 97,98, 123,117, 127,115" title="Route 6">
+<area href="/pokearth/kalos/route7.shtml" shape="rect" coords="76, 118, 124, 123" title="Route 7">
+<area href="/pokearth/kalos/route8.shtml" shape="poly" coords="60,126, 55,127, 66,155, 70,153" title="Route 8">
+<area href="/pokearth/kalos/route9.shtml" shape="rect" coords="78, 156, 109, 162" title="Route 9">
+<area href="/pokearth/kalos/route10.shtml" shape="poly" coords="36,103, 32,106, 49,118, 51,115" title="Route 10">
+<area href="/pokearth/kalos/route11.shtml" shape="poly" coords="37,88, 33,87, 30,93, 34,95" title="Route 11">
+<area href="/pokearth/kalos/route12.shtml" shape="poly" coords="103,67, 99,61, 53,72, 57,76" title="Route 12">
+<area href="/pokearth/kalos/route13.shtml" shape="poly" coords="117,62, 115,67, 149,76, 152,72" title="Route 13">
+<area href="/pokearth/kalos/route14.shtml" shape="rect" coords="162, 30, 168, 63" title="Route 14">
+<area href="/pokearth/kalos/route15.shtml" shape="poly" coords="171,25, 169,30, 212,60, 215,58" title="Route 15">
+<area href="/pokearth/kalos/route16.shtml" shape="poly" coords="213,68, 209,63, 179,72, 181,77" title="Route 16">
+<area href="/pokearth/kalos/route17.shtml" shape="poly" coords="226,62, 224,68, 273,81, 275,76" title="Route 17">
+<area href="/pokearth/kalos/route18.shtml" shape="poly" coords="287,83, 285,86, 292,92, 294,90" title="Route 18">
+<area href="/pokearth/kalos/route19.shtml" shape="poly" coords="294,103, 290,98, 275,112, 278,115" title="Route 19">
+<area href="/pokearth/kalos/route20.shtml" shape="poly" coords="270,124, 266,123, 258,153, 262,154" title="Route 20">
+<area href="/pokearth/kalos/route21.shtml" shape="rect" coords="241, 114, 264, 119" title="Route 21">
+<area href="/pokearth/kalos/route22.shtml" shape="poly" coords="229,119, 229,113, 202,116, 204,121" title="Route 22">
+
+<area href="/pokearth/kalos/ambrettetown.shtml" shape="rect" coords="65, 152, 79, 166" title="Ambrette Town">
+<area href="/pokearth/kalos/anistarcity.shtml" shape="rect" coords="274, 73, 288, 87" title="Anistar City">
+<area href="/pokearth/kalos/aquacordetown.shtml" shape="rect" coords="205, 150, 219, 164" title="Aquacorde Town">
+<area href="/pokearth/kalos/azurebay.shtml" shape="poly" coords="88,41, 84,45, 102,58, 105,54" title="Azure Bay">
+<area href="/pokearth/kalos/camphriertown.shtml" shape="rect" coords="124, 114, 138, 128" title="Camphrier Town">
+<area href="/pokearth/kalos/chamberofemptiness.shtml" shape="rect" coords="216, 120, 227, 131" title="Chamber of Empitness">
+<area href="/pokearth/kalos/connectingcave.shtml" shape="rect" coords="65, 115, 76, 126" title="Connecting Cave">
+<area href="/pokearth/kalos/couriwaytown.shtml" shape="rect" coords="291, 89, 305, 103" title="Couriway Town">
+<area href="/pokearth/kalos/coumarinecity.shtml" shape="rect" coords="103, 56, 117, 70" title="Coumarine City">
+<area href="/pokearth/kalos/cyllagecity.shtml" shape="rect" coords="49, 113, 63, 127" title="Cyllage City">
+<area href="/pokearth/kalos/dendemilletown.shtml" shape="rect" coords="212, 56, 226, 70" title="Dendemille Town">
+<area href="/pokearth/kalos/frostcavern.shtml" shape="rect" coords="226, 62, 238, 74" title="Frost Cavern">
+<area href="/pokearth/kalos/geosengetown.shtml" shape="rect" coords="22, 93, 36, 107" title="Geosenge Town">
+<area href="/pokearth/kalos/glitteringcave.shtml" shape="rect" coords="111, 153, 122, 164" title="Glittering Cave">
+<area href="/pokearth/kalos/kalospowerplant.shtml" shape="rect" coords="116, 79, 128, 91" title="Kalos Power Plant">
+<area href="/pokearth/kalos/kiloudecity.shtml" shape="rect" coords="233, 187, 247, 201" title="Kiloude City">
+<area href="/pokearth/kalos/laverrecity.shtml" shape="rect" coords="158, 17, 172, 31" title="Laverre City">
+<area href="/pokearth/kalos/losthotel.shtml" shape="rect" coords="185, 49, 197, 61" title="Lost Hotel">
+<area href="/pokearth/kalos/lumiosecity.shtml" shape="rect" coords="150, 63, 182, 93" title="Lumiose City">
+<area href="/pokearth/kalos/parfumpalace.shtml" shape="rect" coords="89, 88, 101, 100" title="Parfum Palace">
+<area href="/pokearth/kalos/pokeballfactory.shtml" shape="rect" coords="159, 6, 170, 17" title="Poke Ball Factory">
+<area href="/pokearth/kalos/pokemonleague.shtml" shape="rect" coords="228, 84, 240, 96" title="Pokemon League">
+<area href="/pokearth/kalos/pokemonvillage.shtml" shape="rect" coords="253, 153, 264, 164" title="Pokemon Village">
+<area href="/pokearth/kalos/reflectioncave.shtml" shape="rect" coords="35, 78, 47, 90" title="Reflection Cave">
+<area href="/pokearth/kalos/santalunecity.shtml" shape="rect" coords="192, 112, 204, 124" title="Santalune City">
+<area href="/pokearth/kalos/santaluneforest.shtml" shape="rect" coords="206, 130, 217, 141" title="Santalune Forest">
+<area href="/pokearth/kalos/seaspirit'sden.shtml" shape="rect" coords="75, 33, 86, 44" title="Sea Spirit's Den">
+<area href="/pokearth/kalos/shalourcity.shtml" shape="rect" coords="41, 69, 54, 83" title="Shalour City">
+<area href="/pokearth/kalos/snowbellecity.shtml" shape="rect" coords="264, 110, 278, 124" title="Snowbelle City">
+<area href="/pokearth/kalos/terminuscave.shtml" shape="rect" coords="302, 73, 313, 84" title="Terminus Cave">
+<area href="/pokearth/kalos/vanivilletown.shtml" shape="rect" coords="205, 174, 219, 188" title="Vaniville Town">
+<area href="/pokearth/kalos/victoryroad.shtml" shape="rect" coords="229, 98, 241, 121" title="Victory Road">
+
+</map></p>
