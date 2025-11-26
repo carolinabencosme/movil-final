@@ -355,8 +355,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Dragón que escupe fuego y pertenece a Kanto.';
 
   @override
-  String triviaGuessPrompt(int id) =>
-      '¿Quién es este Pokémon? ¡Intenta adivinar el N.º $id!';
+  String triviaGuessPrompt(int id) {
+    return '¿Quién es este Pokémon? ¡Intenta adivinar el N.º $id!';
+  }
 
   @override
   String get triviaOptionPikachu => 'Pikachu';

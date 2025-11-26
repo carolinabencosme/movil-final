@@ -350,8 +350,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fire-breathing dragon from Kanto.';
 
   @override
-  String triviaGuessPrompt(int id) =>
-      'Who\'s that Pokémon? Try to guess No. $id!';
+  String triviaGuessPrompt(int id) {
+    return 'Who\'s that Pokémon? Try to guess No. $id!';
+  }
 
   @override
   String get triviaOptionPikachu => 'Pikachu';
