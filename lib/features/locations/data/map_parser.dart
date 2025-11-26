@@ -69,7 +69,9 @@ class MapParser {
     final List<ClickableArea> areas = [];
     final areaRegex = RegExp(r'<area[^>]*>', caseSensitive: false);
     final attributeRegex =
-        RegExp(r'(href|shape|coords|title)\s*=\s*["\']([^"\']+)["\']');
+    RegExp(r'''(href|shape|coords|title)\s*=\s*['"]([^'"]+)['"]''');
+
+
 
     for (final match in areaRegex.allMatches(content)) {
       final tag = match.group(0);
