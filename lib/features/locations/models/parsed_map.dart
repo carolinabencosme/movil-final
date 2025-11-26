@@ -9,6 +9,7 @@ class ClickableArea {
     required this.shape,
     required this.href,
     required this.title,
+    this.location = '',
     required this.points,
     this.rect,
     this.center,
@@ -23,6 +24,9 @@ class ClickableArea {
 
   /// Título descriptivo del área.
   final String title;
+
+  /// Nombre de la ubicación representada por el área.
+  final String location;
 
   /// Puntos normalizados que describen la geometría del área.
   final List<Offset> points;
