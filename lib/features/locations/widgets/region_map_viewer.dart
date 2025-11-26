@@ -196,7 +196,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Construye los marcadores sobre el mapa
-  List<Widget> _buildMarkers() {
+  static const double _fullscreenSpriteScale = 0.75;
+
+  List<Widget> _buildMarkers({double scaleFactor = 1.0}) {
     if (widget.encounters.isEmpty) return [];
 
     final Map<String, _MarkerGroup> groupedMarkers = {};
@@ -220,7 +222,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
     final mapSize = _getMapSize();
     final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
-    final markerSize = 44.0 * normalizedScale;
+    final markerSize = 44.0 * normalizedScale * scaleFactor;
 
     return groupedMarkers.values.map((group) {
       final isSelected = _selectedEncounter != null &&
@@ -423,6 +425,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final mapSize = _getMapSize();
+          final isFullscreen = height == null || !showFullscreenButton;
+          final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
           final baseScale = constraints.maxWidth / mapSize.width;
           const minScale = 1.0;
           const maxScale = 4.0;
@@ -491,7 +495,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                         // Imagen del mapa de la región (PNG o SVG)
                         _buildMapImage(theme),
                         // Marcadores posicionados sobre el mapa
-                        ..._buildMarkers(),
+                        ..._buildMarkers(scaleFactor: markerScaleFactor),
                         // Marcadores de debug (si está habilitado)
                         ..._buildDebugSpawnMarkers(),
                       ],
