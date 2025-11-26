@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../models/pokemon_model.dart';
 import '../../../screens/detail_screen.dart';
@@ -301,9 +302,85 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       return;
     }
 
-    if (area.href.isNotEmpty) {
-      debugPrint('Tapped area: ${area.href}');
+    _showAreaDialog(area);
+  }
+
+  Future<void> _showAreaDialog(ClickableArea area) async {
+    final uri = _resolveAreaUri(area);
+    final displayName = _areaDisplayName(area);
+    final locationLabel = _areaLocationLabel(area, uri);
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _AreaInfoDialog(
+        areaName: displayName,
+        locationLabel: locationLabel,
+        linkUri: uri,
+      ),
+    );
+  }
+
+  Uri? _resolveAreaUri(ClickableArea area) {
+    final href = area.href.trim();
+    if (href.isEmpty) return null;
+
+    final parsed = Uri.tryParse(href);
+    if (parsed == null) return null;
+    if (parsed.hasScheme) return parsed;
+
+    final normalizedHref = href.startsWith('/') ? href : '/$href';
+    return Uri.parse('https://www.serebii.net$normalizedHref');
+  }
+
+  String _areaDisplayName(ClickableArea area) {
+    if (area.title.trim().isNotEmpty) return area.title.trim();
+
+    final uri = _resolveAreaUri(area);
+    final segments = uri?.pathSegments.where((segment) => segment.isNotEmpty).toList();
+    if (segments != null && segments.isNotEmpty) {
+      return _prettifySegment(segments.last);
     }
+
+    if (area.href.isNotEmpty) return area.href;
+    return 'Área sin nombre';
+  }
+
+  String _areaLocationLabel(ClickableArea area, Uri? uri) {
+    final resolvedUri = uri ?? _resolveAreaUri(area);
+    if (resolvedUri == null) return 'Ubicación desconocida';
+
+    final formattedSegments = resolvedUri.pathSegments
+        .where((segment) => segment.isNotEmpty)
+        .map(_prettifySegment)
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+
+    final host = resolvedUri.host.isNotEmpty ? resolvedUri.host : null;
+    if (formattedSegments.isEmpty && host == null) return 'Ubicación desconocida';
+
+    if (host != null && formattedSegments.isEmpty) return host;
+    if (host != null) {
+      return '$host · ${formattedSegments.join(' / ')}';
+    }
+
+    return formattedSegments.join(' / ');
+  }
+
+  String _prettifySegment(String segment) {
+    final cleaned = segment
+        .replaceAll(RegExp(r'\.(s)?html?$', caseSensitive: false), '')
+        .replaceAll('.', ' ');
+    final normalized = cleaned.replaceAll(RegExp(r'[_\-]+'), ' ').trim();
+
+    if (normalized.isEmpty) return segment;
+
+    return normalized
+        .split(' ')
+        .map(
+          (word) =>
+              word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
+        .join(' ');
   }
 
   List<Widget> _buildClickableAreas() {
@@ -1236,6 +1313,79 @@ class _MarkerPopup extends StatelessWidget {
         .split('-')
         .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
+  }
+}
+
+class _AreaInfoDialog extends StatelessWidget {
+  const _AreaInfoDialog({
+    required this.areaName,
+    required this.locationLabel,
+    required this.linkUri,
+  });
+
+  final String areaName;
+  final String locationLabel;
+  final Uri? linkUri;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final linkText = linkUri?.toString() ?? 'Enlace no disponible';
+
+    return AlertDialog(
+      title: Text(areaName),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.place_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  locationLabel,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: linkUri != null ? () => _openLink(context) : null,
+            icon: const Icon(Icons.link),
+            label: Text(linkText),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openLink(BuildContext context) async {
+    if (linkUri == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final success = await launchUrl(linkUri!, mode: LaunchMode.externalApplication);
+    if (!success) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el enlace'),
+        ),
+      );
+    }
   }
 }
 
