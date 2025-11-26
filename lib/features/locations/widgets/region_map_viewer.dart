@@ -415,13 +415,17 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
+      clipBehavior: Clip.none,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final mapSize = _getMapSize();
           final baseScale = constraints.maxWidth / mapSize.width;
           const minScale = 1.0;
           const maxScale = 4.0;
+          final boundaryMargin = EdgeInsets.symmetric(
+            horizontal: constraints.maxWidth * 0.5,
+            vertical: constraints.maxHeight * 0.5,
+          );
 
           final List<Widget> controlButtons = [
             _MapControlButton(
@@ -473,7 +477,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 transformationController: _transformationController,
                 minScale: minScale,
                 maxScale: maxScale,
-                boundaryMargin: EdgeInsets.zero,
+                boundaryMargin: boundaryMargin,
+                clipBehavior: Clip.none,
                 child: Center(
                   child: Transform.scale(
                     scale: baseScale,
