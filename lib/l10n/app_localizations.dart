@@ -728,7 +728,7 @@ abstract class AppLocalizations {
   /// **'Fire-breathing dragon from Kanto.'**
   String get triviaQuestionCharizardPrompt;
 
-  /// Generic trivia prompt that hints the Pokémon id.
+  /// Generic trivia prompt that hints the Pokémon id
   ///
   /// In en, this message translates to:
   /// **'Who\'s that Pokémon? Try to guess No. {id}!'**
@@ -1513,6 +1513,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Moves'**
   String get detailTabMoves;
+
+  /// Label for the detail tab that shows locations where the Pokémon can be found.
+  ///
+  /// In en, this message translates to:
+  /// **'Locations'**
+  String get detailTabLocations;
 
   /// Section title for the moves tab on the Pokémon detail screen.
   ///
