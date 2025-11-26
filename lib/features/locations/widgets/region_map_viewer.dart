@@ -376,88 +376,105 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: Stack(
-        children: [
-          // Mapa interactivo con zoom/pan
-          InteractiveViewer(
-            transformationController: _transformationController,
-            minScale: 0.8,
-            maxScale: 4.0,
-            boundaryMargin: const EdgeInsets.all(20),
-            child: Stack(
-              children: [
-                // Imagen del mapa de la región (PNG o SVG)
-                _buildMapImage(theme),
-                // Marcadores posicionados sobre el mapa
-                ..._buildMarkers(),
-                // Marcadores de debug (si está habilitado)
-                ..._buildDebugSpawnMarkers(),
-              ],
-            ),
-          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final mapSize = _getMapSize();
+              final baseScale = constraints.maxWidth / mapSize.width;
+              const minScale = 1.0;
+              const maxScale = 4.0;
 
-          // Popup cuando se selecciona un marcador
-          if (_selectedEncounter != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: _MarkerPopup(
-                encounter: _selectedEncounter!,
-                onClose: () {
-                  setState(() {
-                    _selectedEncounter = null;
-                  });
-                },
-              ),
-            ),
+              return Stack(
+                children: [
+                  // Mapa interactivo con zoom/pan
+                  InteractiveViewer(
+                    transformationController: _transformationController,
+                    minScale: minScale,
+                    maxScale: maxScale,
+                    boundaryMargin: EdgeInsets.zero,
+                    child: Center(
+                      child: Transform.scale(
+                        scale: baseScale,
+                        child: Stack(
+                          children: [
+                            // Imagen del mapa de la región (PNG o SVG)
+                            _buildMapImage(theme),
+                            // Marcadores posicionados sobre el mapa
+                            ..._buildMarkers(),
+                            // Marcadores de debug (si está habilitado)
+                            ..._buildDebugSpawnMarkers(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
-          // Botones de control
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Botón de zoom in
-                _MapControlButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    final currentScale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    final newScale = (currentScale * 1.5).clamp(0.8, 4.0);
-                    _transformationController.value = Matrix4.identity()
-                      ..scale(newScale);
-                  },
-                ),
-                const SizedBox(height: 8),
-                // Botón de zoom out
-                _MapControlButton(
-                  icon: Icons.remove,
-                  onPressed: () {
-                    final currentScale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    final newScale = (currentScale / 1.5).clamp(0.8, 4.0);
-                    _transformationController.value = Matrix4.identity()
-                      ..scale(newScale);
-                  },
-                ),
-                const SizedBox(height: 8),
-                // Botón de reset
-                _MapControlButton(
-                  icon: Icons.center_focus_strong,
-                  onPressed: () {
-                    _transformationController.value = Matrix4.identity();
-                    setState(() {
-                      _selectedEncounter = null;
-                    });
-                  },
-                ),
-              ],
-            ),
+                  // Popup cuando se selecciona un marcador
+                  if (_selectedEncounter != null)
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      right: 16,
+                      child: _MarkerPopup(
+                        encounter: _selectedEncounter!,
+                        onClose: () {
+                          setState(() {
+                            _selectedEncounter = null;
+                          });
+                        },
+                      ),
+                    ),
+
+                  // Botones de control
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Botón de zoom in
+                        _MapControlButton(
+                          icon: Icons.add,
+                          onPressed: () {
+                            final currentScale = _transformationController.value
+                                .getMaxScaleOnAxis();
+                            final newScale =
+                                (currentScale * 1.5).clamp(minScale, maxScale);
+                            _transformationController.value =
+                                Matrix4.identity()..scale(newScale);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // Botón de zoom out
+                        _MapControlButton(
+                          icon: Icons.remove,
+                          onPressed: () {
+                            final currentScale = _transformationController.value
+                                .getMaxScaleOnAxis();
+                            final newScale =
+                                (currentScale / 1.5).clamp(minScale, maxScale);
+                            _transformationController.value =
+                                Matrix4.identity()..scale(newScale);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // Botón de reset
+                        _MapControlButton(
+                          icon: Icons.center_focus_strong,
+                          onPressed: () {
+                            _transformationController.value =
+                                Matrix4.identity();
+                            setState(() {
+                              _selectedEncounter = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-        ],
-      ),
         ),
       ],
     );
