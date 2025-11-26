@@ -405,8 +405,11 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     double? height,
     bool showFullscreenButton = true,
   }) {
-    return Container(
-      height: height ?? widget.height,
+    final isFullscreen = height == null || !showFullscreenButton;
+    final containerHeight = height ?? (isFullscreen ? null : widget.height);
+
+    final mapContainer = Container(
+      height: containerHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
@@ -421,11 +424,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           ),
         ],
       ),
-      clipBehavior: Clip.none,
+      clipBehavior: Clip.hardEdge,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final mapSize = _getMapSize();
-          final isFullscreen = height == null || !showFullscreenButton;
           final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
           final fitScale = constraints.maxWidth / mapSize.width;
           final minScale = fitScale;
@@ -501,7 +503,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                 maxScale: maxScale,
                 constrained: false,
                 alignment: Alignment.topLeft,
-                boundaryMargin: EdgeInsets.zero,
+                boundaryMargin: const EdgeInsets.all(12),
                 clipBehavior: Clip.none,
                 child: SizedBox(
                   width: mapSize.width,
@@ -549,6 +551,19 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         },
       ),
     );
+
+    if (isFullscreen) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: FractionallySizedBox(
+          heightFactor: 0.95,
+          widthFactor: 0.98,
+          child: mapContainer,
+        ),
+      );
+    }
+
+    return mapContainer;
   }
 
   @override
