@@ -19,6 +19,7 @@ class RegionMapViewer extends StatefulWidget {
     required this.region,
     required this.encounters,
     this.height = 300.0,
+    this.previewMode = false,
     this.markerColor = const Color(0xFF3B9DFF),
     this.onMarkerTap,
     this.debugMode = false,
@@ -33,6 +34,9 @@ class RegionMapViewer extends StatefulWidget {
 
   /// Altura del widget en píxeles
   final double height;
+
+  /// Si está habilitado, muestra solo el CTA para abrir el mapa completo
+  final bool previewMode;
 
   /// Color de los marcadores
   final Color markerColor;
@@ -531,6 +535,31 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (widget.previewMode) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Explora el mapa interactivo en pantalla completa',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _openFullscreenMap,
+              icon: const Icon(Icons.map),
+              label: const Text('Ver mapa'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
