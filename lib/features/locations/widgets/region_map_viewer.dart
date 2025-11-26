@@ -346,6 +346,11 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   String _areaLocationLabel(ClickableArea area, Uri? uri) {
+    final trimmedLocation = area.location.trim();
+    if (trimmedLocation.isNotEmpty) return trimmedLocation;
+
+    if (area.title.trim().isNotEmpty) return area.title.trim();
+
     final resolvedUri = uri ?? _resolveAreaUri(area);
     if (resolvedUri == null) return 'Ubicación desconocida';
 

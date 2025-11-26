@@ -68,10 +68,9 @@ class MapParser {
   List<ClickableArea> _extractAreas(String content) {
     final List<ClickableArea> areas = [];
     final areaRegex = RegExp(r'<area[^>]*>', caseSensitive: false);
-    final attributeRegex =
-    RegExp(r'''(href|shape|coords|title)\s*=\s*['"]([^'"]+)['"]''');
-
-
+    final attributeRegex = RegExp(
+      r'''(href|shape|coords|title|location|alt)\s*=\s*['"]([^'"]+)['"]''',
+    );
 
     for (final match in areaRegex.allMatches(content)) {
       final tag = match.group(0);
@@ -86,11 +85,16 @@ class MapParser {
 
       final shape = _parseShape(attributes['shape']);
       final coords = _parseCoords(attributes['coords']!);
+      final location = attributes['location'] ??
+          attributes['alt'] ??
+          attributes['title'] ??
+          '';
       final area = _buildArea(
         shape: shape,
         coords: coords,
         href: attributes['href'] ?? '',
         title: attributes['title'] ?? '',
+        location: location,
       );
 
       if (area != null) {
@@ -128,6 +132,7 @@ class MapParser {
     required List<double> coords,
     required String href,
     required String title,
+    required String location,
   }) {
     switch (shape) {
       case AreaShape.circle:
@@ -138,6 +143,7 @@ class MapParser {
           shape: shape,
           href: href,
           title: title,
+          location: location,
           points: [center],
           center: center,
           radius: radius,
@@ -152,6 +158,7 @@ class MapParser {
           shape: shape,
           href: href,
           title: title,
+          location: location,
           points: points,
         );
       case AreaShape.rect:
@@ -171,6 +178,7 @@ class MapParser {
           shape: shape,
           href: href,
           title: title,
+          location: location,
           rect: rect,
           points: [rect.topLeft, rect.bottomRight],
         );
