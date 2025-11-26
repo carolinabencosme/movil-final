@@ -57,6 +57,54 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   List<RegionMapData> _availableVersions = [];
   int _selectedVersionIndex = 0;
 
+  Future<void> _openFullscreenMap() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          final theme = Theme.of(context);
+
+          return Scaffold(
+            backgroundColor: theme.colorScheme.surface,
+            appBar: AppBar(
+              title: Text('Mapa de ${_formatRegionName(widget.region)}'),
+              actions: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Cerrar pantalla completa',
+                  icon: const Icon(Icons.close_fullscreen),
+                ),
+              ],
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    if (_availableVersions.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildVersionSelector(theme),
+                      ),
+                    Expanded(
+                      child: _buildMapContainer(
+                        theme,
+                        height: null,
+                        showFullscreenButton: false,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+        fullscreenDialog: true,
+      ),
+    );
+
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -346,6 +394,129 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     }
   }
 
+  Widget _buildMapContainer(
+    ThemeData theme, {
+    double? height,
+    bool showFullscreenButton = true,
+  }) {
+    return Container(
+      height: height ?? widget.height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final mapSize = _getMapSize();
+          final baseScale = constraints.maxWidth / mapSize.width;
+          const minScale = 1.0;
+          const maxScale = 4.0;
+
+          final List<Widget> controlButtons = [
+            _MapControlButton(
+              icon: Icons.add,
+              tooltip: 'Acercar',
+              onPressed: () {
+                final currentScale =
+                    _transformationController.value.getMaxScaleOnAxis();
+                final newScale = (currentScale * 1.5).clamp(minScale, maxScale);
+                _transformationController.value =
+                    Matrix4.identity()..scale(newScale);
+              },
+            ),
+            const SizedBox(height: 8),
+            _MapControlButton(
+              icon: Icons.remove,
+              tooltip: 'Alejar',
+              onPressed: () {
+                final currentScale =
+                    _transformationController.value.getMaxScaleOnAxis();
+                final newScale = (currentScale / 1.5).clamp(minScale, maxScale);
+                _transformationController.value =
+                    Matrix4.identity()..scale(newScale);
+              },
+            ),
+          ];
+
+          if (showFullscreenButton) {
+            controlButtons.addAll([
+              const SizedBox(height: 8),
+              _MapControlButton(
+                icon: Icons.fullscreen,
+                tooltip: 'Pantalla completa',
+                onPressed: _openFullscreenMap,
+              ),
+            ]);
+          }
+
+          return Stack(
+            children: [
+              // Mapa interactivo con zoom/pan
+              InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: minScale,
+                maxScale: maxScale,
+                boundaryMargin: EdgeInsets.zero,
+                child: Center(
+                  child: Transform.scale(
+                    scale: baseScale,
+                    child: Stack(
+                      children: [
+                        // Imagen del mapa de la región (PNG o SVG)
+                        _buildMapImage(theme),
+                        // Marcadores posicionados sobre el mapa
+                        ..._buildMarkers(),
+                        // Marcadores de debug (si está habilitado)
+                        ..._buildDebugSpawnMarkers(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Popup cuando se selecciona un marcador
+              if (_selectedEncounter != null)
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: _MarkerPopup(
+                    encounter: _selectedEncounter!,
+                    onClose: () {
+                      setState(() {
+                        _selectedEncounter = null;
+                      });
+                    },
+                  ),
+                ),
+
+              // Botones de control
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: controlButtons,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -357,125 +528,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         // Version selector (only show if multiple versions available)
         if (_availableVersions.length > 1)
           _buildVersionSelector(theme),
-        
+
         // Map container
-        Container(
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final mapSize = _getMapSize();
-              final baseScale = constraints.maxWidth / mapSize.width;
-              const minScale = 1.0;
-              const maxScale = 4.0;
-
-              return Stack(
-                children: [
-                  // Mapa interactivo con zoom/pan
-                  InteractiveViewer(
-                    transformationController: _transformationController,
-                    minScale: minScale,
-                    maxScale: maxScale,
-                    boundaryMargin: EdgeInsets.zero,
-                    child: Center(
-                      child: Transform.scale(
-                        scale: baseScale,
-                        child: Stack(
-                          children: [
-                            // Imagen del mapa de la región (PNG o SVG)
-                            _buildMapImage(theme),
-                            // Marcadores posicionados sobre el mapa
-                            ..._buildMarkers(),
-                            // Marcadores de debug (si está habilitado)
-                            ..._buildDebugSpawnMarkers(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Popup cuando se selecciona un marcador
-                  if (_selectedEncounter != null)
-                    Positioned(
-                      top: 16,
-                      left: 16,
-                      right: 16,
-                      child: _MarkerPopup(
-                        encounter: _selectedEncounter!,
-                        onClose: () {
-                          setState(() {
-                            _selectedEncounter = null;
-                          });
-                        },
-                      ),
-                    ),
-
-                  // Botones de control
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Botón de zoom in
-                        _MapControlButton(
-                          icon: Icons.add,
-                          onPressed: () {
-                            final currentScale = _transformationController.value
-                                .getMaxScaleOnAxis();
-                            final newScale =
-                                (currentScale * 1.5).clamp(minScale, maxScale);
-                            _transformationController.value =
-                                Matrix4.identity()..scale(newScale);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // Botón de zoom out
-                        _MapControlButton(
-                          icon: Icons.remove,
-                          onPressed: () {
-                            final currentScale = _transformationController.value
-                                .getMaxScaleOnAxis();
-                            final newScale =
-                                (currentScale / 1.5).clamp(minScale, maxScale);
-                            _transformationController.value =
-                                Matrix4.identity()..scale(newScale);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // Botón de reset
-                        _MapControlButton(
-                          icon: Icons.center_focus_strong,
-                          onPressed: () {
-                            _transformationController.value =
-                                Matrix4.identity();
-                            setState(() {
-                              _selectedEncounter = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
+        _buildMapContainer(theme),
       ],
     );
   }
@@ -989,30 +1044,35 @@ class _MapControlButton extends StatelessWidget {
   const _MapControlButton({
     required this.icon,
     required this.onPressed,
+    this.tooltip,
   });
 
   final IconData icon;
   final VoidCallback onPressed;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: theme.colorScheme.surface,
-      elevation: 4,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: theme.colorScheme.surface,
+        elevation: 4,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            color: theme.colorScheme.onSurface,
-            size: 24,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              color: theme.colorScheme.onSurface,
+              size: 24,
+            ),
           ),
         ),
       ),
