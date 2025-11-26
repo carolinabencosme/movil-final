@@ -229,7 +229,7 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
             child: RegionMapViewer(
               region: location.region,
               encounters: location.encounters,
-              height: 300,
+              previewMode: true,
               markerColor: theme.colorScheme.primary,
             ),
           ),
