@@ -33,8 +33,13 @@ class CardCaptureService {
   /// El widget debe estar envuelto en un RepaintBoundary con el GlobalKey
   /// para que este método pueda acceder al RenderObject y renderizarlo.
   ///
+  /// [paintTimeout] permite ajustar el tiempo máximo de espera según el
+  /// dispositivo o las pruebas.
   /// Retorna la imagen capturada (bytes + dimensiones) o null si falla.
-  Future<CapturedCardImage?> captureWidget(GlobalKey key) async {
+  Future<CapturedCardImage?> captureWidget(
+    GlobalKey key, {
+    Duration paintTimeout = const Duration(seconds: 5),
+  }) async {
     try {
       // Buscar el RenderRepaintBoundary del widget
       final boundary = key.currentContext?.findRenderObject()
@@ -46,20 +51,25 @@ class CardCaptureService {
       }
 
       // Esperar a que el widget esté completamente pintado con timeout
-      const paintTimeout = Duration(seconds: 2);
       final paintStopwatch = Stopwatch()..start();
 
       if (boundary.debugNeedsPaint) {
-        debugPrint('[CardCaptureService] Widget necesita ser pintado, esperando...');
+        debugPrint(
+          '[CardCaptureService] Widget necesita ser pintado, esperando hasta '
+          '${paintTimeout.inMilliseconds}ms...',
+        );
       }
 
       while (boundary.debugNeedsPaint && paintStopwatch.elapsed < paintTimeout) {
         await _waitForPaint();
+        // Pequeña espera para conceder frames extra antes de desistir.
+        await Future.delayed(const Duration(milliseconds: 50));
       }
 
       if (boundary.debugNeedsPaint) {
         debugPrint(
-          '[CardCaptureService] El widget no se pintó tras esperar ${paintTimeout.inMilliseconds}ms',
+          '[CardCaptureService] El widget no se pintó tras esperar '
+          '${paintTimeout.inMilliseconds}ms',
         );
         return null;
       }
@@ -172,19 +182,25 @@ class CardCaptureService {
   }
 
   /// Método todo-en-uno: captura un widget, lo guarda y lo comparte.
-  /// 
+  ///
   /// [key] es el GlobalKey del RepaintBoundary que envuelve el widget.
   /// [filename] es el nombre del archivo temporal (por defecto: pokemon_card.png).
   /// [text] es un texto opcional para acompañar la imagen al compartir.
-  /// 
+  /// [paintTimeout] permite ajustar el tiempo máximo de espera según el
+  /// dispositivo o las pruebas.
+  ///
   /// Retorna true si todo el proceso fue exitoso, false si hubo algún error.
   Future<bool> captureAndShare(
     GlobalKey key, {
     String filename = 'pokemon_card.png',
     String? text,
+    Duration paintTimeout = const Duration(seconds: 5),
   }) async {
     // 1. Capturar el widget como imagen
-    final capturedImage = await captureWidget(key);
+    final capturedImage = await captureWidget(
+      key,
+      paintTimeout: paintTimeout,
+    );
     if (capturedImage == null) {
       debugPrint('[CardCaptureService] Falló la captura del widget');
       return false;
