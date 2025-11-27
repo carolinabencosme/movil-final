@@ -1705,8 +1705,25 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   final CardCaptureService _captureService = CardCaptureService();
   bool _isSharing = false;
   bool _isPreloadingImage = false;
+  bool _isShareSupported = false;
+  bool _isCheckingShareSupport = true;
 
-  bool get _canShareFiles => _captureService.canShareFiles;
+  bool get _canShareFiles => !_isCheckingShareSupport && _isShareSupported;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkShareSupport();
+  }
+
+  Future<void> _checkShareSupport() async {
+    final supported = await _captureService.canShareFiles;
+    if (!mounted) return;
+    setState(() {
+      _isShareSupported = supported;
+      _isCheckingShareSupport = false;
+    });
+  }
 
   /// Coordenadas para posicionar el widget de captura fuera de la pantalla.
   /// Debe ser lo suficientemente negativo para que el widget no sea visible.
@@ -1715,6 +1732,20 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   Future<void> _shareCard() async {
     if (!_canShareFiles) {
       debugPrint('[ShareCardDialog] Compartir omitido: plataforma no soportada.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compartir no está disponible en esta plataforma.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    final canShare = _isShareSupported || await _captureService.canShareFiles;
+    if (!canShare) {
+      debugPrint('[ShareCardDialog] Verificación adicional: compartir no soportado.');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1922,6 +1953,17 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                     ),
                   ),
                 ),
+                if (!_isCheckingShareSupport && !_isShareSupported)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'Compartir no está disponible en esta plataforma.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 // Botones
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -1938,9 +1980,10 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed:
-                              _isSharing || !_canShareFiles ? null : _shareCard,
-                          icon: _isSharing
+                          onPressed: (_isSharing || _isCheckingShareSupport || !_isShareSupported)
+                              ? null
+                              : _shareCard,
+                          icon: (_isSharing || _isCheckingShareSupport)
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
@@ -1950,11 +1993,13 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                                 )
                               : const Icon(Icons.share),
                           label: Text(
-                            !_canShareFiles
-                                ? 'Compartir no disponible'
-                                : _isSharing
-                                    ? 'Compartiendo...'
-                                    : 'Compartir',
+                            _isCheckingShareSupport
+                                ? 'Verificando compatibilidad...'
+                                : !_isShareSupported
+                                    ? 'Compartir no disponible'
+                                    : _isSharing
+                                        ? 'Compartiendo...'
+                                        : 'Compartir',
                           ),
                         ),
                       ),
