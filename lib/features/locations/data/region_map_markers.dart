@@ -79,7 +79,10 @@ RegionMarker _scaleMarkerToMap(
 
 /// Dimensiones base usadas para escalar los marcadores al tamaño real del mapa
 const Map<String, Size> _markerBaseSizes = {
-  'kanto': Size(1024, 768),
+  // El asset real de Kanto (`assets/maps/regions/kanto/kanto_pokeearth.png`)
+  // mide 200x618 px, por lo que mantenemos la misma base para evitar
+  // desajustes al calcular targetSize/baseSize en el escalado de marcadores.
+  'kanto': Size(200, 618),
   'johto': Size(1200, 900),
   'hoenn': Size(1500, 1100),
   'sinnoh': Size(1400, 1000),
