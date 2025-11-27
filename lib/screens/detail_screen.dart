@@ -1705,6 +1705,10 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   bool _isSharing = false;
   bool _isPreloadingImage = false;
 
+  /// Coordenadas para posicionar el widget de captura fuera de la pantalla.
+  /// Debe ser lo suficientemente negativo para que el widget no sea visible.
+  static const double _offScreenPosition = -10000;
+
   Future<void> _shareCard() async {
     if (_isSharing) return;
 
@@ -1807,8 +1811,8 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
           // Usamos Positioned con coordenadas negativas para moverlo fuera del viewport
           // pero manteniéndolo en el árbol de render para que sea pintado.
           Positioned(
-            left: -10000,
-            top: -10000,
+            left: _offScreenPosition,
+            top: _offScreenPosition,
             child: SizedBox(
               width: 1080,
               height: 1920,
