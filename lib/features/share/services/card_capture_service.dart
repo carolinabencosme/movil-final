@@ -121,7 +121,7 @@ class CardCaptureService {
     String imagePath, {
     String? text,
   }) async {
-    if (!canShareFiles) {
+    if (!await canShareFiles) {
       final platformLabel = kIsWeb ? 'Web' : Platform.operatingSystem;
       debugPrint(
         '[CardCaptureService] Compartir omitido: plataforma no soportada ($platformLabel).',
@@ -207,8 +207,21 @@ class CardCaptureService {
   }
 
   /// Indica si la plataforma actual soporta compartir archivos.
-  bool get canShareFiles {
-    if (kIsWeb) return false;
-    return Platform.isAndroid || Platform.isIOS;
+  Future<bool> get canShareFiles async {
+    if (kIsWeb) {
+      return Share.isSupported();
+    }
+
+    final isMobile = Platform.isAndroid || Platform.isIOS;
+    final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    if (isMobile || isDesktop) return true;
+
+    try {
+      return await Share.isSupported();
+    } catch (e, stackTrace) {
+      debugPrint('[CardCaptureService] Error al verificar soporte de share: $e');
+      debugPrint('[CardCaptureService] StackTrace: $stackTrace');
+      return false;
+    }
   }
 }
