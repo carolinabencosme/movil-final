@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
@@ -114,12 +115,20 @@ class CardCaptureService {
   /// 
   /// [imagePath] debe ser la ruta completa al archivo de imagen.
   /// [text] es un texto opcional para acompañar la imagen.
-  /// 
+  ///
   /// Retorna el resultado del intento de compartir la imagen.
   Future<ShareResult> shareImage(
     String imagePath, {
     String? text,
   }) async {
+    if (!canShareFiles) {
+      final platformLabel = kIsWeb ? 'Web' : Platform.operatingSystem;
+      debugPrint(
+        '[CardCaptureService] Compartir omitido: plataforma no soportada ($platformLabel).',
+      );
+      return ShareResult.unavailable;
+    }
+
     try {
       debugPrint('[CardCaptureService] Preparando archivo para compartir: $imagePath');
       final xFile = XFile(imagePath);
@@ -195,5 +204,11 @@ class CardCaptureService {
     }
 
     return true;
+  }
+
+  /// Indica si la plataforma actual soporta compartir archivos.
+  bool get canShareFiles {
+    if (kIsWeb) return false;
+    return Platform.isAndroid || Platform.isIOS;
   }
 }
