@@ -6,6 +6,43 @@ class MapCoordinates {
   final double y;
 }
 
+/// Coordenadas normalizadas y en píxeles para ubicar un Pokémon en el mapa
+class PokemonLocationCoordinates {
+  const PokemonLocationCoordinates({
+    required this.normalizedX,
+    required this.normalizedY,
+    this.rawX,
+    this.rawY,
+    this.mapSize,
+  });
+
+  /// Coordenada X normalizada (0-1)
+  final double normalizedX;
+
+  /// Coordenada Y normalizada (0-1)
+  final double normalizedY;
+
+  /// Coordenadas originales en píxeles si están disponibles
+  final double? rawX;
+  final double? rawY;
+
+  /// Tamaño del mapa usado para calcular las coordenadas
+  final Size? mapSize;
+
+  /// Convierte las coordenadas normalizadas a píxeles dentro de [mapBoundsPx].
+  ///
+  /// Siempre mantiene el punto dentro del rectángulo recibido.
+  Offset toPixels(Rect mapBoundsPx) {
+    final clampedX = normalizedX.clamp(0.0, 1.0);
+    final clampedY = normalizedY.clamp(0.0, 1.0);
+
+    return Offset(
+      mapBoundsPx.left + mapBoundsPx.width * clampedX,
+      mapBoundsPx.top + mapBoundsPx.height * clampedY,
+    );
+  }
+}
+
 /// Modelo para un encuentro de Pokémon en una ubicación específica
 class PokemonEncounter {
   const PokemonEncounter({
@@ -243,6 +280,62 @@ class EncounterPokemonInfo {
   final List<String> types;
 }
 
+/// DTO especializado para representar ubicaciones de un Pokémon
+class PokemonLocationPoint {
+  const PokemonLocationPoint({
+    required this.pokemonId,
+    required this.pokemonName,
+    required this.spriteUrl,
+    required this.locationArea,
+    required this.region,
+    required this.versions,
+    this.coordinates,
+  });
+
+  /// Identificador del Pokémon
+  final int pokemonId;
+
+  /// Nombre del Pokémon
+  final String pokemonName;
+
+  /// Sprite del Pokémon (arte oficial o sprite base)
+  final String spriteUrl;
+
+  /// Nombre del área de encuentro
+  final String locationArea;
+
+  /// Región inferida para la ubicación
+  final String? region;
+
+  /// Versiones de juego donde aparece el encuentro
+  final List<String> versions;
+
+  /// Coordenadas normalizadas y opcionalmente en píxeles
+  final PokemonLocationCoordinates? coordinates;
+
+  /// Versión legible de la región
+  String get displayRegion {
+    if (region == null || region!.isEmpty) return 'Unknown Region';
+    return region![0].toUpperCase() + region!.substring(1);
+  }
+
+  /// Nombre legible del área
+  String get displayArea {
+    return locationArea
+        .replaceAll('-', ' ')
+        .split(' ')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
+  /// Coordenadas del marcador en píxeles dentro del mapa renderizado
+  MapCoordinates? toPixelCoordinates(Rect mapBoundsPx) {
+    final pixelOffset = coordinates?.toPixels(mapBoundsPx);
+    if (pixelOffset == null) return null;
+    return MapCoordinates(pixelOffset.dx, pixelOffset.dy);
+  }
+}
+
 /// Resumen plano de un método de encuentro
 class EncounterMethodSummary {
   const EncounterMethodSummary({
@@ -286,3 +379,5 @@ class LocationsByRegion {
   /// Cuenta total de áreas en esta región
   int get areaCount => encounters.length;
 }
+import 'dart:ui';
+
