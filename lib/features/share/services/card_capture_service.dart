@@ -121,6 +121,7 @@ class CardCaptureService {
     String? text,
   }) async {
     try {
+      debugPrint('[CardCaptureService] Preparando archivo para compartir: $imagePath');
       final xFile = XFile(imagePath);
 
       final result = await Share.shareXFiles(
@@ -152,7 +153,7 @@ class CardCaptureService {
     // 1. Capturar el widget como imagen
     final capturedImage = await captureWidget(key);
     if (capturedImage == null) {
-      debugPrint('[CardCaptureService] No se pudo capturar el widget');
+      debugPrint('[CardCaptureService] Falló la captura del widget');
       return false;
     }
 
@@ -170,16 +171,26 @@ class CardCaptureService {
     final imagePath =
         await saveImageToTemp(capturedImage.bytes, filename: filename);
     if (imagePath == null) {
-      debugPrint('[CardCaptureService] No se pudo guardar la imagen');
+      debugPrint('[CardCaptureService] Falló al guardar la imagen capturada');
+      return false;
+    }
+
+    final tempFile = File(imagePath);
+    final exists = await tempFile.exists();
+    if (!exists) {
+      debugPrint(
+        '[CardCaptureService] El archivo temporal no existe en la ruta: $imagePath',
+      );
       return false;
     }
 
     // 3. Compartir usando el diálogo nativo
     final shareResult = await shareImage(imagePath, text: text);
-    final shared = shareResult.status == ShareResultStatus.success ||
-        shareResult.status == ShareResultStatus.unavailable; // unavailable = shared
+    final shared = shareResult.status == ShareResultStatus.success;
     if (!shared) {
-      debugPrint('[CardCaptureService] No se pudo compartir la imagen');
+      debugPrint(
+        '[CardCaptureService] Falló el envío del archivo. Estado: ${shareResult.status}',
+      );
       return false;
     }
 

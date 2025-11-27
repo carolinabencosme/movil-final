@@ -1771,6 +1771,7 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
             ),
           );
         } else {
+          debugPrint('[ShareCardDialog] No se pudo compartir la tarjeta.');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No se pudo compartir la tarjeta. Intenta de nuevo.'),
