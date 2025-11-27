@@ -1865,24 +1865,25 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
         clipBehavior: Clip.none,
         children: [
           // Widget oculto para captura (pintado pero no visible)
-          // Se mantiene en el árbol con opacidad cero y tamaño fijo para asegurar
-          // una captura en 1080x1920 sin desplazar el contenido del diálogo.
-          IgnorePointer(
-            child: Opacity(
-              opacity: 0,
-              alwaysIncludeSemantics: false,
-              child: Center(
-                child: OverflowBox(
-                  maxWidth: double.infinity,
-                  maxHeight: double.infinity,
-                  child: SizedBox(
-                    width: 1080,
-                    height: 1920,
-                    child: RepaintBoundary(
-                      key: _cardKey,
-                      child: PokemonShareCard(
-                        pokemon: widget.pokemon,
-                        themeColor: widget.themeColor,
+          // Posicionado fuera del flujo para evitar afectar el tamaño del diálogo
+          // mientras mantiene una captura en 1080x1920.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Offstage(
+                offstage: false,
+                child: Opacity(
+                  opacity: 0,
+                  alwaysIncludeSemantics: false,
+                  child: Center(
+                    child: SizedBox(
+                      width: 1080,
+                      height: 1920,
+                      child: RepaintBoundary(
+                        key: _cardKey,
+                        child: PokemonShareCard(
+                          pokemon: widget.pokemon,
+                          themeColor: widget.themeColor,
+                        ),
                       ),
                     ),
                   ),
@@ -1891,139 +1892,141 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
             ),
           ),
           // Diálogo principal
-          Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Compartir Pokémon Card',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                // Preview de la tarjeta (escala pequeña)
-                Container(
-                  height: 300,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        FittedBox(
-                          fit: BoxFit.contain,
-                          child: PokemonShareCard(
-                            pokemon: widget.pokemon,
-                            themeColor: widget.themeColor,
-                          ),
+                        Text(
+                          'Compartir Pokémon Card',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        if (_isPreloadingImage)
-                          Positioned.fill(
-                            child: Container(
-                              color: Colors.black.withOpacity(0.25),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'Preparando la imagen...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
                       ],
                     ),
                   ),
-                ),
-                if (!_isCheckingShareSupport && !_isShareSupported)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'Compartir no está disponible en esta plataforma.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  // Preview de la tarjeta (escala pequeña)
+                  Container(
+                    height: 300,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.contain,
+                            child: PokemonShareCard(
+                              pokemon: widget.pokemon,
+                              themeColor: widget.themeColor,
+                            ),
                           ),
-                      textAlign: TextAlign.center,
+                          if (_isPreloadingImage)
+                            Positioned.fill(
+                              child: Container(
+                                color: Colors.black.withOpacity(0.25),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    SizedBox(
+                                      width: 32,
+                                      height: 32,
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'Preparando la imagen...',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                // Botones
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isSharing
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                          child: const Text('Cancelar'),
-                        ),
+                  if (!_isCheckingShareSupport && !_isShareSupported)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Text(
+                        'Compartir no está disponible en esta plataforma.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: (_isSharing || _isCheckingShareSupport || !_isShareSupported)
-                              ? null
-                              : _shareCard,
-                          icon: (_isSharing || _isCheckingShareSupport)
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.share),
-                          label: Text(
-                            _isCheckingShareSupport
-                                ? 'Verificando compatibilidad...'
-                                : !_isShareSupported
-                                    ? 'Compartir no disponible'
-                                    : _isSharing
-                                        ? 'Compartiendo...'
-                                        : 'Compartir',
+                    ),
+                  // Botones
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _isSharing
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            child: const Text('Cancelar'),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: (_isSharing || _isCheckingShareSupport || !_isShareSupported)
+                                ? null
+                                : _shareCard,
+                            icon: (_isSharing || _isCheckingShareSupport)
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.share),
+                            label: Text(
+                              _isCheckingShareSupport
+                                  ? 'Verificando compatibilidad...'
+                                  : !_isShareSupported
+                                      ? 'Compartir no disponible'
+                                      : _isSharing
+                                          ? 'Compartiendo...'
+                                          : 'Compartir',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
