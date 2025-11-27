@@ -1532,7 +1532,7 @@ class _MarkerPopup extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(
           maxWidth: 280,
-          minWidth: 200,
+          minWidth: 160,
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1669,21 +1669,26 @@ class _MarkerPopup extends StatelessWidget {
             ],
 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (encounter.allVersions.isNotEmpty)
-                  Text(
-                    _buildVersionsLabel(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  Expanded(
+                    child: Text(
+                      _buildVersionsLabel(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
+                const SizedBox(width: 8),
                 TextButton.icon(
                   onPressed: () => _openDetail(context),
                   icon: const Icon(Icons.open_in_new, size: 18),
                   label: const Text('Ver detalles'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
