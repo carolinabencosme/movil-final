@@ -1725,10 +1725,6 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
     });
   }
 
-  /// Coordenadas para posicionar el widget de captura fuera de la pantalla.
-  /// Debe ser lo suficientemente negativo para que el widget no sea visible.
-  static const double _offScreenPosition = -10000;
-
   Future<void> _shareCard() async {
     if (!_canShareFiles) {
       debugPrint('[ShareCardDialog] Compartir omitido: plataforma no soportada.');
@@ -1802,6 +1798,19 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
       // Verificar que el widget esté listo para capturar
       if (!mounted) return;
 
+      if (_cardKey.currentContext == null) {
+        debugPrint('[ShareCardDialog] Contexto de la tarjeta no disponible para captura.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo preparar la tarjeta para compartir.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
       final success = await _captureService.captureAndShare(
         _cardKey,
         filename: 'pokemon_${widget.pokemon.id}_card.png',
@@ -1855,20 +1864,28 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Widget fuera de pantalla para captura (pintado pero no visible)
-          // Usamos Positioned con coordenadas negativas para moverlo fuera del viewport
-          // pero manteniéndolo en el árbol de render para que sea pintado.
-          Positioned(
-            left: _offScreenPosition,
-            top: _offScreenPosition,
-            child: SizedBox(
-              width: 1080,
-              height: 1920,
-              child: RepaintBoundary(
-                key: _cardKey,
-                child: PokemonShareCard(
-                  pokemon: widget.pokemon,
-                  themeColor: widget.themeColor,
+          // Widget oculto para captura (pintado pero no visible)
+          // Se mantiene en el árbol con opacidad cero y tamaño fijo para asegurar
+          // una captura en 1080x1920 sin desplazar el contenido del diálogo.
+          IgnorePointer(
+            child: Opacity(
+              opacity: 0,
+              alwaysIncludeSemantics: false,
+              child: Center(
+                child: OverflowBox(
+                  maxWidth: double.infinity,
+                  maxHeight: double.infinity,
+                  child: SizedBox(
+                    width: 1080,
+                    height: 1920,
+                    child: RepaintBoundary(
+                      key: _cardKey,
+                      child: PokemonShareCard(
+                        pokemon: widget.pokemon,
+                        themeColor: widget.themeColor,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
