@@ -82,45 +82,38 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   ParsedMap? _parsedMap;
   final MapParser _mapParser = const MapParser();
 
+  RegionMapData? _resolveCurrentMapData({
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+  }) {
+    final versions = availableVersions ?? _availableVersions;
+    final index = selectedVersionIndex ?? _selectedVersionIndex;
+    if (versions.isEmpty) return null;
+    return versions[index];
+  }
+
   Future<void> _openFullscreenMap() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) {
           final theme = Theme.of(context);
 
-          return Scaffold(
-            backgroundColor: theme.colorScheme.surface,
-            appBar: AppBar(
-              title: Text('Mapa de ${_formatRegionName(widget.region)}'),
-              actions: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  tooltip: 'Cerrar pantalla completa',
-                  icon: const Icon(Icons.close_fullscreen),
-                ),
-              ],
-            ),
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    if (_availableVersions.length > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildVersionSelector(theme),
-                      ),
-                    Expanded(
-                      child: _buildMapContainer(
-                        theme,
-                        height: null,
-                        showFullscreenButton: false,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          return _FullscreenRegionMapPage(
+            region: widget.region,
+            encounters: widget.encounters,
+            locationPoints: widget.locationPoints,
+            availableVersions: _availableVersions,
+            initialSelectedVersionIndex: _selectedVersionIndex,
+            parsedMap: _parsedMap,
+            mapBoundsPx: widget.mapBoundsPx,
+            mapMarginPx: widget.mapMarginPx,
+            onAreaTap: widget.onAreaTap,
+            onMarkerTap: widget.onMarkerTap,
+            debugMode: widget.debugMode,
+            debugSpawns: widget.debugSpawns,
+            buildMapContainer: _buildMapContainer,
+            buildVersionSelector: _buildVersionSelector,
+            handleAreaTap: _handleAreaTap,
           );
         },
         fullscreenDialog: true,
@@ -189,15 +182,22 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Obtiene el mapa actualmente seleccionado
-  RegionMapData? get _currentMapData {
-    if (_availableVersions.isEmpty) return null;
-    return _availableVersions[_selectedVersionIndex];
-  }
+  RegionMapData? get _currentMapData => _resolveCurrentMapData();
 
   /// Obtiene el path del asset de la imagen del mapa
-  String _getMapAssetPath() {
-    if (_parsedMap != null) return _parsedMap!.imagePath;
-    if (_currentMapData != null) return _currentMapData!.assetPath;
+  String _getMapAssetPath({
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localCurrentMap = currentMapData ??
+        _resolveCurrentMapData(
+          availableVersions: _availableVersions,
+          selectedVersionIndex: _selectedVersionIndex,
+        );
+
+    if (localParsedMap != null) return localParsedMap.imagePath;
+    if (localCurrentMap != null) return localCurrentMap.assetPath;
 
     final normalizedRegion = widget.region.toLowerCase();
 
@@ -225,9 +225,19 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Obtiene el tamaño del mapa
-  Size _getMapSize() {
-    if (_parsedMap != null) return _parsedMap!.mapSize;
-    if (_currentMapData != null) return _currentMapData!.mapSize;
+  Size _getMapSize({
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localCurrentMap = currentMapData ??
+        _resolveCurrentMapData(
+          availableVersions: _availableVersions,
+          selectedVersionIndex: _selectedVersionIndex,
+        );
+
+    if (localParsedMap != null) return localParsedMap.mapSize;
+    if (localCurrentMap != null) return localCurrentMap.mapSize;
 
     final normalizedRegion = widget.region.toLowerCase().trim();
     final versions = regionMapsByVersion[normalizedRegion];
@@ -239,13 +249,19 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Determina el rectángulo usable del mapa para colocar sprites
-  Rect _resolveMapBounds(Size mapSize) {
-    if (widget.mapBoundsPx != null) {
-      return widget.mapBoundsPx!;
+  Rect _resolveMapBounds(
+    Size mapSize, {
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+  }) {
+    if (mapBoundsPx != null) {
+      return mapBoundsPx;
     }
 
-    final horizontalMargin = widget.mapMarginPx.clamp(0.0, mapSize.width / 2);
-    final verticalMargin = widget.mapMarginPx.clamp(0.0, mapSize.height / 2);
+    final horizontalMargin =
+        (mapMarginPx ?? widget.mapMarginPx).clamp(0.0, mapSize.width / 2);
+    final verticalMargin =
+        (mapMarginPx ?? widget.mapMarginPx).clamp(0.0, mapSize.height / 2);
 
     return Rect.fromLTWH(
       horizontalMargin,
@@ -261,14 +277,23 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   List<Widget> _buildSpriteMarkers({
     required Rect mapBounds,
     double scaleFactor = 1.0,
+    required List<PokemonLocationPoint>? locationPoints,
+    PokemonEncounter? selectedEncounter,
+    required ValueChanged<PokemonEncounter?> onEncounterChange,
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+    Function(PokemonEncounter)? onMarkerTap,
   }) {
-    final points = widget.locationPoints
+    final points = locationPoints
         ?.where((point) =>
             point.coordinates != null && (point.spriteUrl.isNotEmpty))
         .toList();
     if (points == null || points.isEmpty) return [];
 
-    final mapSize = _getMapSize();
+    final mapSize = _getMapSize(
+      parsedMap: parsedMap,
+      currentMapData: currentMapData,
+    );
     final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
     final spriteSize = 44.0 * normalizedScale * scaleFactor;
 
@@ -307,18 +332,15 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         height: spriteSize,
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              if (_selectedEncounter != null &&
-                  _selectedEncounter!.locationArea == encounter.locationArea &&
-                  _selectedEncounter!.pokemonId == encounter.pokemonId) {
-                _selectedEncounter = null;
-              } else {
-                _selectedEncounter = encounter;
-              }
-            });
+            final isSameEncounter = selectedEncounter != null &&
+                selectedEncounter.locationArea == encounter.locationArea &&
+                selectedEncounter.pokemonId == encounter.pokemonId;
 
-            if (_selectedEncounter != null) {
-              widget.onMarkerTap?.call(_selectedEncounter!);
+            final newSelection = isSameEncounter ? null : encounter;
+            onEncounterChange(newSelection);
+
+            if (newSelection != null) {
+              onMarkerTap?.call(newSelection);
             }
           },
           child: Image.network(
@@ -331,21 +353,28 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     }).toList();
   }
 
-  List<Widget> _buildMarkers({double scaleFactor = 1.0}) {
-    if (widget.encounters.isEmpty) return [];
+  List<Widget> _buildMarkers({
+    double scaleFactor = 1.0,
+    required List<PokemonEncounter> encounters,
+    PokemonEncounter? selectedEncounter,
+    required ValueChanged<PokemonEncounter?> onEncounterChange,
+    RegionMapData? currentMapData,
+    Function(PokemonEncounter)? onMarkerTap,
+  }) {
+    if (encounters.isEmpty) return [];
 
     final Map<String, _MarkerGroup> groupedMarkers = {};
 
-    for (final encounter in widget.encounters) {
+    for (final encounter in encounters) {
       final marker = getRegionMarker(
         widget.region,
         encounter.locationArea,
-        gameVersion: _currentMapData?.gameVersion,
+        gameVersion: currentMapData?.gameVersion,
       );
 
       if (marker == null) continue;
 
-      final key = '${marker.x}-${marker.y}-${_currentMapData?.gameVersion ?? 'default'}';
+      final key = '${marker.x}-${marker.y}-${currentMapData?.gameVersion ?? 'default'}';
       groupedMarkers.putIfAbsent(
         key,
         () => _MarkerGroup(marker: marker, encounters: []),
@@ -353,38 +382,38 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       groupedMarkers[key]!.encounters.add(encounter);
     }
 
-    final mapSize = _getMapSize();
+    final mapSize = _getMapSize(currentMapData: currentMapData);
     final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
     final markerSize = 44.0 * normalizedScale * scaleFactor;
 
     return groupedMarkers.values.map((group) {
-      final isSelected = _selectedEncounter != null &&
-          group.encounters.contains(_selectedEncounter);
+      final isSelected =
+          selectedEncounter != null && group.encounters.contains(selectedEncounter);
 
       return Positioned(
         left: group.marker.x,
         top: group.marker.y,
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              final currentIndex = _selectedEncounter != null
-                  ? group.encounters.indexOf(_selectedEncounter!)
-                  : -1;
+            final currentIndex = selectedEncounter != null
+                ? group.encounters.indexOf(selectedEncounter)
+                : -1;
 
-              if (group.encounters.length == 1) {
-                _selectedEncounter = currentIndex != -1
-                    ? null
-                    : group.encounters.first;
-              } else {
-                final nextIndex = currentIndex == -1
-                    ? 0
-                    : (currentIndex + 1) % group.encounters.length;
-                _selectedEncounter = group.encounters[nextIndex];
-              }
-            });
+            PokemonEncounter? newSelection;
 
-            if (_selectedEncounter != null) {
-              widget.onMarkerTap?.call(_selectedEncounter!);
+            if (group.encounters.length == 1) {
+              newSelection = currentIndex != -1 ? null : group.encounters.first;
+            } else {
+              final nextIndex = currentIndex == -1
+                  ? 0
+                  : (currentIndex + 1) % group.encounters.length;
+              newSelection = group.encounters[nextIndex];
+            }
+
+            onEncounterChange(newSelection);
+
+            if (newSelection != null) {
+              onMarkerTap?.call(newSelection);
             }
           },
           child: RegionMarkerWidget(
@@ -398,16 +427,16 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     }).toList();
   }
 
-  void _handleAreaTap(ClickableArea area) {
+  void _handleAreaTap(ClickableArea area, BuildContext context) {
     if (widget.onAreaTap != null) {
       widget.onAreaTap!(area);
       return;
     }
 
-    _showAreaDialog(area);
+    _showAreaDialog(area, context);
   }
 
-  Future<void> _showAreaDialog(ClickableArea area) async {
+  Future<void> _showAreaDialog(ClickableArea area, BuildContext context) async {
     final uri = _resolveAreaUri(area);
     final displayName = _areaDisplayName(area);
     final locationLabel = _areaLocationLabel(area, uri);
@@ -490,24 +519,30 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         .join(' ');
   }
 
-  List<Widget> _buildClickableAreas() {
-    final parsedMap = _parsedMap;
+  List<Widget> _buildClickableAreas(
+    BuildContext _,
+    ParsedMap? parsedMap,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
     if (parsedMap == null || parsedMap.areas.isEmpty) return [];
 
     return parsedMap.areas.map((area) {
       switch (area.shape) {
         case AreaShape.circle:
-          return _buildCircleArea(area);
+          return _buildCircleArea(area, onAreaTap);
         case AreaShape.poly:
-          return _buildPolygonArea(area);
+          return _buildPolygonArea(area, onAreaTap);
         case AreaShape.rect:
         default:
-          return _buildRectArea(area);
+          return _buildRectArea(area, onAreaTap);
       }
     }).toList();
   }
 
-  Widget _buildRectArea(ClickableArea area) {
+  Widget _buildRectArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
     final rect = area.rect ?? area.bounds;
     return Positioned(
       left: rect.left,
@@ -516,7 +551,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       height: rect.height,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTap: () => _handleAreaTap(area),
+        onTap: () => onAreaTap(area),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.blueAccent.withOpacity(0.08),
@@ -531,7 +566,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     );
   }
 
-  Widget _buildCircleArea(ClickableArea area) {
+  Widget _buildCircleArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
     final bounds = area.bounds;
     final center = area.center ?? bounds.center;
     final localCenter = center - Offset(bounds.left, bounds.top);
@@ -544,7 +582,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       height: bounds.height,
       child: GestureDetector(
         behavior: HitTestBehavior.deferToChild,
-        onTap: () => _handleAreaTap(area),
+        onTap: () => onAreaTap(area),
         child: CustomPaint(
           painter: _CircleAreaPainter(
             center: localCenter,
@@ -555,7 +593,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     );
   }
 
-  Widget _buildPolygonArea(ClickableArea area) {
+  Widget _buildPolygonArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
     final bounds = area.bounds;
     final points = area.points
         .map((point) => point - Offset(bounds.left, bounds.top))
@@ -568,19 +609,25 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       height: bounds.height,
       child: _PolygonAreaWidget(
         points: points,
-        onTap: () => _handleAreaTap(area),
+        onTap: () => onAreaTap(area),
       ),
     );
   }
 
   /// Construye marcadores de debug para spawn points
-  List<Widget> _buildDebugSpawnMarkers() {
-    if (!widget.debugMode || widget.debugSpawns == null) {
+  List<Widget> _buildDebugSpawnMarkers({
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    RegionMapData? currentMapData,
+    ParsedMap? parsedMap,
+  }) {
+    final isDebugEnabled = debugMode ?? widget.debugMode;
+    final spawns = debugSpawns ?? widget.debugSpawns;
+    if (!isDebugEnabled || spawns == null) {
       return [];
     }
 
     final List<Widget> markers = [];
-    final spawns = widget.debugSpawns!;
 
     for (var i = 0; i < spawns.length; i++) {
       final spawn = spawns[i];
@@ -589,7 +636,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       final pokemon = spawn['pokemon'] as String? ?? 'Unknown';
 
       // Validar que las coordenadas estén dentro de los límites del mapa
-      final mapSize = _getMapSize();
+      final mapSize = _getMapSize(
+        currentMapData: currentMapData,
+        parsedMap: parsedMap,
+      );
       if (x < 0 || x > mapSize.width || y < 0 || y > mapSize.height) {
         debugPrint('Warning: Spawn point $i ($pokemon) has invalid coordinates: ($x, $y)');
         continue;
@@ -647,10 +697,20 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Construye la imagen del mapa (PNG o SVG)
-  Widget _buildMapImage(ThemeData theme) {
-    final mapData = _currentMapData;
-    final assetPath = _getMapAssetPath();
-    final size = _getMapSize();
+  Widget _buildMapImage(
+    ThemeData theme, {
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final mapData = currentMapData ?? _currentMapData;
+    final assetPath = _getMapAssetPath(
+      parsedMap: parsedMap,
+      currentMapData: mapData,
+    );
+    final size = _getMapSize(
+      parsedMap: parsedMap,
+      currentMapData: mapData,
+    );
 
     // Determinar si es SVG o PNG
     final isSvg = mapData?.isSvg ?? assetPath.toLowerCase().endsWith('.svg');
@@ -712,9 +772,51 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     ThemeData theme, {
     double? height,
     bool showFullscreenButton = true,
+    PokemonEncounter? selectedEncounter,
+    ValueChanged<PokemonEncounter?>? onEncounterChange,
+    TransformationController? transformationController,
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ParsedMap? parsedMap,
+    List<PokemonEncounter>? encounters,
+    List<PokemonLocationPoint>? locationPoints,
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+    void Function(ClickableArea area, BuildContext context)? onAreaTapHandler,
+    VoidCallback? onOpenFullscreen,
   }) {
     final isFullscreen = !showFullscreenButton && height == null;
     final containerHeight = height ?? (isFullscreen ? null : widget.height);
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localAvailableVersions = availableVersions ?? _availableVersions;
+    final localSelectedVersionIndex = selectedVersionIndex ?? _selectedVersionIndex;
+    final localCurrentMapData = _resolveCurrentMapData(
+      availableVersions: localAvailableVersions,
+      selectedVersionIndex: localSelectedVersionIndex,
+    );
+    final localEncounters = encounters ?? widget.encounters;
+    final localLocationPoints = locationPoints ?? widget.locationPoints;
+    final localDebugMode = debugMode ?? widget.debugMode;
+    final localDebugSpawns = debugSpawns ?? widget.debugSpawns;
+    final localSelectedEncounter = selectedEncounter ?? _selectedEncounter;
+    final localTransformationController =
+        transformationController ?? _transformationController;
+    final localMapBoundsPx = mapBoundsPx ?? widget.mapBoundsPx;
+    final localMapMarginPx = mapMarginPx ?? widget.mapMarginPx;
+    final areaTapHandler = onAreaTapHandler ?? _handleAreaTap;
+
+    void updateEncounterSelection(PokemonEncounter? encounter) {
+      if (onEncounterChange != null) {
+        onEncounterChange(encounter);
+        return;
+      }
+
+      setState(() {
+        _selectedEncounter = encounter;
+      });
+    }
 
     final mapContainer = Container(
       height: containerHeight,
@@ -735,9 +837,16 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       clipBehavior: Clip.hardEdge,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final mapSize = _getMapSize();
-          final mapBounds = _resolveMapBounds(mapSize);
-          final hasSpriteMarkers = widget.locationPoints
+          final mapSize = _getMapSize(
+            parsedMap: localParsedMap,
+            currentMapData: localCurrentMapData,
+          );
+          final mapBounds = _resolveMapBounds(
+            mapSize,
+            mapBoundsPx: localMapBoundsPx,
+            mapMarginPx: localMapMarginPx,
+          );
+          final hasSpriteMarkers = localLocationPoints
                   ?.any((point) =>
                       point.coordinates != null && point.spriteUrl.isNotEmpty) ??
               false;
@@ -746,8 +855,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
           final minScale = fitScale;
           final maxScale = fitScale * 4;
 
-          if (_transformationController.value == Matrix4.identity()) {
-            _transformationController.value = Matrix4.identity()..scale(fitScale);
+          if (localTransformationController.value == Matrix4.identity()) {
+            localTransformationController.value =
+                Matrix4.identity()..scale(fitScale);
           }
 
           final List<Widget> controlButtons = [
@@ -755,7 +865,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               icon: Icons.add,
               tooltip: 'Acercar',
               onPressed: () {
-                final currentMatrix = _transformationController.value;
+                final currentMatrix = localTransformationController.value;
                 final currentScale = currentMatrix.getMaxScaleOnAxis();
                 final newScale = (currentScale * 1.5).clamp(minScale, maxScale);
 
@@ -769,7 +879,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                   ..scale(scaleFactor)
                   ..translate(-focal.dx, -focal.dy);
 
-                _transformationController.value = adjustedMatrix;
+                localTransformationController.value = adjustedMatrix;
               },
             ),
             const SizedBox(height: 8),
@@ -777,7 +887,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               icon: Icons.remove,
               tooltip: 'Alejar',
               onPressed: () {
-                final currentMatrix = _transformationController.value;
+                final currentMatrix = localTransformationController.value;
                 final currentScale = currentMatrix.getMaxScaleOnAxis();
                 final newScale = (currentScale / 1.5).clamp(minScale, maxScale);
 
@@ -791,7 +901,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                   ..scale(scaleFactor)
                   ..translate(-focal.dx, -focal.dy);
 
-                _transformationController.value = adjustedMatrix;
+                localTransformationController.value = adjustedMatrix;
               },
             ),
           ];
@@ -802,7 +912,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               _MapControlButton(
                 icon: Icons.fullscreen,
                 tooltip: 'Pantalla completa',
-                onPressed: _openFullscreenMap,
+                onPressed: onOpenFullscreen ?? _openFullscreenMap,
               ),
             ]);
           }
@@ -811,7 +921,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
             children: [
               // Mapa interactivo con zoom/pan
               InteractiveViewer(
-                transformationController: _transformationController,
+                transformationController: localTransformationController,
                 minScale: minScale,
                 maxScale: maxScale,
                 constrained: false,
@@ -824,36 +934,60 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                   child: Stack(
                     children: [
                       // Imagen del mapa de la región (PNG o SVG)
-                      _buildMapImage(theme),
+                      _buildMapImage(
+                        theme,
+                        parsedMap: localParsedMap,
+                        currentMapData: localCurrentMapData,
+                      ),
                       // Áreas clickeables provenientes del archivo de mapa
-                      ..._buildClickableAreas(),
+                      ..._buildClickableAreas(
+                        context,
+                        localParsedMap,
+                        (area) => areaTapHandler(area, context),
+                      ),
                       // Sprites posicionados según coordenadas en píxeles
                       if (hasSpriteMarkers)
                         ..._buildSpriteMarkers(
                           mapBounds: mapBounds,
                           scaleFactor: markerScaleFactor,
+                          locationPoints: localLocationPoints,
+                          parsedMap: localParsedMap,
+                          currentMapData: localCurrentMapData,
+                          selectedEncounter: localSelectedEncounter,
+                          onEncounterChange: updateEncounterSelection,
+                          onMarkerTap: widget.onMarkerTap,
                         )
                       else
-                        ..._buildMarkers(scaleFactor: markerScaleFactor),
+                        ..._buildMarkers(
+                          scaleFactor: markerScaleFactor,
+                          encounters: localEncounters,
+                          selectedEncounter: localSelectedEncounter,
+                          onEncounterChange: updateEncounterSelection,
+                          currentMapData: localCurrentMapData,
+                          onMarkerTap: widget.onMarkerTap,
+                        ),
                       // Marcadores de debug (si está habilitado)
-                      ..._buildDebugSpawnMarkers(),
+                      ..._buildDebugSpawnMarkers(
+                        debugMode: localDebugMode,
+                        debugSpawns: localDebugSpawns,
+                        currentMapData: localCurrentMapData,
+                        parsedMap: localParsedMap,
+                      ),
                     ],
                   ),
                 ),
               ),
 
               // Popup cuando se selecciona un marcador
-              if (_selectedEncounter != null)
+              if (localSelectedEncounter != null)
                 Positioned(
                   top: 16,
                   left: 16,
                   right: 16,
                   child: _MarkerPopup(
-                    encounter: _selectedEncounter!,
+                    encounter: localSelectedEncounter,
                     onClose: () {
-                      setState(() {
-                        _selectedEncounter = null;
-                      });
+                      updateEncounterSelection(null);
                     },
                   ),
                 ),
@@ -890,6 +1024,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localAvailableVersions = _availableVersions;
 
     if (widget.previewMode) {
       return Padding(
@@ -921,7 +1056,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Version selector (only show if multiple versions available)
-        if (_availableVersions.length > 1)
+        if (localAvailableVersions.length > 1)
           _buildVersionSelector(theme),
 
         // Map container
@@ -931,7 +1066,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Construye el selector de versiones del juego
-  Widget _buildVersionSelector(ThemeData theme) {
+  Widget _buildVersionSelector(
+    ThemeData theme, {
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ValueChanged<int>? onVersionSelected,
+  }) {
+    final localAvailableVersions = availableVersions ?? _availableVersions;
+    final localSelectedVersionIndex = selectedVersionIndex ?? _selectedVersionIndex;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -955,18 +1097,22 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(
-                  _availableVersions.length,
+                  localAvailableVersions.length,
                   (index) => Padding(
-                    padding: EdgeInsets.only(right: index < _availableVersions.length - 1 ? 8.0 : 0.0),
+                    padding: EdgeInsets.only(right: index < localAvailableVersions.length - 1 ? 8.0 : 0.0),
                     child: _VersionChip(
-                      label: _availableVersions[index].gameVersion,
-                      isSelected: index == _selectedVersionIndex,
+                      label: localAvailableVersions[index].gameVersion,
+                      isSelected: index == localSelectedVersionIndex,
                       onTap: () {
-                        setState(() {
-                          _selectedVersionIndex = index;
-                          _selectedEncounter = null; // Reset selection
-                          _transformationController.value = Matrix4.identity();
-                        });
+                        if (onVersionSelected != null) {
+                          onVersionSelected(index);
+                        } else {
+                          setState(() {
+                            _selectedVersionIndex = index;
+                            _selectedEncounter = null; // Reset selection
+                            _transformationController.value = Matrix4.identity();
+                          });
+                        }
                       },
                     ),
                   ),
@@ -981,6 +1127,159 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   String _formatRegionName(String region) {
     return region[0].toUpperCase() + region.substring(1);
+  }
+}
+
+class _FullscreenRegionMapPage extends StatefulWidget {
+  const _FullscreenRegionMapPage({
+    required this.region,
+    required this.encounters,
+    required this.locationPoints,
+    required this.availableVersions,
+    required this.initialSelectedVersionIndex,
+    required this.parsedMap,
+    required this.mapBoundsPx,
+    required this.mapMarginPx,
+    required this.onAreaTap,
+    required this.onMarkerTap,
+    required this.debugMode,
+    required this.debugSpawns,
+    required this.buildMapContainer,
+    required this.buildVersionSelector,
+    required this.handleAreaTap,
+  });
+
+  final String region;
+  final List<PokemonEncounter> encounters;
+  final List<PokemonLocationPoint>? locationPoints;
+  final List<RegionMapData> availableVersions;
+  final int initialSelectedVersionIndex;
+  final ParsedMap? parsedMap;
+  final Rect? mapBoundsPx;
+  final double mapMarginPx;
+  final void Function(ClickableArea area)? onAreaTap;
+  final Function(PokemonEncounter)? onMarkerTap;
+  final bool debugMode;
+  final List<Map<String, dynamic>>? debugSpawns;
+  final Widget Function(
+    ThemeData theme, {
+    double? height,
+    bool showFullscreenButton,
+    PokemonEncounter? selectedEncounter,
+    ValueChanged<PokemonEncounter?>? onEncounterChange,
+    TransformationController? transformationController,
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ParsedMap? parsedMap,
+    List<PokemonEncounter>? encounters,
+    List<PokemonLocationPoint>? locationPoints,
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+    void Function(ClickableArea area, BuildContext context)? onAreaTapHandler,
+    VoidCallback? onOpenFullscreen,
+  }) buildMapContainer;
+  final Widget Function(
+    ThemeData theme, {
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ValueChanged<int>? onVersionSelected,
+  }) buildVersionSelector;
+  final void Function(ClickableArea area, BuildContext context) handleAreaTap;
+
+  @override
+  State<_FullscreenRegionMapPage> createState() =>
+      _FullscreenRegionMapPageState();
+}
+
+class _FullscreenRegionMapPageState extends State<_FullscreenRegionMapPage> {
+  PokemonEncounter? _selectedEncounter;
+  late int _selectedVersionIndex;
+  late final TransformationController _transformationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedVersionIndex = widget.initialSelectedVersionIndex;
+    _transformationController = TransformationController();
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: Text('Mapa de ${widget.region[0].toUpperCase()}${widget.region.substring(1)}'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Cerrar pantalla completa',
+            icon: const Icon(Icons.close_fullscreen),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              if (widget.availableVersions.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: widget.buildVersionSelector(
+                    theme,
+                    availableVersions: widget.availableVersions,
+                    selectedVersionIndex: _selectedVersionIndex,
+                    onVersionSelected: (index) {
+                      setState(() {
+                        _selectedVersionIndex = index;
+                        _selectedEncounter = null;
+                        _transformationController.value = Matrix4.identity();
+                      });
+                    },
+                  ),
+                ),
+              Expanded(
+                child: widget.buildMapContainer(
+                  theme,
+                  height: null,
+                  showFullscreenButton: false,
+                  selectedEncounter: _selectedEncounter,
+                  onEncounterChange: (encounter) {
+                    setState(() {
+                      _selectedEncounter = encounter;
+                    });
+                    if (encounter != null) {
+                      widget.onMarkerTap?.call(encounter);
+                    }
+                  },
+                  transformationController: _transformationController,
+                  availableVersions: widget.availableVersions,
+                  selectedVersionIndex: _selectedVersionIndex,
+                  parsedMap: widget.parsedMap,
+                  encounters: widget.encounters,
+                  locationPoints: widget.locationPoints,
+                  debugMode: widget.debugMode,
+                  debugSpawns: widget.debugSpawns,
+                  mapBoundsPx: widget.mapBoundsPx,
+                  mapMarginPx: widget.mapMarginPx,
+                  onAreaTapHandler: widget.handleAreaTap,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
