@@ -45,11 +45,28 @@ class CardCaptureService {
         return null;
       }
 
-      // Esperar a que el widget esté completamente pintado
-      // Si debugNeedsPaint es true, esperamos al siguiente frame
+      // Esperar a que el widget esté completamente pintado con timeout
+      const paintTimeout = Duration(seconds: 2);
+      final paintStopwatch = Stopwatch()..start();
+
       if (boundary.debugNeedsPaint) {
         debugPrint('[CardCaptureService] Widget necesita ser pintado, esperando...');
+      }
+
+      while (boundary.debugNeedsPaint && paintStopwatch.elapsed < paintTimeout) {
         await _waitForPaint();
+      }
+
+      if (boundary.debugNeedsPaint) {
+        debugPrint(
+          '[CardCaptureService] El widget no se pintó tras esperar ${paintTimeout.inMilliseconds}ms',
+        );
+        return null;
+      }
+
+      if (boundary.layer == null) {
+        debugPrint('[CardCaptureService] RenderRepaintBoundary no tiene capa para pintar');
+        return null;
       }
 
       // Capturar la imagen con tamaño real (1080x1920) y pixelRatio 1.0
