@@ -21,9 +21,12 @@ class RegionMapViewer extends StatefulWidget {
     super.key,
     required this.region,
     required this.encounters,
+    this.locationPoints,
     this.height = 300.0,
     this.previewMode = false,
     this.markerColor = const Color(0xFF3B9DFF),
+    this.mapBoundsPx,
+    this.mapMarginPx = 0,
     this.onMarkerTap,
     this.onAreaTap,
     this.debugMode = false,
@@ -36,6 +39,9 @@ class RegionMapViewer extends StatefulWidget {
   /// Lista de encuentros en esta región
   final List<PokemonEncounter> encounters;
 
+  /// Lista de ubicaciones enriquecidas con coordenadas en píxeles
+  final List<PokemonLocationPoint>? locationPoints;
+
   /// Altura del widget en píxeles
   final double height;
 
@@ -44,6 +50,12 @@ class RegionMapViewer extends StatefulWidget {
 
   /// Color de los marcadores
   final Color markerColor;
+
+  /// Rectángulo opcional que delimita el área útil del mapa en píxeles
+  final Rect? mapBoundsPx;
+
+  /// Margen configurable para calcular [mapBoundsPx] si no se provee manualmente
+  final double mapMarginPx;
 
   /// Callback cuando se toca un marcador
   final Function(PokemonEncounter)? onMarkerTap;
@@ -226,8 +238,57 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     return const Size(800, 600);
   }
 
+  /// Determina el rectángulo usable del mapa para colocar sprites
+  Rect _resolveMapBounds(Size mapSize) {
+    if (widget.mapBoundsPx != null) {
+      return widget.mapBoundsPx!;
+    }
+
+    final horizontalMargin = widget.mapMarginPx.clamp(0.0, mapSize.width / 2);
+    final verticalMargin = widget.mapMarginPx.clamp(0.0, mapSize.height / 2);
+
+    return Rect.fromLTWH(
+      horizontalMargin,
+      verticalMargin,
+      mapSize.width - (horizontalMargin * 2),
+      mapSize.height - (verticalMargin * 2),
+    );
+  }
+
   /// Construye los marcadores sobre el mapa
   static const double _fullscreenSpriteScale = 0.75;
+
+  List<Widget> _buildSpriteMarkers({
+    required Rect mapBounds,
+    double scaleFactor = 1.0,
+  }) {
+    final points = widget.locationPoints;
+    if (points == null || points.isEmpty) return [];
+
+    final mapSize = _getMapSize();
+    final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
+    final spriteSize = 44.0 * normalizedScale * scaleFactor;
+
+    return points.map((point) {
+      final pixelCoordinates = point.toPixelCoordinates(mapBounds);
+      if (pixelCoordinates == null) return const SizedBox.shrink();
+
+      final left = pixelCoordinates.x - spriteSize / 2;
+      final top = pixelCoordinates.y - spriteSize / 2;
+
+      return Positioned(
+        left: left,
+        top: top,
+        width: spriteSize,
+        height: spriteSize,
+        child: Image.network(
+          point.spriteUrl,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => const Icon(Icons.catching_pokemon),
+        ),
+      );
+    }).toList();
+  }
 
   List<Widget> _buildMarkers({double scaleFactor = 1.0}) {
     if (widget.encounters.isEmpty) return [];
@@ -634,6 +695,8 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final mapSize = _getMapSize();
+          final mapBounds = _resolveMapBounds(mapSize);
+          final hasSpriteMarkers = widget.locationPoints?.isNotEmpty ?? false;
           final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
           final fitScale = constraints.maxWidth / mapSize.width;
           final minScale = fitScale;
@@ -720,8 +783,14 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
                       _buildMapImage(theme),
                       // Áreas clickeables provenientes del archivo de mapa
                       ..._buildClickableAreas(),
-                      // Marcadores posicionados sobre el mapa
-                      ..._buildMarkers(scaleFactor: markerScaleFactor),
+                      // Sprites posicionados según coordenadas en píxeles
+                      if (hasSpriteMarkers)
+                        ..._buildSpriteMarkers(
+                          mapBounds: mapBounds,
+                          scaleFactor: markerScaleFactor,
+                        )
+                      else
+                        ..._buildMarkers(scaleFactor: markerScaleFactor),
                       // Marcadores de debug (si está habilitado)
                       ..._buildDebugSpawnMarkers(),
                     ],
