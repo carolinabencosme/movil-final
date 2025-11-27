@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import 'package:http/http.dart' as http;
 
+import '../models/parsed_map.dart';
 import '../models/pokemon_location.dart';
+import 'map_parser.dart';
 import 'region_map_data.dart';
 import 'region_map_markers.dart';
 import 'location_service_exception.dart';
@@ -20,9 +22,11 @@ class PokemonLocationService {
 
   static const String _baseUrl = 'https://pokeapi.co/api/v2';
   final http.Client _client;
+  final MapParser _mapParser = const MapParser();
 
   final Map<String, Map<String, dynamic>> _locationAreaCache = {};
   final Map<int, EncounterPokemonInfo> _pokemonCache = {};
+  final Map<String, ParsedMap> _parsedMapCache = {};
 
   /// Obtiene las ubicaciones de un Pokémon con coordenadas listas para pintar en el mapa.
   Future<List<PokemonLocationPoint>> fetchPokemonLocations(int pokemonId) async {
@@ -44,6 +48,7 @@ class PokemonLocationService {
       final coordinates = await _resolveCoordinates(
         region: region,
         locationAreaName: locationAreaName,
+        locationAreaUrl: locationAreaUrl,
         version: versions.isNotEmpty ? versions.first : null,
       );
 
@@ -146,12 +151,16 @@ class PokemonLocationService {
   Future<PokemonLocationCoordinates?> _resolveCoordinates({
     required String? region,
     required String locationAreaName,
+    required String locationAreaUrl,
     required String? version,
   }) async {
     if (region == null) return null;
     final normalizedRegion = region.toLowerCase().trim();
     final normalizedArea = _normalizeAreaName(locationAreaName);
     final normalizedVersion = _normalizeVersion(version);
+    final placeName = await _resolvePlaceName(locationAreaUrl);
+    final normalizedPlaceName =
+        placeName != null && placeName.isNotEmpty ? _normalizeLabel(placeName) : null;
 
     final marker = _findMarker(
       region: normalizedRegion,
@@ -162,26 +171,69 @@ class PokemonLocationService {
     final regionMap = _resolveMapDataForVersion(normalizedRegion, normalizedVersion);
     final baseSize = _markerBaseSizes[normalizedRegion];
 
-    if (marker == null || regionMap == null || baseSize == null) {
-      return null;
+    if (marker != null && regionMap != null && baseSize != null) {
+      final scaleX = regionMap.mapSize.width / baseSize.width;
+      final scaleY = regionMap.mapSize.height / baseSize.height;
+
+      final scaledX = marker.x * scaleX;
+      final scaledY = marker.y * scaleY;
+
+      final normalizedX = (scaledX / regionMap.mapSize.width).clamp(0.0, 1.0);
+      final normalizedY = (scaledY / regionMap.mapSize.height).clamp(0.0, 1.0);
+
+      return PokemonLocationCoordinates(
+        normalizedX: normalizedX,
+        normalizedY: normalizedY,
+        rawX: scaledX,
+        rawY: scaledY,
+        mapSize: regionMap.mapSize,
+      );
     }
 
-    final scaleX = regionMap.mapSize.width / baseSize.width;
-    final scaleY = regionMap.mapSize.height / baseSize.height;
+    final parsedMap = await _loadParsedMap(normalizedRegion);
+    if (parsedMap == null || parsedMap.areas.isEmpty) return null;
 
-    final scaledX = marker.x * scaleX;
-    final scaledY = marker.y * scaleY;
+    final targetNames = <String>{normalizedArea};
+    if (normalizedPlaceName != null) targetNames.add(normalizedPlaceName);
 
-    final normalizedX = (scaledX / regionMap.mapSize.width).clamp(0.0, 1.0);
-    final normalizedY = (scaledY / regionMap.mapSize.height).clamp(0.0, 1.0);
+    for (final area in parsedMap.areas) {
+      final normalizedTitle = _normalizeLabel(area.title);
+      final normalizedHref = _normalizeLabel(area.href);
+      final normalizedLocation = _normalizeLabel(area.location);
 
-    return PokemonLocationCoordinates(
-      normalizedX: normalizedX,
-      normalizedY: normalizedY,
-      rawX: scaledX,
-      rawY: scaledY,
-      mapSize: regionMap.mapSize,
-    );
+      final matches = targetNames.any((target) {
+        if (target.isEmpty) return false;
+        return normalizedTitle == target ||
+            normalizedHref == target ||
+            normalizedLocation == target ||
+            normalizedTitle.contains(target) ||
+            normalizedHref.contains(target) ||
+            normalizedLocation.contains(target) ||
+            target.contains(normalizedTitle) ||
+            target.contains(normalizedHref) ||
+            target.contains(normalizedLocation);
+      });
+
+      if (!matches) continue;
+
+      final center = _resolveAreaCenter(area);
+      if (center == null || parsedMap.mapSize.width == 0 || parsedMap.mapSize.height == 0) {
+        continue;
+      }
+
+      final normalizedX = (center.dx / parsedMap.mapSize.width).clamp(0.0, 1.0);
+      final normalizedY = (center.dy / parsedMap.mapSize.height).clamp(0.0, 1.0);
+
+      return PokemonLocationCoordinates(
+        normalizedX: normalizedX,
+        normalizedY: normalizedY,
+        rawX: center.dx,
+        rawY: center.dy,
+        mapSize: parsedMap.mapSize,
+      );
+    }
+
+    return null;
   }
 
   Map<String, dynamic> _normalizeAttributes(Map<String, dynamic> data) {
@@ -251,13 +303,64 @@ class PokemonLocationService {
   String _normalizeAreaName(String value) {
     final normalized = value.toLowerCase().trim();
     if (normalized.endsWith('-area')) {
-      return normalized.replaceFirst(RegExp(r'-area\$'), '');
+      return _normalizeLabel(normalized.replaceFirst(RegExp(r'-area\$'), ''));
     }
-    return normalized;
+    return _normalizeLabel(normalized);
   }
 
   String _normalizeVersion(String? value) {
     return (value ?? '').toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  Future<String?> _resolvePlaceName(String locationAreaUrl) async {
+    try {
+      final areaData = await _fetchLocationArea(locationAreaUrl);
+      final location = areaData['location'] as Map<String, dynamic>?;
+      final locationName = location?['name'] as String?;
+      if (locationName != null && locationName.isNotEmpty) return locationName;
+
+      final names = areaData['names'] as List<dynamic>?;
+      if (names != null && names.isNotEmpty) {
+        final firstName = (names.first as Map<String, dynamic>?)?['name'] as String?;
+        if (firstName != null && firstName.isNotEmpty) return firstName;
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  Future<ParsedMap?> _loadParsedMap(String region) async {
+    if (_parsedMapCache.containsKey(region)) return _parsedMapCache[region]!;
+
+    try {
+      final parsedMap = await _mapParser.load(region);
+      _parsedMapCache[region] = parsedMap;
+      return parsedMap;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Offset? _resolveAreaCenter(ClickableArea area) {
+    switch (area.shape) {
+      case AreaShape.rect:
+        return area.rect?.center ?? area.bounds.center;
+      case AreaShape.circle:
+        return area.center ?? area.bounds.center;
+      case AreaShape.poly:
+        if (area.points.isNotEmpty) {
+          final sum = area.points.reduce((value, element) => value + element);
+          return sum / area.points.length.toDouble();
+        }
+        return area.bounds.center;
+    }
+  }
+
+  String _normalizeLabel(String value) {
+    final trimmed = value.toLowerCase().trim();
+    return trimmed.replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 }
 
