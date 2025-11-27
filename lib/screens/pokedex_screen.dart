@@ -1759,16 +1759,16 @@ class _FiltersSheetState extends State<FiltersSheet> {
   }
 }
 
-class _PokemonListTile extends StatefulWidget {
+class _PokemonListTile extends ConsumerStatefulWidget {
   const _PokemonListTile({super.key, required this.pokemon});
 
   final PokemonListItem pokemon;
 
   @override
-  State<_PokemonListTile> createState() => _PokemonListTileState();
+  ConsumerState<_PokemonListTile> createState() => _PokemonListTileState();
 }
 
-class _PokemonListTileState extends State<_PokemonListTile> {
+class _PokemonListTileState extends ConsumerState<_PokemonListTile> {
   bool _isPressed = false;
 
   void _handleTap(
@@ -1797,40 +1797,26 @@ class _PokemonListTileState extends State<_PokemonListTile> {
 
   @override
   Widget build(BuildContext context) {
-    final favoritesController = FavoritesScope.maybeOf(context);
-    if (favoritesController == null) {
-      return _buildTile(
-        context,
-        isFavorite: false,
-        favoritesController: null,
-      );
-    }
+    final favoritesController = ref.watch(favoritesControllerProvider);
+    final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
+    final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
 
-    return AnimatedBuilder(
-      animation: favoritesController,
-      builder: (context, _) {
-        final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
-        return _buildTile(
-          context,
-          isFavorite: isFavorite,
-          favoritesController: favoritesController,
-          onToggleFavorite: () {
-            favoritesController.toggleFavorite(widget.pokemon);
-          },
-        );
-      },
+    return _buildTile(
+      context,
+      pokemon: pokemon,
+      isFavorite: isFavorite,
+      favoritesController: favoritesController,
     );
   }
 
   Widget _buildTile(
     BuildContext context, {
+    required PokemonListItem pokemon,
     required bool isFavorite,
-    required FavoritesController? favoritesController,
-    VoidCallback? onToggleFavorite,
+    required FavoritesController favoritesController,
   }) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final pokemon = favoritesController?.applyFavoriteState(widget.pokemon) ?? widget.pokemon;
     final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
@@ -1920,7 +1906,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                       tooltip: isFavorite
                           ? l10n.detailFavoriteRemoveTooltip
                           : l10n.detailFavoriteAddTooltip,
-                      onPressed: onToggleFavorite,
+                      onPressed: () {
+                        favoritesController.toggleFavorite(pokemon);
+                      },
                     ),
                   ),
                 ),
