@@ -276,15 +276,53 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
       final left = pixelCoordinates.x - spriteSize / 2;
       final top = pixelCoordinates.y - spriteSize / 2;
 
+      final encounter = PokemonEncounter(
+        locationArea: point.locationArea,
+        versionDetails: point.versions
+            .map(
+              (version) => EncounterVersionDetail(
+                version: version,
+                maxChance: 0,
+                encounterDetails: const [],
+              ),
+            )
+            .toList(),
+        region: point.region,
+        coordinates: MapCoordinates(
+          pixelCoordinates.x,
+          pixelCoordinates.y,
+        ),
+        pokemonId: point.pokemonId,
+        pokemonName: point.pokemonName,
+        spriteUrl: point.spriteUrl,
+      );
+
       return Positioned(
         left: left,
         top: top,
         width: spriteSize,
         height: spriteSize,
-        child: Image.network(
-          point.spriteUrl,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => const Icon(Icons.catching_pokemon),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              if (_selectedEncounter != null &&
+                  _selectedEncounter!.locationArea == encounter.locationArea &&
+                  _selectedEncounter!.pokemonId == encounter.pokemonId) {
+                _selectedEncounter = null;
+              } else {
+                _selectedEncounter = encounter;
+              }
+            });
+
+            if (_selectedEncounter != null) {
+              widget.onMarkerTap?.call(_selectedEncounter!);
+            }
+          },
+          child: Image.network(
+            point.spriteUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.catching_pokemon),
+          ),
         ),
       );
     }).toList();
