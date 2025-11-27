@@ -675,7 +675,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     double? height,
     bool showFullscreenButton = true,
   }) {
-    final isFullscreen = height == null || !showFullscreenButton;
+    final isFullscreen = !showFullscreenButton && height == null;
     final containerHeight = height ?? (isFullscreen ? null : widget.height);
 
     final mapContainer = Container(
