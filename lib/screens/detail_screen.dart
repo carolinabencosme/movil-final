@@ -1703,17 +1703,47 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   final GlobalKey _cardKey = GlobalKey();
   final CardCaptureService _captureService = CardCaptureService();
   bool _isSharing = false;
+  bool _isPreloadingImage = false;
 
   Future<void> _shareCard() async {
     if (_isSharing) return;
 
     setState(() {
       _isSharing = true;
+      _isPreloadingImage = true;
     });
 
     try {
-      // Dar tiempo para que el RepaintBoundary se inicialice si es necesario
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await WidgetsBinding.instance.endOfFrame;
+
+      var precacheSuccessful = true;
+      try {
+        await precacheImage(
+          NetworkImage(widget.pokemon.imageUrl),
+          context,
+        );
+      } catch (e) {
+        precacheSuccessful = false;
+        debugPrint('[ShareCardDialog] Error al precargar imagen: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo preparar la imagen para compartir.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+
+      if (!precacheSuccessful || !mounted) {
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPreloadingImage = false;
+        });
+      }
 
       final success = await _captureService.captureAndShare(
         _cardKey,
@@ -1753,6 +1783,7 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
       if (mounted) {
         setState(() {
           _isSharing = false;
+          _isPreloadingImage = false;
         });
       }
     }
@@ -1806,15 +1837,43 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: RepaintBoundary(
-                  key: _cardKey,
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: PokemonShareCard(
-                      pokemon: widget.pokemon,
-                      themeColor: widget.themeColor,
+                child: Stack(
+                  children: [
+                    RepaintBoundary(
+                      key: _cardKey,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: PokemonShareCard(
+                          pokemon: widget.pokemon,
+                          themeColor: widget.themeColor,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (_isPreloadingImage)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.25),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: CircularProgressIndicator(),
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Preparando la imagen...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
