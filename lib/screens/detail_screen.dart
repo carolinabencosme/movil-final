@@ -1706,11 +1706,26 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   bool _isSharing = false;
   bool _isPreloadingImage = false;
 
+  bool get _canShareFiles => _captureService.canShareFiles;
+
   /// Coordenadas para posicionar el widget de captura fuera de la pantalla.
   /// Debe ser lo suficientemente negativo para que el widget no sea visible.
   static const double _offScreenPosition = -10000;
 
   Future<void> _shareCard() async {
+    if (!_canShareFiles) {
+      debugPrint('[ShareCardDialog] Compartir omitido: plataforma no soportada.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compartir no está disponible en esta plataforma.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     if (_isSharing) return;
 
     setState(() {
@@ -1923,7 +1938,8 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: _isSharing ? null : _shareCard,
+                          onPressed:
+                              _isSharing || !_canShareFiles ? null : _shareCard,
                           icon: _isSharing
                               ? const SizedBox(
                                   width: 16,
@@ -1933,7 +1949,13 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                                   ),
                                 )
                               : const Icon(Icons.share),
-                          label: Text(_isSharing ? 'Compartiendo...' : 'Compartir'),
+                          label: Text(
+                            !_canShareFiles
+                                ? 'Compartir no disponible'
+                                : _isSharing
+                                    ? 'Compartiendo...'
+                                    : 'Compartir',
+                          ),
                         ),
                       ),
                     ],
