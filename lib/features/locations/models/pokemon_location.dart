@@ -358,6 +358,7 @@ class LocationsByRegion {
   const LocationsByRegion({
     required this.region,
     required this.encounters,
+    this.locationPoints = const [],
     this.coordinates,
   });
 
@@ -367,19 +368,31 @@ class LocationsByRegion {
   /// Lista de encuentros en esta región
   final List<PokemonEncounter> encounters;
 
+  /// Lista de ubicaciones con coordenadas enriquecidas
+  final List<PokemonLocationPoint> locationPoints;
+
   /// Coordenadas X/Y del centro de la región en el mapa
   final MapCoordinates? coordinates;
 
   /// Obtiene todas las versiones únicas en esta región
   List<String> get allVersions {
-    return encounters
+    final encounterVersions = encounters
         .expand((encounter) => encounter.allVersions)
         .toSet()
         .toList();
+
+    final pointVersions = locationPoints
+        .expand((point) => point.versions)
+        .where((version) => version.isNotEmpty)
+        .toSet()
+        .toList();
+
+    return {...encounterVersions, ...pointVersions}.toList();
   }
 
   /// Cuenta total de áreas en esta región
-  int get areaCount => encounters.length;
+  int get areaCount =>
+      locationPoints.isNotEmpty ? locationPoints.length : encounters.length;
 }
 
 
