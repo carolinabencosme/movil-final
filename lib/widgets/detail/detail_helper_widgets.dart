@@ -84,25 +84,31 @@ class InfoSectionCard extends StatelessWidget {
 
     switch (variant) {
       case InfoSectionCardVariant.rounded:
-        return Card(
-          margin: EdgeInsets.zero,
-          color: cardColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-            side: BorderSide(color: outlineColor),
-          ),
-          child: content,
-        );
-      case InfoSectionCardVariant.angled:
-        return ClipPath(
-          clipper: const AngledCardClipper(),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: cardColor,
-              border: Border.all(color: outlineColor),
+        return SizedBox(
+          width: double.infinity,
+          child: Card(
+            margin: EdgeInsets.zero,
+            color: cardColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(26),
+              side: BorderSide(color: outlineColor),
             ),
             child: content,
+          ),
+        );
+      case InfoSectionCardVariant.angled:
+        return SizedBox(
+          width: double.infinity,
+          child: ClipPath(
+            clipper: const AngledCardClipper(),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: cardColor,
+                border: Border.all(color: outlineColor),
+              ),
+              child: content,
+            ),
           ),
         );
     }
