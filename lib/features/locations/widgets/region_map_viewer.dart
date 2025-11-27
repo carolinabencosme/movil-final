@@ -262,7 +262,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
     required Rect mapBounds,
     double scaleFactor = 1.0,
   }) {
-    final points = widget.locationPoints;
+    final points = widget.locationPoints
+        ?.where((point) =>
+            point.coordinates != null && (point.spriteUrl.isNotEmpty))
+        .toList();
     if (points == null || points.isEmpty) return [];
 
     final mapSize = _getMapSize();
@@ -696,7 +699,10 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         builder: (context, constraints) {
           final mapSize = _getMapSize();
           final mapBounds = _resolveMapBounds(mapSize);
-          final hasSpriteMarkers = widget.locationPoints?.isNotEmpty ?? false;
+          final hasSpriteMarkers = widget.locationPoints
+                  ?.any((point) =>
+                      point.coordinates != null && point.spriteUrl.isNotEmpty) ??
+              false;
           final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
           final fitScale = constraints.maxWidth / mapSize.width;
           final minScale = fitScale;
