@@ -94,9 +94,12 @@ class CardCaptureService {
     String filename = 'pokemon_card.png',
   }) async {
     try {
+      final normalizedFilename =
+          filename.toLowerCase().endsWith('.png') ? filename : '$filename.png';
+
       // Obtener directorio temporal
       final tempDir = await getTemporaryDirectory();
-      final filePath = '${tempDir.path}/$filename';
+      final filePath = '${tempDir.path}/$normalizedFilename';
       
       // Crear el archivo y escribir los bytes
       final file = File(filePath);
@@ -131,10 +134,14 @@ class CardCaptureService {
 
     try {
       debugPrint('[CardCaptureService] Preparando archivo para compartir: $imagePath');
-      final xFile = XFile(imagePath);
+      final xFile = XFile(
+        imagePath,
+        mimeType: 'image/png',
+      );
 
       final result = await Share.shareXFiles(
         [xFile],
+        subject: text,
         text: text,
       );
 
