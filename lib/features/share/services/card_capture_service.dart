@@ -209,19 +209,12 @@ class CardCaptureService {
   /// Indica si la plataforma actual soporta compartir archivos.
   Future<bool> get canShareFiles async {
     if (kIsWeb) {
-      return Share.isSupported();
+      // Web sharing is handled by share_plus internally
+      return true;
     }
 
     final isMobile = Platform.isAndroid || Platform.isIOS;
     final isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
-    if (isMobile || isDesktop) return true;
-
-    try {
-      return await Share.isSupported();
-    } catch (e, stackTrace) {
-      debugPrint('[CardCaptureService] Error al verificar soporte de share: $e');
-      debugPrint('[CardCaptureService] StackTrace: $stackTrace');
-      return false;
-    }
+    return isMobile || isDesktop;
   }
 }
