@@ -268,6 +268,7 @@ class PokemonDetail {
     this.shinyImageUrl,
     this.spriteData,
     this.forms,
+    this.description = '',
   });
 
   final int id;
@@ -290,6 +291,9 @@ class PokemonDetail {
   
   /// List of available forms/variants for this Pokemon
   final List<PokemonForm>? forms;
+  
+  /// Flavor text description of the Pokémon from the Pokédex
+  final String description;
 
   /// Gets the sprite URL based on shiny state
   String getSpriteUrl({bool isShiny = false}) {
@@ -429,6 +433,24 @@ class PokemonDetail {
       }
     }
 
+    // Flavor text / descripción del Pokédex
+    final flavorTextEntries =
+        species?['pokemon_v2_pokemonspeciesflavortexts'] as List<dynamic>? ?? [];
+    String description = '';
+    for (final dynamic entry in flavorTextEntries) {
+      final map = entry as Map<String, dynamic>?;
+      final flavorText = map?['flavor_text'];
+      if (flavorText is String && flavorText.isNotEmpty) {
+        // Clean up the flavor text (remove line breaks and extra spaces)
+        description = flavorText
+            .replaceAll('\n', ' ')
+            .replaceAll('\f', ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+        break;
+      }
+    }
+
     final eggGroupEntries =
         species?['pokemon_v2_pokemonegggroups'] as List<dynamic>? ?? [];
     final eggGroups = <String>[];
@@ -491,6 +513,7 @@ class PokemonDetail {
       shinyImageUrl: shinyUrl.isNotEmpty ? shinyUrl : null,
       spriteData: spriteData,
       forms: forms.isNotEmpty ? forms : null,
+      description: description,
     );
   }
 }

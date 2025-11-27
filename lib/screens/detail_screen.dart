@@ -756,6 +756,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       shinyImageUrl: currentData.shinyImageUrl,
       spriteData: widget.pokemon.spriteData,
       forms: widget.pokemon.forms,
+      description: widget.pokemon.description,
     );
   }
 
