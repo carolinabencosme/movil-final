@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -42,6 +44,13 @@ class CardCaptureService {
         return null;
       }
 
+      // Esperar a que el widget esté completamente pintado
+      // Si debugNeedsPaint es true, esperamos al siguiente frame
+      if (boundary.debugNeedsPaint) {
+        debugPrint('[CardCaptureService] Widget necesita ser pintado, esperando...');
+        await _waitForPaint();
+      }
+
       // Capturar la imagen con tamaño real (1080x1920) y pixelRatio 1.0
       final image = await boundary.toImage(pixelRatio: 1.0);
       
@@ -65,6 +74,15 @@ class CardCaptureService {
       debugPrint('[CardCaptureService] StackTrace: $stackTrace');
       return null;
     }
+  }
+
+  /// Espera a que el próximo frame sea pintado.
+  Future<void> _waitForPaint() async {
+    final completer = Completer<void>();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      completer.complete();
+    });
+    await completer.future;
   }
 
   /// Guarda los bytes de una imagen en un archivo temporal.
