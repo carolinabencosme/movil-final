@@ -1,4 +1,6 @@
 /// Clase simple para coordenadas X/Y en el mapa de región
+import 'dart:ui';
+
 class MapCoordinates {
   const MapCoordinates(this.x, this.y);
 
@@ -379,5 +381,5 @@ class LocationsByRegion {
   /// Cuenta total de áreas en esta región
   int get areaCount => encounters.length;
 }
-import 'dart:ui';
+
 

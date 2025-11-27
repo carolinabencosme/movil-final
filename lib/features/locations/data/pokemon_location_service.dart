@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import '../models/pokemon_location.dart';
 import 'region_map_data.dart';
 import 'region_map_markers.dart';
+import 'location_service_exception.dart';
+
 
 /// Servicio especializado para ubicar Pokémon en mapas y regiones.
 ///
