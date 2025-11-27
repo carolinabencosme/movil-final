@@ -1803,6 +1803,22 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Tarjeta en tamaño completo (1080x1920) para la captura
+            Offstage(
+              offstage: true,
+              child: SizedBox(
+                width: 1080,
+                height: 1920,
+                child: RepaintBoundary(
+                  key: _cardKey,
+                  child: PokemonShareCard(
+                    pokemon: widget.pokemon,
+                    themeColor: widget.themeColor,
+                  ),
+                ),
+              ),
+            ),
+
             // Header
             Padding(
               padding: const EdgeInsets.all(16),
@@ -1839,14 +1855,11 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
                 borderRadius: BorderRadius.circular(16),
                 child: Stack(
                   children: [
-                    RepaintBoundary(
-                      key: _cardKey,
-                      child: FittedBox(
-                        fit: BoxFit.contain,
-                        child: PokemonShareCard(
-                          pokemon: widget.pokemon,
-                          themeColor: widget.themeColor,
-                        ),
+                    FittedBox(
+                      fit: BoxFit.contain,
+                      child: PokemonShareCard(
+                        pokemon: widget.pokemon,
+                        themeColor: widget.themeColor,
                       ),
                     ),
                     if (_isPreloadingImage)
