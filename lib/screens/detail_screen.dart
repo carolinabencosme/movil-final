@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +16,7 @@ import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
+import '../services/connectivity_service.dart';
 import '../widgets/detail/animations/particle_field.dart';
 import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
@@ -64,44 +64,28 @@ class DetailScreen extends ConsumerStatefulWidget {
 class _DetailScreenState extends ConsumerState<DetailScreen> {
   bool _isOfflineMode = false;
   bool _offlineSnackShown = false;
-  bool _hasConnection = true;
-  final Connectivity _connectivity = Connectivity();
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  final ConnectivityService _connectivityService = ConnectivityService.instance;
+  StreamSubscription<bool>? _connectivitySubscription;
+
+  bool get _hasConnection => !_connectivityService.isOffline;
 
   PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
 
   @override
   void initState() {
     super.initState();
-    _initializeConnectivity();
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      final bool hasConnection =
-          results.any((status) => status != ConnectivityResult.none);
-      if (!mounted || hasConnection == _hasConnection) {
-        return;
-      }
-      setState(() {
-        _hasConnection = hasConnection;
-      });
+        _connectivityService.isOfflineStream.listen((bool isOffline) {
+      if (!mounted) return;
+
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(!hasConnection),
+        (_) => _updateOfflineMode(isOffline),
       );
     });
-  }
 
-  Future<void> _initializeConnectivity() async {
-    final List<ConnectivityResult> results =
-        await _connectivity.checkConnectivity();
-    if (!mounted) return;
-    final bool hasConnection =
-        results.any((status) => status != ConnectivityResult.none);
-    if (hasConnection != _hasConnection) {
-      setState(() {
-        _hasConnection = hasConnection;
-      });
+    if (_connectivityService.isOffline) {
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(!hasConnection),
+        (_) => _updateOfflineMode(true),
       );
     }
   }
