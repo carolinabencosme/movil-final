@@ -148,6 +148,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;               // Indica si ya se inicializó
   bool _isOfflineMode = false;         // Indica si los datos provienen de caché local
   bool _offlineSnackShown = false;     // Controla los avisos de modo offline
+  bool _hasInitializedOfflineState = false; // Controla la inicialización offline
+  bool _connectivityUiReady = false;   // Evita mostrar SnackBars antes del primer build
   StreamSubscription<bool>? _connectivitySubscription;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
 
@@ -170,19 +172,17 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _scrollController.addListener(_onScroll);
     _connectivitySubscription =
         _connectivityService.isOfflineStream.listen((bool isOffline) {
-          if (!mounted) return;
+      if (!mounted) return;
 
-          if (isOffline) {
-            _updateOfflineMode(true, showMessage: true);
-          } else {
-            _updateOfflineMode(false);
-            _resetAndFetch();
-          }
-        });
+      final bool allowSnackBar = _connectivityUiReady;
 
-    if (_connectivityService.isOffline) {
-      _updateOfflineMode(true, showMessage: true);
-    }
+      if (isOffline) {
+        _updateOfflineMode(true, showMessage: allowSnackBar);
+      } else {
+        _updateOfflineMode(false, showMessage: allowSnackBar);
+        _resetAndFetch();
+      }
+    });
   }
 
   @override
@@ -200,6 +200,16 @@ class _PokedexScreenState extends State<PokedexScreen> {
               favoritesController.applyFavoriteStateToList(_pokemons);
         });
       }
+    }
+    if (!_hasInitializedOfflineState) {
+      _hasInitializedOfflineState = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _connectivityUiReady = true;
+        if (_connectivityService.isOffline) {
+          _updateOfflineMode(true, showMessage: true);
+        }
+      });
     }
     if (_didInit) return;
     _didInit = true;
@@ -792,13 +802,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   void _updateOfflineMode(bool offline, {bool showMessage = false}) {
     if (!mounted) return;
+    final bool shouldShowMessage = showMessage && _connectivityUiReady;
     if (offline) {
       if (!_isOfflineMode) {
         setState(() {
           _isOfflineMode = true;
         });
       }
-      if (showMessage && !_offlineSnackShown) {
+      if (shouldShowMessage && !_offlineSnackShown) {
         _showTransientMessage(
           'Modo offline activo. Mostrando datos guardados localmente.',
         );
@@ -811,8 +822,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
         });
       }
       if (_offlineSnackShown) {
-        _showTransientMessage('Conexión restablecida.');
         _offlineSnackShown = false;
+        if (shouldShowMessage) {
+          _showTransientMessage('Conexión restablecida.');
+        }
       }
     }
   }
