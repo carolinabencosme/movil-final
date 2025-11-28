@@ -66,7 +66,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
   bool _offlineSnackShown = false;
   bool _shouldRefetchOnReconnect = false;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
-  Future<QueryResult<Object?>> Function()? _refetch;
+  Refetch? _refetch;
   StreamSubscription<bool>? _connectivitySubscription;
 
   bool get _hasConnection => !_connectivityService.isOffline;
@@ -175,7 +175,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       final refetch = _refetch;
       if (refetch != null) {
         _shouldRefetchOnReconnect = false;
-        await refetch();
+        await refetch.call();
       }
     }
     _updateOfflineMode(false);
