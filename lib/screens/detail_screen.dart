@@ -64,7 +64,9 @@ class DetailScreen extends ConsumerStatefulWidget {
 class _DetailScreenState extends ConsumerState<DetailScreen> {
   bool _isOfflineMode = false;
   bool _offlineSnackShown = false;
+  bool _shouldRefetchOnReconnect = false;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
+  Future<QueryResult<Object?>> Function()? _refetch;
   StreamSubscription<bool>? _connectivitySubscription;
 
   bool get _hasConnection => !_connectivityService.isOffline;
@@ -79,13 +81,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       if (!mounted) return;
 
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(isOffline),
+        (_) => isOffline ? _handleBecameOffline() : _handleBecameOnline(),
       );
     });
 
     if (_connectivityService.isOffline) {
+      _shouldRefetchOnReconnect = true;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(true),
+        (_) => _handleBecameOffline(),
       );
     }
   }
@@ -146,6 +149,36 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         _offlineSnackShown = false;
       }
     }
+  }
+
+  void _clearOfflineIndicators() {
+    if (!mounted) return;
+    if (_isOfflineMode || _offlineSnackShown) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      _offlineSnackShown = false;
+    }
+  }
+
+  void _handleBecameOffline() {
+    _shouldRefetchOnReconnect = true;
+    _updateOfflineMode(true);
+  }
+
+  Future<void> _handleBecameOnline() async {
+    _clearOfflineIndicators();
+    if (_shouldRefetchOnReconnect) {
+      final refetch = _refetch;
+      if (refetch != null) {
+        _shouldRefetchOnReconnect = false;
+        await refetch();
+      }
+    }
+    _updateOfflineMode(false);
   }
 
   void _showSnack(String message) {
@@ -263,6 +296,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         },
       ),
       builder: (result, {fetchMore, refetch}) {
+        _refetch = refetch;
+        if (!_connectivityService.isOffline &&
+            _shouldRefetchOnReconnect &&
+            refetch != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _handleBecameOnline(),
+          );
+        }
         if (kDebugMode) {
           debugPrint(
             '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}',
