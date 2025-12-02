@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/trivia_provider.dart';
+import '../services/trivia_repository.dart';
 import 'pokemon_trivia_screen.dart';
 import 'trivia_achievements_screen.dart';
 import 'trivia_ranking_screen.dart';
 
-class TriviaScreen extends StatelessWidget {
+class TriviaScreen extends ConsumerWidget {
   const TriviaScreen({
     super.key,
     this.heroTag,
@@ -18,12 +21,13 @@ class TriviaScreen extends StatelessWidget {
   final String? title;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final Color highlightColor = accentColor ?? theme.colorScheme.secondary;
     final textTheme = theme.textTheme;
     final cards = _buildTriviaCards(l10n, highlightColor, theme);
+    final TriviaRepository repository = ref.read(triviaRepositoryProvider);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -84,8 +88,11 @@ class TriviaScreen extends StatelessWidget {
               icon: Icons.leaderboard,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => TriviaRankingScreen(
-                    accentColor: highlightColor,
+                  builder: (_) => TriviaRepositoryScope(
+                    notifier: repository,
+                    child: TriviaRankingScreen(
+                      accentColor: highlightColor,
+                    ),
                   ),
                 ),
               ),
@@ -98,8 +105,11 @@ class TriviaScreen extends StatelessWidget {
               icon: Icons.emoji_events_outlined,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => TriviaAchievementsScreen(
-                    accentColor: highlightColor,
+                  builder: (_) => TriviaRepositoryScope(
+                    notifier: repository,
+                    child: TriviaAchievementsScreen(
+                      accentColor: highlightColor,
+                    ),
                   ),
                 ),
               ),
