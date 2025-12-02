@@ -1041,7 +1041,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
           _buildSearchBar(theme),
           if (_isFetching && !_isInitialLoading)
             const LinearProgressIndicator(minHeight: 2),
-          if (_isOfflineMode) _buildOfflineBanner(theme),
           _buildSummary(theme),
           Expanded(child: _buildPokemonList()),
         ],
@@ -1104,40 +1103,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOfflineBanner(ThemeData theme) {
-    final Color backgroundColor =
-        theme.colorScheme.tertiaryContainer.withOpacity(0.85);
-    final Color foregroundColor = theme.colorScheme.onTertiaryContainer;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              color: foregroundColor,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Modo offline activo. Algunos filtros pueden ser limitados.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: foregroundColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
