@@ -101,7 +101,8 @@ class PokedexScreen extends StatefulWidget {
 /// - Búsqueda: con debounce de 350ms para optimizar las queries
 /// - Filtros: tipos, generaciones, regiones y formas
 /// - Ordenamiento: por diferentes criterios y direcciones
-class _PokedexScreenState extends State<PokedexScreen> {
+class _PokedexScreenState extends State<PokedexScreen>
+    with WidgetsBindingObserver {
   /// Tamaño de cada página de resultados
   /// Se cargan 30 Pokémon a la vez para balance entre rendimiento y UX
   /// Tamaño de cada página de resultados
@@ -169,6 +170,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
     _connectivitySubscription =
         _connectivityService.isOfflineStream.listen((bool isOffline) {
@@ -183,6 +185,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _resetAndFetch();
       }
     });
+    _validateConnectivity(allowSnackBar: false);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _validateConnectivity(allowSnackBar: _connectivityUiReady);
+    }
   }
 
   @override
@@ -224,6 +234,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _searchController.dispose();
     _debounce?.cancel();
     _connectivitySubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _favoritesController?.removeListener(_onFavoritesChanged);
     super.dispose();
   }
@@ -334,6 +345,12 @@ class _PokedexScreenState extends State<PokedexScreen> {
         _selectedShapes.length +
         searchCount +
         sortCount;
+  }
+
+  Future<void> _validateConnectivity({required bool allowSnackBar}) async {
+    final bool isOffline = await _connectivityService.refreshStatus();
+    if (!mounted) return;
+    _updateOfflineMode(isOffline, showMessage: allowSnackBar);
   }
 
   /// Reinicia el estado de paginación y recarga desde el inicio

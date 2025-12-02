@@ -27,6 +27,15 @@ class ConnectivityService {
   /// Latest offline state value.
   bool get isOffline => _isOffline;
 
+  /// Forces a new connectivity check and updates the offline state.
+  ///
+  /// Returns the latest offline value after completing the verification.
+  Future<bool> refreshStatus() async {
+    final List<ConnectivityResult> results = await _connectivity.checkConnectivity();
+    await _handleConnectivityChange(results);
+    return _isOffline;
+  }
+
   Future<void> _initialize() async {
     final List<ConnectivityResult> results = await _connectivity.checkConnectivity();
     await _handleConnectivityChange(results);
