@@ -1,0 +1,56 @@
+<p align="center"><img border="0" src="/pokearth/johto.png" usemap="#johto" width="166" height="144"><map name="johto">
+
+<area href="/pokearth/johto/newbarktown.shtml" shape="rect" coords="144, 109, 152, 117" title="New Bark Town">
+<area href="/pokearth/johto/cherrygrovecity.shtml" shape="rect" coords="105, 109, 113, 117" title="Cherrygrove City">
+<area href="/pokearth/johto/violetcity.shtml" shape="rect" coords="90, 60, 97, 68" title="Violet City">
+<area href="/pokearth/johto/darkcave.shtml" shape="rect" coords="116, 60, 136, 69" title="Dark Cave">
+<area href="/pokearth/johto/ruinsofalph.shtml" shape="rect" coords="81, 76, 89, 84" title="Ruins of Alph">
+<area href="/pokearth/johto/unioncave.shtml" shape="rect" coords="90, 129, 98, 137" title="Union Cave">
+<area href="/pokearth/johto/azaleatown.shtml" shape="rect" coords="71, 129, 79, 137" title="Azalea Town">
+<area href="/pokearth/johto/ilexforest.shtml" shape="rect" coords="53, 129, 61, 137" title="Ilex Forest">
+<area href="/pokearth/johto/goldenrodcity.shtml" shape="rect" coords="49, 88, 63, 103" title="Goldenrod City">
+<area href="/pokearth/johto/nationalpark.shtml" shape="rect" coords="53, 60, 61, 68" title="National Park">
+<area href="/pokearth/johto/ecruteakcity.shtml" shape="rect" coords="66, 40, 81, 48" title="Ecruteak City">
+<area href="/pokearth/johto/ecruteakcity.shtml" shape="rect" coords="71, 40, 81, 48" title="Ecruteak City">
+<area href="/pokearth/johto/olivinecity.shtml" shape="rect" coords="18, 53, 33, 61" title="Olivine City">
+<area href="/pokearth/johto/whirlislands.shtml" shape="rect" coords="18, 88, 26, 96" title="Whirl Islands">
+<area href="/pokearth/johto/cianwoodcity.shtml" shape="rect" coords="8, 96, 16, 104" title="Cianwood City">
+<area href="/pokearth/johto/mt.mortar.shtml" shape="rect" coords="86, 40, 94, 48" title="Mt. Mortar">
+<area href="/pokearth/johto/mahoganytown.shtml" shape="rect" coords="109, 40, 117, 48" title="Mahogany Town">
+<area href="/pokearth/johto/lakeofrage.shtml" shape="rect" coords="109, 7, 117, 15" title="Lake of Rage">
+<area href="/pokearth/johto/icepath.shtml" shape="rect" coords="129, 40, 137, 48" title="Ice Path">
+<area href="/pokearth/johto/blackthorncity.shtml" shape="rect" coords="137, 40, 145, 48" title="Blackthorn City">
+<area href="/pokearth/johto/dragon'sden.shtml" shape="rect" coords="137, 30, 145, 38" title="Dragon's Den">
+<area href="/pokearth/johto/mt.silver.shtml" shape="rect" coords="158, 80, 166, 88" title="Mt. Silver">
+<area href="/pokearth/kanto/tohjofalls.shtml" shape="rect" coords="161, 109, 166, 115" title="Tohjo Falls (Kanto)">
+<area href="/pokearth/johto/safarizone.shtml" shape="rect" coords="0, 93, 5, 101" title="Safari Zone">
+<area href="/pokearth/johto/battlefrontier.shtml" shape="rect" coords="10, 51, 18, 59" title="Battle Frontier">
+
+
+
+
+<area href="/pokearth/kanto/route26.shtml" shape="rect" coords="152, 108, 161, 117" title="Route 26 (Kanto)">
+
+
+<area href="/pokearth/johto/route29.shtml" shape="rect" coords="113, 108, 143, 118" title="Route 29">
+<area href="/pokearth/johto/route30.shtml" shape="rect" coords="105, 108, 116, 68" title="Route 30">
+<area href="/pokearth/johto/route31.shtml" shape="rect" coords="98, 59, 115, 68" title="Route 31">
+<area href="/pokearth/johto/route32.shtml" shape="rect" coords="89, 68, 99, 128" title="Route 32">
+<area href="/pokearth/johto/route33.shtml" shape="rect" coords="79, 128, 90, 137" title="Route 33">
+<area href="/pokearth/johto/route34.shtml" shape="rect" coords="52, 103, 62, 128" title="Route 34">
+<area href="/pokearth/johto/route35.shtml" shape="rect" coords="52, 68, 62, 88" title="Route 35">
+<area href="/pokearth/johto/route36.shtml" shape="rect" coords="60, 59, 89, 69" title="Route 36">
+<area href="/pokearth/johto/route37.shtml" shape="rect" coords="71, 55, 82, 58" title="Route 37">
+<area href="/pokearth/johto/route38.shtml" shape="rect" coords="25, 39, 66, 49" title="Route 38">
+<area href="/pokearth/johto/route39.shtml" shape="rect" coords="25, 48, 34, 53" title="Route 39">
+<area href="/pokearth/johto/route40.shtml" shape="rect" coords="17, 61, 27, 82" title="Route 40">
+<area href="/pokearth/johto/route41.shtml" shape="rect" coords="17, 82, 27, 105" title="Route 41">
+<area href="/pokearth/johto/route42.shtml" shape="rect" coords="81, 39, 109, 49" title="Route 42">
+<area href="/pokearth/johto/route43.shtml" shape="rect" coords="108, 15, 118, 40" title="Route 43">
+<area href="/pokearth/johto/route44.shtml" shape="rect" coords="117, 39, 128, 49" title="Route 44">
+<area href="/pokearth/johto/route45.shtml" shape="rect" coords="136, 48, 146, 89" title="Route 45">
+<area href="/pokearth/johto/route46.shtml" shape="rect" coords="130, 78, 140, 108" title="Route 46">
+<area href="/pokearth/johto/route47.shtml" shape="rect" coords="0, 104, 8, 111" title="Route 47">
+<area href="/pokearth/johto/route48.shtml" shape="rect" coords="0, 100, 6, 105" title="Route 48">
+
+</map></p>

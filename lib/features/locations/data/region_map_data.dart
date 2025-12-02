@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 /// Datos de un mapa de región Pokémon
 ///
 /// Contiene información sobre el asset del mapa y sus dimensiones reales.
+/// Las imágenes son capturas oficiales de cada versión almacenadas en
+/// `assets/maps/regions/**` y las dimensiones provienen directamente del
+/// archivo PNG correspondiente.
 class RegionMapData {
   const RegionMapData({
     required this.region,
@@ -27,158 +30,90 @@ class RegionMapData {
   String get displayName {
     return region[0].toUpperCase() + region.substring(1);
   }
+
+  /// Determina si el asset es un archivo SVG
+  bool get isSvg {
+    return assetPath.toLowerCase().endsWith('.svg');
+  }
 }
 
 /// Mapas de regiones Pokémon oficiales extraídos de los juegos
 ///
 /// Organizado por región y versión de juego para soportar múltiples
-/// generaciones y remakes. Los tamaños son aproximados basados en
-/// las imágenes oficiales de los juegos.
+/// generaciones y remakes. Las dimensiones corresponden a las capturas
+/// que se incluyen en `assets/maps/regions/**` y se midieron directamente
+/// de cada PNG para evitar valores aproximados.
 final Map<String, List<RegionMapData>> regionMapsByVersion = {
   'kanto': [
     const RegionMapData(
       region: 'kanto',
-      assetPath: 'assets/maps/regions/kanto/kanto_rby.png',
-      mapSize: Size(1024, 768),
-      gameVersion: 'Red/Blue/Yellow',
-    ),
-    const RegionMapData(
-      region: 'kanto',
-      assetPath: 'assets/maps/regions/kanto/kanto_frlg.png',
-      mapSize: Size(1024, 768),
-      gameVersion: 'FireRed/LeafGreen',
-    ),
-    const RegionMapData(
-      region: 'kanto',
-      assetPath: 'assets/maps/regions/kanto/kanto_letsgo.png',
-      mapSize: Size(1024, 768),
-      gameVersion: "Let's Go Pikachu/Eevee",
+      assetPath: 'assets/maps/regions/kanto/kanto_pokeearth.png',
+      mapSize: Size(200, 618),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'johto': [
     const RegionMapData(
       region: 'johto',
-      assetPath: 'assets/maps/regions/johto/johto_gsc.png',
-      mapSize: Size(1200, 900),
-      gameVersion: 'Gold/Silver/Crystal',
-    ),
-    const RegionMapData(
-      region: 'johto',
-      assetPath: 'assets/maps/regions/johto/johto_hgss.png',
-      mapSize: Size(1200, 900),
-      gameVersion: 'HeartGold/SoulSilver',
+      assetPath: 'assets/maps/regions/johto/johto_pokeearth.png',
+      mapSize: Size(166, 144),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'hoenn': [
     const RegionMapData(
       region: 'hoenn',
-      assetPath: 'assets/maps/regions/hoenn/hoenn_rse.png',
-      mapSize: Size(1500, 1100),
-      gameVersion: 'Ruby/Sapphire/Emerald',
-    ),
-    const RegionMapData(
-      region: 'hoenn',
-      assetPath: 'assets/maps/regions/hoenn/hoenn_oras.png',
-      mapSize: Size(1500, 1100),
-      gameVersion: 'Omega Ruby/Alpha Sapphire',
+      assetPath: 'assets/maps/regions/hoenn/hoenn_pokeearth.png',
+      mapSize: Size(306, 221),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'sinnoh': [
     const RegionMapData(
       region: 'sinnoh',
-      assetPath: 'assets/maps/regions/sinnoh/sinnoh_dpp.png',
-      mapSize: Size(1400, 1000),
-      gameVersion: 'Diamond/Pearl/Platinum',
-    ),
-    const RegionMapData(
-      region: 'sinnoh',
-      assetPath: 'assets/maps/regions/sinnoh/sinnoh_bdsp.png',
-      mapSize: Size(1400, 1000),
-      gameVersion: 'Brilliant Diamond/Shining Pearl',
+      assetPath: 'assets/maps/regions/sinnoh/sinnoh_pokeearth.png',
+      mapSize: Size(216, 168),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'unova': [
     const RegionMapData(
       region: 'unova',
-      assetPath: 'assets/maps/regions/unova/unova_bw.png',
-      mapSize: Size(1600, 1200),
-      gameVersion: 'Black/White',
-    ),
-    const RegionMapData(
-      region: 'unova',
-      assetPath: 'assets/maps/regions/unova/unova_b2w2.png',
-      mapSize: Size(1600, 1200),
-      gameVersion: 'Black 2/White 2',
+      assetPath: 'assets/maps/regions/unova/unova_pokeearth.png',
+      mapSize: Size(256, 168),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'kalos': [
     const RegionMapData(
       region: 'kalos',
-      assetPath: 'assets/maps/regions/kalos/kalos_xy.png',
-      mapSize: Size(1800, 1400),
-      gameVersion: 'X/Y',
+      assetPath: 'assets/maps/regions/kalos/kalos_pokeearth.png',
+      mapSize: Size(320, 210),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'alola': [
     const RegionMapData(
       region: 'alola',
-      assetPath: 'assets/maps/regions/alola/alola_sm.png',
-      mapSize: Size(1600, 1200),
-      gameVersion: 'Sun/Moon',
-    ),
-    const RegionMapData(
-      region: 'alola',
-      assetPath: 'assets/maps/regions/alola/alola_usum.png',
-      mapSize: Size(1600, 1200),
-      gameVersion: 'Ultra Sun/Ultra Moon',
+      assetPath: 'assets/maps/regions/alola/alola_pokeearth.png',
+      mapSize: Size(400, 240),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'galar': [
     const RegionMapData(
       region: 'galar',
-      assetPath: 'assets/maps/regions/galar/galar_swsh.png',
-      mapSize: Size(2000, 1500),
-      gameVersion: 'Sword/Shield',
-    ),
-    const RegionMapData(
-      region: 'galar',
-      assetPath: 'assets/maps/regions/galar/galar_isle_of_armor.png',
-      mapSize: Size(1500, 1200),
-      gameVersion: 'The Isle of Armor',
-    ),
-    const RegionMapData(
-      region: 'galar',
-      assetPath: 'assets/maps/regions/galar/galar_crown_tundra.png',
-      mapSize: Size(1500, 1200),
-      gameVersion: 'The Crown Tundra',
-    ),
-  ],
-  'paldea': [
-    const RegionMapData(
-      region: 'paldea',
-      assetPath: 'assets/maps/regions/paldea/paldea_sv.png',
-      mapSize: Size(2200, 1600),
-      gameVersion: 'Scarlet/Violet',
-    ),
-    const RegionMapData(
-      region: 'paldea',
-      assetPath: 'assets/maps/regions/paldea/paldea_teal_mask.png',
-      mapSize: Size(1800, 1400),
-      gameVersion: 'The Teal Mask',
-    ),
-    const RegionMapData(
-      region: 'paldea',
-      assetPath: 'assets/maps/regions/paldea/paldea_indigo_disk.png',
-      mapSize: Size(1800, 1400),
-      gameVersion: 'The Indigo Disk',
+      assetPath: 'assets/maps/regions/galar/galar_pokeearth.png',
+      mapSize: Size(728, 1420),
+      gameVersion: 'Pokéarth',
     ),
   ],
   'hisui': [
     const RegionMapData(
       region: 'hisui',
-      assetPath: 'assets/maps/regions/hisui/hisui_legends.png',
-      mapSize: Size(2000, 1500),
-      gameVersion: 'Legends: Arceus',
+      assetPath: 'assets/maps/regions/hisui/hisui_pokeearth.png',
+      mapSize: Size(640, 360),
+      gameVersion: 'Pokéarth',
     ),
   ],
 };

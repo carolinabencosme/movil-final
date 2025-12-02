@@ -820,6 +820,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailTabMoves => 'Movimientos';
 
   @override
+  String get detailTabLocations => 'Ubicaciones';
+
+  @override
   String get detailMovesTitle => 'Movimientos';
 
   @override

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +16,7 @@ import '../controllers/favorites_controller.dart';
 import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_details.dart';
 import '../theme/pokemon_type_colors.dart';
+import '../services/connectivity_service.dart';
 import '../widgets/detail/animations/particle_field.dart';
 import '../widgets/detail/detail_constants.dart';
 import '../widgets/detail/detail_helper_widgets.dart';
@@ -64,44 +64,31 @@ class DetailScreen extends ConsumerStatefulWidget {
 class _DetailScreenState extends ConsumerState<DetailScreen> {
   bool _isOfflineMode = false;
   bool _offlineSnackShown = false;
-  bool _hasConnection = true;
-  final Connectivity _connectivity = Connectivity();
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  bool _shouldRefetchOnReconnect = false;
+  final ConnectivityService _connectivityService = ConnectivityService.instance;
+  Refetch? _refetch;
+  StreamSubscription<bool>? _connectivitySubscription;
+
+  bool get _hasConnection => !_connectivityService.isOffline;
 
   PokemonCacheService get _pokemonCacheService => PokemonCacheService.instance;
 
   @override
   void initState() {
     super.initState();
-    _initializeConnectivity();
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      final bool hasConnection =
-          results.any((status) => status != ConnectivityResult.none);
-      if (!mounted || hasConnection == _hasConnection) {
-        return;
-      }
-      setState(() {
-        _hasConnection = hasConnection;
-      });
+        _connectivityService.isOfflineStream.listen((bool isOffline) {
+      if (!mounted) return;
+
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(!hasConnection),
+        (_) => isOffline ? _handleBecameOffline() : _handleBecameOnline(),
       );
     });
-  }
 
-  Future<void> _initializeConnectivity() async {
-    final List<ConnectivityResult> results =
-        await _connectivity.checkConnectivity();
-    if (!mounted) return;
-    final bool hasConnection =
-        results.any((status) => status != ConnectivityResult.none);
-    if (hasConnection != _hasConnection) {
-      setState(() {
-        _hasConnection = hasConnection;
-      });
+    if (_connectivityService.isOffline) {
+      _shouldRefetchOnReconnect = true;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateOfflineMode(!hasConnection),
+        (_) => _handleBecameOffline(),
       );
     }
   }
@@ -162,6 +149,36 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         _offlineSnackShown = false;
       }
     }
+  }
+
+  void _clearOfflineIndicators() {
+    if (!mounted) return;
+    if (_isOfflineMode || _offlineSnackShown) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (_isOfflineMode) {
+        setState(() {
+          _isOfflineMode = false;
+        });
+      }
+      _offlineSnackShown = false;
+    }
+  }
+
+  void _handleBecameOffline() {
+    _shouldRefetchOnReconnect = true;
+    _updateOfflineMode(true);
+  }
+
+  Future<void> _handleBecameOnline() async {
+    _clearOfflineIndicators();
+    if (_shouldRefetchOnReconnect) {
+      final refetch = _refetch;
+      if (refetch != null) {
+        _shouldRefetchOnReconnect = false;
+        await refetch.call();
+      }
+    }
+    _updateOfflineMode(false);
   }
 
   void _showSnack(String message) {
@@ -279,6 +296,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         },
       ),
       builder: (result, {fetchMore, refetch}) {
+        _refetch = refetch;
+        if (!_connectivityService.isOffline &&
+            _shouldRefetchOnReconnect &&
+            refetch != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _handleBecameOnline(),
+          );
+        }
         if (kDebugMode) {
           debugPrint(
             '[Pokemon Detail] Query result - isLoading: ${result.isLoading}, hasException: ${result.hasException}',
@@ -756,6 +781,7 @@ class _PokemonDetailBodyState extends State<PokemonDetailBody>
       shinyImageUrl: currentData.shinyImageUrl,
       spriteData: widget.pokemon.spriteData,
       forms: widget.pokemon.forms,
+      description: widget.pokemon.description,
     );
   }
 
@@ -1703,17 +1729,57 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
   final GlobalKey _cardKey = GlobalKey();
   final CardCaptureService _captureService = CardCaptureService();
   bool _isSharing = false;
+  bool _isPreloadingImage = false;
+
+  /// Coordenadas para posicionar el widget de captura fuera de la pantalla.
+  /// Debe ser lo suficientemente negativo para que el widget no sea visible.
+  static const double _offScreenPosition = -10000;
 
   Future<void> _shareCard() async {
     if (_isSharing) return;
 
     setState(() {
       _isSharing = true;
+      _isPreloadingImage = true;
     });
 
     try {
-      // Dar tiempo para que el RepaintBoundary se inicialice si es necesario
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await WidgetsBinding.instance.endOfFrame;
+
+      var precacheSuccessful = true;
+      try {
+        await precacheImage(
+          NetworkImage(widget.pokemon.imageUrl),
+          context,
+        );
+      } catch (e) {
+        precacheSuccessful = false;
+        debugPrint('[ShareCardDialog] Error al precargar imagen: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo preparar la imagen para compartir.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+
+      if (!precacheSuccessful || !mounted) {
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPreloadingImage = false;
+        });
+      }
+
+      // Esperar un frame adicional para asegurar que el widget esté completamente pintado
+      await WidgetsBinding.instance.endOfFrame;
+      
+      // Verificar que el widget esté listo para capturar
+      if (!mounted) return;
 
       final success = await _captureService.captureAndShare(
         _cardKey,
@@ -1731,6 +1797,7 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
             ),
           );
         } else {
+          debugPrint('[ShareCardDialog] No se pudo compartir la tarjeta.');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No se pudo compartir la tarjeta. Intenta de nuevo.'),
@@ -1753,6 +1820,7 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
       if (mounted) {
         setState(() {
           _isSharing = false;
+          _isPreloadingImage = false;
         });
       }
     }
@@ -1763,96 +1831,143 @@ class _ShareCardDialogState extends State<_ShareCardDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Compartir Pokémon Card',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ),
-
-            // Preview de la tarjeta (escala pequeña)
-            Container(
-              height: 300,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: RepaintBoundary(
-                  key: _cardKey,
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: PokemonShareCard(
-                      pokemon: widget.pokemon,
-                      themeColor: widget.themeColor,
-                    ),
-                  ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Widget fuera de pantalla para captura (pintado pero no visible)
+          // Usamos Positioned con coordenadas negativas para moverlo fuera del viewport
+          // pero manteniéndolo en el árbol de render para que sea pintado.
+          Positioned(
+            left: _offScreenPosition,
+            top: _offScreenPosition,
+            child: SizedBox(
+              width: 1080,
+              height: 1920,
+              child: RepaintBoundary(
+                key: _cardKey,
+                child: PokemonShareCard(
+                  pokemon: widget.pokemon,
+                  themeColor: widget.themeColor,
                 ),
               ),
             ),
-
-            // Botones
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isSharing
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isSharing ? null : _shareCard,
-                      icon: _isSharing
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.share),
-                      label: Text(_isSharing ? 'Compartiendo...' : 'Compartir'),
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          // Diálogo principal
+          Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
             ),
-          ],
-        ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Compartir Pokémon Card',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                // Preview de la tarjeta (escala pequeña)
+                Container(
+                  height: 300,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.contain,
+                          child: PokemonShareCard(
+                            pokemon: widget.pokemon,
+                            themeColor: widget.themeColor,
+                          ),
+                        ),
+                        if (_isPreloadingImage)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.25),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Preparando la imagen...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Botones
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSharing
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isSharing ? null : _shareCard,
+                          icon: _isSharing
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.share),
+                          label: Text(_isSharing ? 'Compartiendo...' : 'Compartir'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

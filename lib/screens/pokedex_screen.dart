@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +13,7 @@ import '../models/pokemon_model.dart';
 import '../queries/get_pokemon_list.dart';
 import '../queries/get_pokemon_types.dart';
 import '../theme/pokemon_type_colors.dart';
+import '../services/connectivity_service.dart';
 import '../widgets/pokemon_artwork.dart';
 import 'detail_screen.dart';
 import '../services/pokemon_cache_service.dart';
@@ -148,8 +148,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _didInit = false;               // Indica si ya se inicializó
   bool _isOfflineMode = false;         // Indica si los datos provienen de caché local
   bool _offlineSnackShown = false;     // Controla los avisos de modo offline
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
-  final Connectivity _connectivity = Connectivity();
+  bool _hasInitializedOfflineState = false; // Controla la inicialización offline
+  bool _connectivityUiReady = false;   // Evita mostrar SnackBars antes del primer build
+  StreamSubscription<bool>? _connectivitySubscription;
+  final ConnectivityService _connectivityService = ConnectivityService.instance;
 
   /// Métricas y estado de la UI
   int _totalCount = 0;                 // Total de Pokémon que coinciden con filtros
@@ -169,18 +171,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-          // Hay conexión si al menos uno NO es "none"
-          final hasConnection =
-          results.any((r) => r != ConnectivityResult.none);
+        _connectivityService.isOfflineStream.listen((bool isOffline) {
+      if (!mounted) return;
 
-          if (hasConnection) {
-            _updateOfflineMode(false);
-            _resetAndFetch();
-          } else {
-            _updateOfflineMode(true, showMessage: true);
-          }
-        });
+      final bool allowSnackBar = _connectivityUiReady;
+
+      if (isOffline) {
+        _updateOfflineMode(true, showMessage: allowSnackBar);
+      } else {
+        _updateOfflineMode(false, showMessage: allowSnackBar);
+        _resetAndFetch();
+      }
+    });
   }
 
   @override
@@ -198,6 +200,16 @@ class _PokedexScreenState extends State<PokedexScreen> {
               favoritesController.applyFavoriteStateToList(_pokemons);
         });
       }
+    }
+    if (!_hasInitializedOfflineState) {
+      _hasInitializedOfflineState = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _connectivityUiReady = true;
+        if (_connectivityService.isOffline) {
+          _updateOfflineMode(true, showMessage: true);
+        }
+      });
     }
     if (_didInit) return;
     _didInit = true;
@@ -463,12 +475,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       }
     });
 
-    final List<ConnectivityResult> connectivityResults =
-        await _connectivity.checkConnectivity();
-    final bool hasConnection = connectivityResults.any(
-      (ConnectivityResult result) => result != ConnectivityResult.none,
-    );
-
+    final bool isOffline = _connectivityService.isOffline;
     final searchValue = _debouncedSearch.toLowerCase();
     final numericId = int.tryParse(_debouncedSearch);
 
@@ -482,7 +489,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     // No paginar cuando se busca por ID (solo devuelve un resultado)
     final shouldPaginate = !includeIdFilter;
 
-    if (!hasConnection) {
+    if (isOffline) {
       final bool handledOffline = await _loadPokemonsFromCache(
         reset: reset,
         offset: offset,
@@ -795,13 +802,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   void _updateOfflineMode(bool offline, {bool showMessage = false}) {
     if (!mounted) return;
+    final bool shouldShowMessage = showMessage && _connectivityUiReady;
     if (offline) {
       if (!_isOfflineMode) {
         setState(() {
           _isOfflineMode = true;
         });
       }
-      if (showMessage && !_offlineSnackShown) {
+      if (shouldShowMessage && !_offlineSnackShown) {
         _showTransientMessage(
           'Modo offline activo. Mostrando datos guardados localmente.',
         );
@@ -814,8 +822,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
         });
       }
       if (_offlineSnackShown) {
-        _showTransientMessage('Conexión restablecida.');
         _offlineSnackShown = false;
+        if (shouldShowMessage) {
+          _showTransientMessage('Conexión restablecida.');
+        }
       }
     }
   }
@@ -1759,16 +1769,16 @@ class _FiltersSheetState extends State<FiltersSheet> {
   }
 }
 
-class _PokemonListTile extends StatefulWidget {
+class _PokemonListTile extends ConsumerStatefulWidget {
   const _PokemonListTile({super.key, required this.pokemon});
 
   final PokemonListItem pokemon;
 
   @override
-  State<_PokemonListTile> createState() => _PokemonListTileState();
+  ConsumerState<_PokemonListTile> createState() => _PokemonListTileState();
 }
 
-class _PokemonListTileState extends State<_PokemonListTile> {
+class _PokemonListTileState extends ConsumerState<_PokemonListTile> {
   bool _isPressed = false;
 
   void _handleTap(
@@ -1797,40 +1807,26 @@ class _PokemonListTileState extends State<_PokemonListTile> {
 
   @override
   Widget build(BuildContext context) {
-    final favoritesController = FavoritesScope.maybeOf(context);
-    if (favoritesController == null) {
-      return _buildTile(
-        context,
-        isFavorite: false,
-        favoritesController: null,
-      );
-    }
+    final favoritesController = ref.watch(favoritesControllerProvider);
+    final pokemon = favoritesController.applyFavoriteState(widget.pokemon);
+    final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
 
-    return AnimatedBuilder(
-      animation: favoritesController,
-      builder: (context, _) {
-        final isFavorite = favoritesController.isFavorite(widget.pokemon.id);
-        return _buildTile(
-          context,
-          isFavorite: isFavorite,
-          favoritesController: favoritesController,
-          onToggleFavorite: () {
-            favoritesController.toggleFavorite(widget.pokemon);
-          },
-        );
-      },
+    return _buildTile(
+      context,
+      pokemon: pokemon,
+      isFavorite: isFavorite,
+      favoritesController: favoritesController,
     );
   }
 
   Widget _buildTile(
     BuildContext context, {
+    required PokemonListItem pokemon,
     required bool isFavorite,
-    required FavoritesController? favoritesController,
-    VoidCallback? onToggleFavorite,
+    required FavoritesController favoritesController,
   }) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final pokemon = favoritesController?.applyFavoriteState(widget.pokemon) ?? widget.pokemon;
     final heroTag = 'pokemon-artwork-${pokemon.id}';
     final primaryTypeKey =
         pokemon.types.isNotEmpty ? pokemon.types.first.toLowerCase() : 'normal';
@@ -1920,7 +1916,9 @@ class _PokemonListTileState extends State<_PokemonListTile> {
                       tooltip: isFavorite
                           ? l10n.detailFavoriteRemoveTooltip
                           : l10n.detailFavoriteAddTooltip,
-                      onPressed: onToggleFavorite,
+                      onPressed: () {
+                        favoritesController.toggleFavorite(pokemon);
+                      },
                     ),
                   ),
                 ),

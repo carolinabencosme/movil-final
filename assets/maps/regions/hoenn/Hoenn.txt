@@ -1,0 +1,65 @@
+<p align="center"><img border="0" src="/pokearth/hoenn.png" usemap="#hoenn" width="306" height="221"><map name="hoenn">
+
+<area href="/pokearth/hoenn/littleroottown.shtml" shape="rect" coords="57, 147, 65, 155" title="Littleroot Town">
+<area href="/pokearth/hoenn/oldaletown.shtml" shape="rect" coords="57, 122, 65, 129" title="Oldale Town">
+<area href="/pokearth/hoenn/petalburgcity.shtml" shape="rect" coords="30, 122, 45, 130" title="Petalburg City">
+<area href="/pokearth/hoenn/rustborocity.shtml" shape="rect" coords="11, 82, 26, 90" title="Rustboro City">
+<area href="/pokearth/hoenn/rustborocity.shtml" shape="rect" coords="11, 82, 19, 97" title="Rustboro City">
+<area href="/pokearth/hoenn/dewfordtown.shtml" shape="rect" coords="38, 185, 46, 193" title="Dewford Town">
+<area href="/pokearth/hoenn/slateportcity.shtml" shape="rect" coords="85, 140, 100, 155" title="Slateport City">
+<area href="/pokearth/hoenn/mauvillecity.shtml" shape="rect" coords="85, 89, 99, 96" title="Mauville City">
+<area href="/pokearth/hoenn/mauvillecity.shtml" shape="rect" coords="85, 89, 93, 104" title="Mauville City">
+<area href="/pokearth/hoenn/verdanturftown.shtml" shape="rect" coords="57, 89, 65, 97" title="Verdanturf Town">
+<area href="/pokearth/hoenn/lavaridgetown.shtml" shape="rect" coords="64, 64, 72, 72" title="Lavaridge Town">
+<area href="/pokearth/hoenn/fallarbortown.shtml" shape="rect" coords="44, 43, 59, 51" title="Fallarbor Town">
+<area href="/pokearth/hoenn/fortreecity.shtml" shape="rect" coords="109, 43, 117, 51" title="Fortree City">
+<area href="/pokearth/hoenn/lilycovecity.shtml" shape="rect" coords="156, 61, 171, 76" title="Lilycove City">
+<area href="/pokearth/hoenn/pacifidlogtown.shtml" shape="rect" coords="172, 147, 180, 155" title="Pacifidlog Town">
+<area href="/pokearth/hoenn/sootopoliscity.shtml" shape="rect" coords="199, 109, 207, 117" title="Sootopolis City">
+<area href="/pokearth/hoenn/mossdeepcity.shtml" shape="rect" coords="227, 79, 242, 87" title="Mossdeep City">
+<area href="/pokearth/hoenn/evergrandecity.shtml" shape="rect" coords="268, 130, 276, 144" title="Evergrande City">
+<area href="/pokearth/hoenn/battlefrontier.shtml" shape="rect" coords="221, 174, 237, 191" title="Battle Frontier">
+<area href="/pokearth/hoenn/southernisland.shtml" shape="rect" coords="268, 196, 280, 208" title="Southern Island">
+
+
+
+<area href="/pokearth/hoenn/route101.shtml" shape="rect" coords="57, 130, 65, 147" title="Route 101">
+<area href="/pokearth/hoenn/route102.shtml" shape="rect" coords="45, 122, 57, 130" title="Route 102">
+<area href="/pokearth/hoenn/route103.shtml" shape="rect" coords="57, 115, 85, 123" title="Route 103">
+<area href="/pokearth/hoenn/route104.shtml" shape="rect" coords="11, 122, 29, 129" title="Route 104">
+<area href="/pokearth/hoenn/route104.shtml" shape="rect" coords="11, 122, 19, 97" title="Route 104">
+<area href="/pokearth/hoenn/route105.shtml" shape="rect" coords="11, 129, 19, 177" title="Route 105">
+<area href="/pokearth/hoenn/route106.shtml" shape="rect" coords="11, 177, 46, 185" title="Route 106">
+<area href="/pokearth/hoenn/route107.shtml" shape="rect" coords="46, 186, 61, 192" title="Route 107">
+<area href="/pokearth/hoenn/route108.shtml" shape="rect" coords="61, 186, 85, 192" title="Route 108">
+<area href="/pokearth/hoenn/route109.shtml" shape="rect" coords="85, 155, 93, 193" title="Route 109">
+<area href="/pokearth/hoenn/route110.shtml" shape="rect" coords="85, 104, 93, 140" title="Route 110">
+<area href="/pokearth/hoenn/route111.shtml" shape="rect" coords="85, 43, 93, 89" title="Route 111">
+<area href="/pokearth/hoenn/route112.shtml" shape="rect" coords="72, 64, 85, 72" title="Route 112">
+<area href="/pokearth/hoenn/route113.shtml" shape="rect" coords="59, 43, 85, 51" title="Route 113">
+<area href="/pokearth/hoenn/route114.shtml" shape="rect" coords="27, 43, 44, 51" title="Route 114">
+<area href="/pokearth/hoenn/route114.shtml" shape="rect" coords="27, 43, 35, 63" title="Route 114">
+<area href="/pokearth/hoenn/meteorfalls.shtml" shape="rect" coords="18, 55, 27, 63" title="Meteor Falls">
+<area href="/pokearth/hoenn/route115.shtml" shape="rect" coords="11, 55, 19, 82" title="Route 115">
+<area href="/pokearth/hoenn/route116.shtml" shape="rect" coords="26, 82, 65, 90" title="Route 116">
+<area href="/pokearth/hoenn/route117.shtml" shape="rect" coords="65, 89, 85, 97" title="Route 117">
+<area href="/pokearth/hoenn/route118.shtml" shape="rect" coords="99, 89, 112, 97" title="Route 118">
+<area href="/pokearth/hoenn/route119.shtml" shape="rect" coords="100, 43, 108, 89" title="Route 119">
+<area href="/pokearth/hoenn/route120.shtml" shape="rect" coords="118, 43, 125, 69" title="Route 120">
+<area href="/pokearth/hoenn/route121.shtml" shape="rect" coords="126, 61, 156, 70" title="Route 121">
+<area href="/pokearth/hoenn/route122.shtml" shape="rect" coords="142, 69, 149, 89" title="Route 122">
+<area href="/pokearth/hoenn/route123.shtml" shape="rect" coords="112, 89, 150, 97" title="Route 123">
+<area href="/pokearth/hoenn/route124.shtml" shape="rect" coords="171, 61, 227, 69" title="Route 124">
+<area href="/pokearth/hoenn/route124.shtml" shape="rect" coords="183, 69, 227, 86" title="Route 124">
+<area href="/pokearth/hoenn/route125.shtml" shape="rect" coords="227, 61, 242, 79" title="Route 125">
+<area href="/pokearth/hoenn/route126.shtml" shape="rect" coords="183, 86, 223, 134" title="Route 126">
+<area href="/pokearth/hoenn/route127.shtml" shape="rect" coords="223, 86, 241, 136" title="Route 127">
+<area href="/pokearth/hoenn/route128.shtml" shape="rect" coords="223, 136, 268, 144" title="Route 128">
+<area href="/pokearth/hoenn/route129.shtml" shape="rect" coords="222, 144, 242, 155" title="Route 129">
+<area href="/pokearth/hoenn/route130.shtml" shape="rect" coords="204, 147, 222, 155" title="Route 130">
+<area href="/pokearth/hoenn/route131.shtml" shape="rect" coords="180, 147, 204, 155" title="Route 131">
+<area href="/pokearth/hoenn/route132.shtml" shape="rect" coords="153, 147, 172, 155" title="Route 132">
+<area href="/pokearth/hoenn/route133.shtml" shape="rect" coords="131, 147, 153, 155" title="Route 133">
+<area href="/pokearth/hoenn/route134.shtml" shape="rect" coords="100, 147, 131, 155" title="Route 134">
+
+</map></p>

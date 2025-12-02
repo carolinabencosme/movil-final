@@ -1514,6 +1514,12 @@ abstract class AppLocalizations {
   /// **'Moves'**
   String get detailTabMoves;
 
+  /// Label for the detail tab that shows locations where the Pokémon can be found.
+  ///
+  /// In en, this message translates to:
+  /// **'Locations'**
+  String get detailTabLocations;
+
   /// Section title for the moves tab on the Pokémon detail screen.
   ///
   /// In en, this message translates to:

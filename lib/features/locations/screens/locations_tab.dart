@@ -4,7 +4,7 @@ import '../../../models/pokemon_model.dart';
 import '../../../widgets/detail/detail_constants.dart';
 import '../../../widgets/detail/detail_helper_widgets.dart';
 import '../../../widgets/detail/info/info_components.dart';
-import '../data/location_service.dart';
+import '../data/pokemon_location_service.dart';
 import '../models/pokemon_location.dart';
 import '../widgets/region_map_viewer.dart';
 
@@ -30,7 +30,7 @@ class PokemonLocationsTab extends StatefulWidget {
 
 class _PokemonLocationsTabState extends State<PokemonLocationsTab>
     with AutomaticKeepAliveClientMixin {
-  final LocationService _locationService = LocationService();
+  final PokemonLocationService _locationService = PokemonLocationService();
   List<LocationsByRegion>? _locations;
   bool _isLoading = true;
   String? _error;
@@ -51,9 +51,11 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
     });
 
     try {
-      final locations = await _locationService.fetchLocationsByRegion(
+      final locationPoints = await _locationService.fetchPokemonLocations(
         widget.pokemon.id,
       );
+
+      final locations = _groupLocationsByRegion(locationPoints);
       
       if (mounted) {
         setState(() {
@@ -69,6 +71,50 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
         });
       }
     }
+  }
+
+  List<LocationsByRegion> _groupLocationsByRegion(
+    List<PokemonLocationPoint> points,
+  ) {
+    final Map<String, List<PokemonLocationPoint>> byRegion = {};
+
+    for (final point in points) {
+      final region = point.region;
+      if (region == null || region.isEmpty) continue;
+
+      byRegion.putIfAbsent(region, () => []).add(point);
+    }
+
+    return byRegion.entries.map((entry) {
+      final encounters = entry.value.map(_mapPointToEncounter).toList();
+
+      return LocationsByRegion(
+        region: entry.key,
+        encounters: encounters,
+        locationPoints: entry.value,
+      );
+    }).toList();
+  }
+
+  PokemonEncounter _mapPointToEncounter(PokemonLocationPoint point) {
+    final versionDetails = point.versions
+        .map(
+          (version) => EncounterVersionDetail(
+            version: version,
+            maxChance: 0,
+            encounterDetails: const [],
+          ),
+        )
+        .toList();
+
+    return PokemonEncounter(
+      locationArea: point.locationArea,
+      versionDetails: versionDetails,
+      region: point.region,
+      pokemonId: point.pokemonId,
+      pokemonName: point.pokemonName,
+      spriteUrl: point.spriteUrl,
+    );
   }
 
   @override
@@ -223,7 +269,8 @@ class _PokemonLocationsTabState extends State<PokemonLocationsTab>
             child: RegionMapViewer(
               region: location.region,
               encounters: location.encounters,
-              height: 300,
+              previewMode: false,
+              locationPoints: location.locationPoints,
               markerColor: theme.colorScheme.primary,
             ),
           ),
@@ -349,30 +396,10 @@ class _RegionLocationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...location.encounters.take(3).map((encounter) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.place,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        encounter.displayName,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            if (location.encounters.length > 3)
+            ..._buildSampleAreas(),
+            if (location.areaCount > 3)
               Text(
-                '+ ${location.encounters.length - 3} ubicaciones más',
+                '+ ${location.areaCount - 3} ubicaciones más',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
@@ -393,5 +420,36 @@ class _RegionLocationCard extends StatelessWidget {
       if (word.isEmpty) return '';
       return word[0].toUpperCase() + word.substring(1);
     }).join(' ');
+  }
+
+  List<Widget> _buildSampleAreas() {
+    final areas = location.encounters.isNotEmpty
+        ? location.encounters.take(3).map((encounter) => encounter.displayName)
+        : location.locationPoints
+            .take(3)
+            .map((point) => point.displayArea)
+            .toList();
+
+    return areas.map((areaName) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            Icon(
+              Icons.place,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                areaName,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../models/pokemon_model.dart';
+import '../../../screens/detail_screen.dart';
+import '../../../theme/pokemon_type_colors.dart';
+import '../data/map_parser.dart';
 import '../data/region_map_data.dart';
 import '../data/region_map_markers.dart';
 import '../models/pokemon_location.dart';
+import '../models/parsed_map.dart';
 
 /// Widget que muestra un mapa de región Pokémon usando InteractiveViewer
 ///
@@ -14,9 +21,16 @@ class RegionMapViewer extends StatefulWidget {
     super.key,
     required this.region,
     required this.encounters,
+    this.locationPoints,
     this.height = 300.0,
+    this.previewMode = false,
     this.markerColor = const Color(0xFF3B9DFF),
+    this.mapBoundsPx,
+    this.mapMarginPx = 0,
     this.onMarkerTap,
+    this.onAreaTap,
+    this.debugMode = false,
+    this.debugSpawns,
   });
 
   /// Nombre de la región (ej: "kanto", "johto")
@@ -25,14 +39,35 @@ class RegionMapViewer extends StatefulWidget {
   /// Lista de encuentros en esta región
   final List<PokemonEncounter> encounters;
 
+  /// Lista de ubicaciones enriquecidas con coordenadas en píxeles
+  final List<PokemonLocationPoint>? locationPoints;
+
   /// Altura del widget en píxeles
   final double height;
+
+  /// Si está habilitado, muestra solo el CTA para abrir el mapa completo
+  final bool previewMode;
 
   /// Color de los marcadores
   final Color markerColor;
 
+  /// Rectángulo opcional que delimita el área útil del mapa en píxeles
+  final Rect? mapBoundsPx;
+
+  /// Margen configurable para calcular [mapBoundsPx] si no se provee manualmente
+  final double mapMarginPx;
+
   /// Callback cuando se toca un marcador
   final Function(PokemonEncounter)? onMarkerTap;
+
+  /// Callback cuando se toca un área definida en el mapa
+  final void Function(ClickableArea area)? onAreaTap;
+
+  /// Modo debug para mostrar spawn test markers
+  final bool debugMode;
+
+  /// Lista de coordenadas de spawn para debug
+  final List<Map<String, dynamic>>? debugSpawns;
 
   @override
   State<RegionMapViewer> createState() => _RegionMapViewerState();
@@ -44,6 +79,66 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   PokemonEncounter? _selectedEncounter;
   List<RegionMapData> _availableVersions = [];
   int _selectedVersionIndex = 0;
+  ParsedMap? _parsedMap;
+  final MapParser _mapParser = const MapParser();
+
+  RegionMapData? _resolveCurrentMapData({
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+  }) {
+    final versions = availableVersions ?? _availableVersions;
+    final index = selectedVersionIndex ?? _selectedVersionIndex;
+    if (versions.isEmpty) return null;
+    return versions[index];
+  }
+
+  Future<void> _openFullscreenMap() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          final theme = Theme.of(context);
+
+          return _FullscreenRegionMapPage(
+            region: widget.region,
+            encounters: widget.encounters,
+            locationPoints: widget.locationPoints,
+            availableVersions: _availableVersions,
+            initialSelectedVersionIndex: _selectedVersionIndex,
+            parsedMap: _parsedMap,
+            mapBoundsPx: widget.mapBoundsPx,
+            mapMarginPx: widget.mapMarginPx,
+            onAreaTap: widget.onAreaTap,
+            onMarkerTap: widget.onMarkerTap,
+            debugMode: widget.debugMode,
+            debugSpawns: widget.debugSpawns,
+            buildMapContainer: _buildMapContainer,
+            buildVersionSelector: _buildVersionSelector,
+            handleAreaTap: _handleAreaTap,
+          );
+        },
+        fullscreenDialog: true,
+      ),
+    );
+
+    setState(() {});
+  }
+
+  Future<void> _loadParsedMap() async {
+    try {
+      final parsedMap = await _mapParser.load(widget.region);
+      if (!mounted) return;
+
+      setState(() {
+        _parsedMap = parsedMap;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _parsedMap = null;
+      });
+      debugPrint('Error loading map data for ${widget.region}: $error');
+    }
+  }
 
   @override
   void initState() {
@@ -56,6 +151,7 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         _availableVersions = [defaultMap];
       }
     }
+    _loadParsedMap();
   }
 
   @override
@@ -73,7 +169,9 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
         }
         _transformationController.value = Matrix4.identity();
         _selectedEncounter = null;
+        _parsedMap = null;
       });
+      _loadParsedMap();
     }
   }
 
@@ -84,213 +182,898 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
   }
 
   /// Obtiene el mapa actualmente seleccionado
-  RegionMapData? get _currentMapData {
-    if (_availableVersions.isEmpty) return null;
-    return _availableVersions[_selectedVersionIndex];
-  }
+  RegionMapData? get _currentMapData => _resolveCurrentMapData();
 
   /// Obtiene el path del asset de la imagen del mapa
-  String _getMapAssetPath() {
-    return _currentMapData?.assetPath ?? 
-           'assets/maps/regions/${widget.region.toLowerCase()}.png';
+  String _getMapAssetPath({
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localCurrentMap = currentMapData ??
+        _resolveCurrentMapData(
+          availableVersions: _availableVersions,
+          selectedVersionIndex: _selectedVersionIndex,
+        );
+
+    if (localParsedMap != null) return localParsedMap.imagePath;
+    if (localCurrentMap != null) return localCurrentMap.assetPath;
+
+    final normalizedRegion = widget.region.toLowerCase();
+
+    // Si no hay datos de versión cargados, usar la primera entrada conocida
+    // para la región antes de construir una ruta manual.
+    final regionVersions = regionMapsByVersion[normalizedRegion];
+    if (regionVersions != null && regionVersions.isNotEmpty) {
+      return regionVersions.first.assetPath;
+    }
+
+    // Último recurso: tomar el primer mapa disponible en el bundle para evitar
+    // renderizar el contenedor de error.
+    for (final entry in regionMapsByVersion.entries) {
+      if (entry.value.isNotEmpty) {
+        return entry.value.first.assetPath;
+      }
+    }
+
+    final versions = regionMapsByVersion[normalizedRegion];
+    if (versions != null && versions.isNotEmpty) {
+      return versions.first.assetPath;
+    }
+
+    return 'assets/maps/regions/$normalizedRegion/${normalizedRegion}.png';
   }
 
   /// Obtiene el tamaño del mapa
-  Size _getMapSize() {
-    return _currentMapData?.mapSize ?? const Size(800, 600);
+  Size _getMapSize({
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localCurrentMap = currentMapData ??
+        _resolveCurrentMapData(
+          availableVersions: _availableVersions,
+          selectedVersionIndex: _selectedVersionIndex,
+        );
+
+    if (localParsedMap != null) return localParsedMap.mapSize;
+    if (localCurrentMap != null) return localCurrentMap.mapSize;
+
+    final normalizedRegion = widget.region.toLowerCase().trim();
+    final versions = regionMapsByVersion[normalizedRegion];
+    if (versions != null && versions.isNotEmpty) {
+      return versions.first.mapSize;
+    }
+
+    return const Size(800, 600);
+  }
+
+  /// Determina el rectángulo usable del mapa para colocar sprites
+  Rect _resolveMapBounds(
+    Size mapSize, {
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+  }) {
+    if (mapBoundsPx != null) {
+      return mapBoundsPx;
+    }
+
+    final horizontalMargin =
+        (mapMarginPx ?? widget.mapMarginPx).clamp(0.0, mapSize.width / 2);
+    final verticalMargin =
+        (mapMarginPx ?? widget.mapMarginPx).clamp(0.0, mapSize.height / 2);
+
+    return Rect.fromLTWH(
+      horizontalMargin,
+      verticalMargin,
+      mapSize.width - (horizontalMargin * 2),
+      mapSize.height - (verticalMargin * 2),
+    );
   }
 
   /// Construye los marcadores sobre el mapa
-  List<Widget> _buildMarkers() {
+  static const double _fullscreenSpriteScale = 0.75;
+
+  List<Widget> _buildSpriteMarkers({
+    required Rect mapBounds,
+    double scaleFactor = 1.0,
+    required List<PokemonLocationPoint>? locationPoints,
+    PokemonEncounter? selectedEncounter,
+    required ValueChanged<PokemonEncounter?> onEncounterChange,
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+    Function(PokemonEncounter)? onMarkerTap,
+  }) {
+    final points = locationPoints
+        ?.where((point) =>
+            point.coordinates != null && (point.spriteUrl.isNotEmpty))
+        .toList();
+    if (points == null || points.isEmpty) return [];
+
+    final mapSize = _getMapSize(
+      parsedMap: parsedMap,
+      currentMapData: currentMapData,
+    );
+    final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
+    final spriteSize = 44.0 * normalizedScale * scaleFactor;
+
+    return points.map((point) {
+      final pixelCoordinates = point.toPixelCoordinates(mapBounds);
+      if (pixelCoordinates == null) return const SizedBox.shrink();
+
+      final left = pixelCoordinates.x - spriteSize / 2;
+      final top = pixelCoordinates.y - spriteSize / 2;
+
+      final encounter = PokemonEncounter(
+        locationArea: point.locationArea,
+        versionDetails: point.versions
+            .map(
+              (version) => EncounterVersionDetail(
+                version: version,
+                maxChance: 0,
+                encounterDetails: const [],
+              ),
+            )
+            .toList(),
+        region: point.region,
+        coordinates: MapCoordinates(
+          pixelCoordinates.x,
+          pixelCoordinates.y,
+        ),
+        pokemonId: point.pokemonId,
+        pokemonName: point.pokemonName,
+        spriteUrl: point.spriteUrl,
+      );
+
+      return Positioned(
+        left: left,
+        top: top,
+        width: spriteSize,
+        height: spriteSize,
+        child: GestureDetector(
+          onTap: () {
+            final isSameEncounter = selectedEncounter != null &&
+                selectedEncounter.locationArea == encounter.locationArea &&
+                selectedEncounter.pokemonId == encounter.pokemonId;
+
+            final newSelection = isSameEncounter ? null : encounter;
+            onEncounterChange(newSelection);
+
+            if (newSelection != null) {
+              onMarkerTap?.call(newSelection);
+            }
+          },
+          child: Image.network(
+            point.spriteUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.catching_pokemon),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  List<Widget> _buildMarkers({
+    double scaleFactor = 1.0,
+    required List<PokemonEncounter> encounters,
+    PokemonEncounter? selectedEncounter,
+    required ValueChanged<PokemonEncounter?> onEncounterChange,
+    RegionMapData? currentMapData,
+    Function(PokemonEncounter)? onMarkerTap,
+  }) {
+    if (encounters.isEmpty) return [];
+
+    final Map<String, _MarkerGroup> groupedMarkers = {};
+
+    for (final encounter in encounters) {
+      final marker = getRegionMarker(
+        widget.region,
+        encounter.locationArea,
+        gameVersion: currentMapData?.gameVersion,
+      );
+
+      if (marker == null) continue;
+
+      final key = '${marker.x}-${marker.y}-${currentMapData?.gameVersion ?? 'default'}';
+      groupedMarkers.putIfAbsent(
+        key,
+        () => _MarkerGroup(marker: marker, encounters: []),
+      );
+      groupedMarkers[key]!.encounters.add(encounter);
+    }
+
+    final mapSize = _getMapSize(currentMapData: currentMapData);
+    final normalizedScale = (mapSize.shortestSide / 800).clamp(0.8, 1.25);
+    final markerSize = 44.0 * normalizedScale * scaleFactor;
+
+    return groupedMarkers.values.map((group) {
+      final isSelected =
+          selectedEncounter != null && group.encounters.contains(selectedEncounter);
+
+      return Positioned(
+        left: group.marker.x,
+        top: group.marker.y,
+        child: GestureDetector(
+          onTap: () {
+            final currentIndex = selectedEncounter != null
+                ? group.encounters.indexOf(selectedEncounter)
+                : -1;
+
+            PokemonEncounter? newSelection;
+
+            if (group.encounters.length == 1) {
+              newSelection = currentIndex != -1 ? null : group.encounters.first;
+            } else {
+              final nextIndex = currentIndex == -1
+                  ? 0
+                  : (currentIndex + 1) % group.encounters.length;
+              newSelection = group.encounters[nextIndex];
+            }
+
+            onEncounterChange(newSelection);
+
+            if (newSelection != null) {
+              onMarkerTap?.call(newSelection);
+            }
+          },
+          child: RegionMarkerWidget(
+            encounters: group.encounters,
+            isSelected: isSelected,
+            color: widget.markerColor,
+            size: markerSize,
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  void _handleAreaTap(ClickableArea area, BuildContext context) {
+    if (widget.onAreaTap != null) {
+      widget.onAreaTap!(area);
+      return;
+    }
+
+    _showAreaDialog(area, context);
+  }
+
+  Future<void> _showAreaDialog(ClickableArea area, BuildContext context) async {
+    final uri = _resolveAreaUri(area);
+    final displayName = _areaDisplayName(area);
+    final locationLabel = _areaLocationLabel(area, uri);
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _AreaInfoDialog(
+        areaName: displayName,
+        locationLabel: locationLabel,
+        linkUri: uri,
+      ),
+    );
+  }
+
+  Uri? _resolveAreaUri(ClickableArea area) {
+    final href = area.href.trim();
+    if (href.isEmpty) return null;
+
+    final parsed = Uri.tryParse(href);
+    if (parsed == null) return null;
+    if (parsed.hasScheme) return parsed;
+
+    final normalizedHref = href.startsWith('/') ? href : '/$href';
+    return Uri.parse('https://www.serebii.net$normalizedHref');
+  }
+
+  String _areaDisplayName(ClickableArea area) {
+    if (area.title.trim().isNotEmpty) return area.title.trim();
+
+    final uri = _resolveAreaUri(area);
+    final segments = uri?.pathSegments.where((segment) => segment.isNotEmpty).toList();
+    if (segments != null && segments.isNotEmpty) {
+      return _prettifySegment(segments.last);
+    }
+
+    if (area.href.isNotEmpty) return area.href;
+    return 'Área sin nombre';
+  }
+
+  String _areaLocationLabel(ClickableArea area, Uri? uri) {
+    final trimmedLocation = area.location.trim();
+    if (trimmedLocation.isNotEmpty) return trimmedLocation;
+
+    if (area.title.trim().isNotEmpty) return area.title.trim();
+
+    final resolvedUri = uri ?? _resolveAreaUri(area);
+    if (resolvedUri == null) return 'Ubicación desconocida';
+
+    final formattedSegments = resolvedUri.pathSegments
+        .where((segment) => segment.isNotEmpty)
+        .map(_prettifySegment)
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+
+    final host = resolvedUri.host.isNotEmpty ? resolvedUri.host : null;
+    if (formattedSegments.isEmpty && host == null) return 'Ubicación desconocida';
+
+    if (host != null && formattedSegments.isEmpty) return host;
+    if (host != null) {
+      return '$host · ${formattedSegments.join(' / ')}';
+    }
+
+    return formattedSegments.join(' / ');
+  }
+
+  String _prettifySegment(String segment) {
+    final cleaned = segment
+        .replaceAll(RegExp(r'\.(s)?html?$', caseSensitive: false), '')
+        .replaceAll('.', ' ');
+    final normalized = cleaned.replaceAll(RegExp(r'[_\-]+'), ' ').trim();
+
+    if (normalized.isEmpty) return segment;
+
+    return normalized
+        .split(' ')
+        .map(
+          (word) =>
+              word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
+        .join(' ');
+  }
+
+  List<Widget> _buildClickableAreas(
+    BuildContext _,
+    ParsedMap? parsedMap,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
+    if (parsedMap == null || parsedMap.areas.isEmpty) return [];
+
+    return parsedMap.areas.map((area) {
+      switch (area.shape) {
+        case AreaShape.circle:
+          return _buildCircleArea(area, onAreaTap);
+        case AreaShape.poly:
+          return _buildPolygonArea(area, onAreaTap);
+        case AreaShape.rect:
+        default:
+          return _buildRectArea(area, onAreaTap);
+      }
+    }).toList();
+  }
+
+  Widget _buildRectArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
+    final rect = area.rect ?? area.bounds;
+    return Positioned(
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => onAreaTap(area),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blueAccent.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: Colors.blueAccent.withOpacity(0.35),
+              width: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircleArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
+    final bounds = area.bounds;
+    final center = area.center ?? bounds.center;
+    final localCenter = center - Offset(bounds.left, bounds.top);
+    final radius = area.radius ?? bounds.width / 2;
+
+    return Positioned(
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+      child: GestureDetector(
+        behavior: HitTestBehavior.deferToChild,
+        onTap: () => onAreaTap(area),
+        child: CustomPaint(
+          painter: _CircleAreaPainter(
+            center: localCenter,
+            radius: radius,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolygonArea(
+    ClickableArea area,
+    void Function(ClickableArea area) onAreaTap,
+  ) {
+    final bounds = area.bounds;
+    final points = area.points
+        .map((point) => point - Offset(bounds.left, bounds.top))
+        .toList();
+
+    return Positioned(
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+      child: _PolygonAreaWidget(
+        points: points,
+        onTap: () => onAreaTap(area),
+      ),
+    );
+  }
+
+  /// Construye marcadores de debug para spawn points
+  List<Widget> _buildDebugSpawnMarkers({
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    RegionMapData? currentMapData,
+    ParsedMap? parsedMap,
+  }) {
+    final isDebugEnabled = debugMode ?? widget.debugMode;
+    final spawns = debugSpawns ?? widget.debugSpawns;
+    if (!isDebugEnabled || spawns == null) {
+      return [];
+    }
+
     final List<Widget> markers = [];
 
-    for (final encounter in widget.encounters) {
-      // Obtener coordenadas del marcador
-      final marker = getRegionMarker(widget.region, encounter.locationArea);
-      
-      if (marker != null) {
-        markers.add(
-          Positioned(
-            left: marker.x - 20, // Centrar el marcador (40/2)
-            top: marker.y - 20,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedEncounter = _selectedEncounter == encounter 
-                      ? null 
-                      : encounter;
-                });
-                widget.onMarkerTap?.call(encounter);
-              },
-              child: RegionMarkerWidget(
-                isSelected: _selectedEncounter == encounter,
-                color: widget.markerColor,
+    for (var i = 0; i < spawns.length; i++) {
+      final spawn = spawns[i];
+      final x = (spawn['x'] as num).toDouble();
+      final y = (spawn['y'] as num).toDouble();
+      final pokemon = spawn['pokemon'] as String? ?? 'Unknown';
+
+      // Validar que las coordenadas estén dentro de los límites del mapa
+      final mapSize = _getMapSize(
+        currentMapData: currentMapData,
+        parsedMap: parsedMap,
+      );
+      if (x < 0 || x > mapSize.width || y < 0 || y > mapSize.height) {
+        debugPrint('Warning: Spawn point $i ($pokemon) has invalid coordinates: ($x, $y)');
+        continue;
+      }
+
+      markers.add(
+        Positioned(
+          left: x - 15, // Centro del círculo (30/2)
+          top: y - 15,
+          child: GestureDetector(
+            onTap: () {
+              // Mostrar tooltip o popup con info del spawn
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Pokémon: $pokemon, Coordinates: ($x, $y)'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.7),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.orange,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '${i + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ),
           ),
-        );
-      }
+        ),
+      );
     }
 
     return markers;
   }
 
+  /// Construye la imagen del mapa (PNG o SVG)
+  Widget _buildMapImage(
+    ThemeData theme, {
+    ParsedMap? parsedMap,
+    RegionMapData? currentMapData,
+  }) {
+    final mapData = currentMapData ?? _currentMapData;
+    final assetPath = _getMapAssetPath(
+      parsedMap: parsedMap,
+      currentMapData: mapData,
+    );
+    final size = _getMapSize(
+      parsedMap: parsedMap,
+      currentMapData: mapData,
+    );
+
+    // Determinar si es SVG o PNG
+    final isSvg = mapData?.isSvg ?? assetPath.toLowerCase().endsWith('.svg');
+
+    Widget errorWidget = Container(
+      width: size.width,
+      height: size.height,
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.map,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Mapa de ${_formatRegionName(widget.region)}',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Imagen del mapa no disponible',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (isSvg) {
+      // Renderizar SVG
+      return SvgPicture.asset(
+        assetPath,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) => errorWidget,
+      );
+    } else {
+      // Renderizar PNG
+      return Image.asset(
+        assetPath,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => errorWidget,
+      );
+    }
+  }
+
+  Widget _buildMapContainer(
+    ThemeData theme, {
+    double? height,
+    bool showFullscreenButton = true,
+    PokemonEncounter? selectedEncounter,
+    ValueChanged<PokemonEncounter?>? onEncounterChange,
+    TransformationController? transformationController,
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ParsedMap? parsedMap,
+    List<PokemonEncounter>? encounters,
+    List<PokemonLocationPoint>? locationPoints,
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+    void Function(ClickableArea area, BuildContext context)? onAreaTapHandler,
+    VoidCallback? onOpenFullscreen,
+  }) {
+    final isFullscreen = !showFullscreenButton && height == null;
+    final containerHeight = height ?? (isFullscreen ? null : widget.height);
+    final localParsedMap = parsedMap ?? _parsedMap;
+    final localAvailableVersions = availableVersions ?? _availableVersions;
+    final localSelectedVersionIndex = selectedVersionIndex ?? _selectedVersionIndex;
+    final localCurrentMapData = _resolveCurrentMapData(
+      availableVersions: localAvailableVersions,
+      selectedVersionIndex: localSelectedVersionIndex,
+    );
+    final localEncounters = encounters ?? widget.encounters;
+    final localLocationPoints = locationPoints ?? widget.locationPoints;
+    final localDebugMode = debugMode ?? widget.debugMode;
+    final localDebugSpawns = debugSpawns ?? widget.debugSpawns;
+    final localSelectedEncounter = selectedEncounter ?? _selectedEncounter;
+    final localTransformationController =
+        transformationController ?? _transformationController;
+    final localMapBoundsPx = mapBoundsPx ?? widget.mapBoundsPx;
+    final localMapMarginPx = mapMarginPx ?? widget.mapMarginPx;
+    final areaTapHandler = onAreaTapHandler ?? _handleAreaTap;
+
+    void updateEncounterSelection(PokemonEncounter? encounter) {
+      if (onEncounterChange != null) {
+        onEncounterChange(encounter);
+        return;
+      }
+
+      setState(() {
+        _selectedEncounter = encounter;
+      });
+    }
+
+    final mapContainer = Container(
+      height: containerHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final mapSize = _getMapSize(
+            parsedMap: localParsedMap,
+            currentMapData: localCurrentMapData,
+          );
+          final mapBounds = _resolveMapBounds(
+            mapSize,
+            mapBoundsPx: localMapBoundsPx,
+            mapMarginPx: localMapMarginPx,
+          );
+          final hasSpriteMarkers = localLocationPoints
+                  ?.any((point) =>
+                      point.coordinates != null && point.spriteUrl.isNotEmpty) ??
+              false;
+          final markerScaleFactor = isFullscreen ? _fullscreenSpriteScale : 1.0;
+          final fitScale = constraints.maxWidth / mapSize.width;
+          final minScale = fitScale;
+          final maxScale = fitScale * 4;
+
+          if (localTransformationController.value == Matrix4.identity()) {
+            localTransformationController.value =
+                Matrix4.identity()..scale(fitScale);
+          }
+
+          final List<Widget> controlButtons = [
+            _MapControlButton(
+              icon: Icons.add,
+              tooltip: 'Acercar',
+              onPressed: () {
+                final currentMatrix = localTransformationController.value;
+                final currentScale = currentMatrix.getMaxScaleOnAxis();
+                final newScale = (currentScale * 1.5).clamp(minScale, maxScale);
+
+                final scaleFactor = newScale / currentScale;
+                final focal = Offset(
+                  constraints.maxWidth / 2,
+                  constraints.maxHeight / 2,
+                );
+                final adjustedMatrix = Matrix4.copy(currentMatrix)
+                  ..translate(focal.dx, focal.dy)
+                  ..scale(scaleFactor)
+                  ..translate(-focal.dx, -focal.dy);
+
+                localTransformationController.value = adjustedMatrix;
+              },
+            ),
+            const SizedBox(height: 8),
+            _MapControlButton(
+              icon: Icons.remove,
+              tooltip: 'Alejar',
+              onPressed: () {
+                final currentMatrix = localTransformationController.value;
+                final currentScale = currentMatrix.getMaxScaleOnAxis();
+                final newScale = (currentScale / 1.5).clamp(minScale, maxScale);
+
+                final scaleFactor = newScale / currentScale;
+                final focal = Offset(
+                  constraints.maxWidth / 2,
+                  constraints.maxHeight / 2,
+                );
+                final adjustedMatrix = Matrix4.copy(currentMatrix)
+                  ..translate(focal.dx, focal.dy)
+                  ..scale(scaleFactor)
+                  ..translate(-focal.dx, -focal.dy);
+
+                localTransformationController.value = adjustedMatrix;
+              },
+            ),
+          ];
+
+          if (showFullscreenButton) {
+            controlButtons.addAll([
+              const SizedBox(height: 8),
+              _MapControlButton(
+                icon: Icons.fullscreen,
+                tooltip: 'Pantalla completa',
+                onPressed: onOpenFullscreen ?? _openFullscreenMap,
+              ),
+            ]);
+          }
+
+          return Stack(
+            children: [
+              // Mapa interactivo con zoom/pan
+              InteractiveViewer(
+                transformationController: localTransformationController,
+                minScale: minScale,
+                maxScale: maxScale,
+                constrained: false,
+                alignment: Alignment.topLeft,
+                boundaryMargin: const EdgeInsets.all(12),
+                clipBehavior: Clip.none,
+                child: SizedBox(
+                  width: mapSize.width,
+                  height: mapSize.height,
+                  child: Stack(
+                    children: [
+                      // Imagen del mapa de la región (PNG o SVG)
+                      _buildMapImage(
+                        theme,
+                        parsedMap: localParsedMap,
+                        currentMapData: localCurrentMapData,
+                      ),
+                      // Áreas clickeables provenientes del archivo de mapa
+                      ..._buildClickableAreas(
+                        context,
+                        localParsedMap,
+                        (area) => areaTapHandler(area, context),
+                      ),
+                      // Sprites posicionados según coordenadas en píxeles
+                      if (hasSpriteMarkers)
+                        ..._buildSpriteMarkers(
+                          mapBounds: mapBounds,
+                          scaleFactor: markerScaleFactor,
+                          locationPoints: localLocationPoints,
+                          parsedMap: localParsedMap,
+                          currentMapData: localCurrentMapData,
+                          selectedEncounter: localSelectedEncounter,
+                          onEncounterChange: updateEncounterSelection,
+                          onMarkerTap: widget.onMarkerTap,
+                        )
+                      else
+                        ..._buildMarkers(
+                          scaleFactor: markerScaleFactor,
+                          encounters: localEncounters,
+                          selectedEncounter: localSelectedEncounter,
+                          onEncounterChange: updateEncounterSelection,
+                          currentMapData: localCurrentMapData,
+                          onMarkerTap: widget.onMarkerTap,
+                        ),
+                      // Marcadores de debug (si está habilitado)
+                      ..._buildDebugSpawnMarkers(
+                        debugMode: localDebugMode,
+                        debugSpawns: localDebugSpawns,
+                        currentMapData: localCurrentMapData,
+                        parsedMap: localParsedMap,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Popup cuando se selecciona un marcador
+              if (localSelectedEncounter != null)
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: _MarkerPopup(
+                    encounter: localSelectedEncounter,
+                    onClose: () {
+                      updateEncounterSelection(null);
+                    },
+                  ),
+                ),
+
+              // Botones de control
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: controlButtons,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (isFullscreen) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: FractionallySizedBox(
+          heightFactor: 0.95,
+          widthFactor: 0.98,
+          child: mapContainer,
+        ),
+      );
+    }
+
+    return mapContainer;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localAvailableVersions = _availableVersions;
+
+    if (widget.previewMode) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Explora el mapa interactivo en pantalla completa',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _openFullscreenMap,
+              icon: const Icon(Icons.map),
+              label: const Text('Ver mapa'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Version selector (only show if multiple versions available)
-        if (_availableVersions.length > 1)
+        if (localAvailableVersions.length > 1)
           _buildVersionSelector(theme),
-        
+
         // Map container
-        Container(
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-        children: [
-          // Mapa interactivo con zoom/pan
-          InteractiveViewer(
-            transformationController: _transformationController,
-            minScale: 0.8,
-            maxScale: 4.0,
-            boundaryMargin: const EdgeInsets.all(20),
-            child: Stack(
-              children: [
-                // Imagen del mapa de la región
-                Image.asset(
-                  _getMapAssetPath(),
-                  width: _getMapSize().width,
-                  height: _getMapSize().height,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    final size = _getMapSize();
-                    return Container(
-                      width: size.width,
-                      height: size.height,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.map,
-                              size: 64,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Mapa de ${_formatRegionName(widget.region)}',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Imagen del mapa no disponible',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                // Marcadores posicionados sobre el mapa
-                ..._buildMarkers(),
-              ],
-            ),
-          ),
-
-          // Popup cuando se selecciona un marcador
-          if (_selectedEncounter != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: _MarkerPopup(
-                encounter: _selectedEncounter!,
-                onClose: () {
-                  setState(() {
-                    _selectedEncounter = null;
-                  });
-                },
-              ),
-            ),
-
-          // Botones de control
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Botón de zoom in
-                _MapControlButton(
-                  icon: Icons.add,
-                  onPressed: () {
-                    final currentScale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    final newScale = (currentScale * 1.5).clamp(0.8, 4.0);
-                    _transformationController.value = Matrix4.identity()
-                      ..scale(newScale);
-                  },
-                ),
-                const SizedBox(height: 8),
-                // Botón de zoom out
-                _MapControlButton(
-                  icon: Icons.remove,
-                  onPressed: () {
-                    final currentScale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    final newScale = (currentScale / 1.5).clamp(0.8, 4.0);
-                    _transformationController.value = Matrix4.identity()
-                      ..scale(newScale);
-                  },
-                ),
-                const SizedBox(height: 8),
-                // Botón de reset
-                _MapControlButton(
-                  icon: Icons.center_focus_strong,
-                  onPressed: () {
-                    _transformationController.value = Matrix4.identity();
-                    setState(() {
-                      _selectedEncounter = null;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-        ),
+        _buildMapContainer(theme),
       ],
     );
   }
 
   /// Construye el selector de versiones del juego
-  Widget _buildVersionSelector(ThemeData theme) {
+  Widget _buildVersionSelector(
+    ThemeData theme, {
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ValueChanged<int>? onVersionSelected,
+  }) {
+    final localAvailableVersions = availableVersions ?? _availableVersions;
+    final localSelectedVersionIndex = selectedVersionIndex ?? _selectedVersionIndex;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -314,18 +1097,22 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(
-                  _availableVersions.length,
+                  localAvailableVersions.length,
                   (index) => Padding(
-                    padding: EdgeInsets.only(right: index < _availableVersions.length - 1 ? 8.0 : 0.0),
+                    padding: EdgeInsets.only(right: index < localAvailableVersions.length - 1 ? 8.0 : 0.0),
                     child: _VersionChip(
-                      label: _availableVersions[index].gameVersion,
-                      isSelected: index == _selectedVersionIndex,
+                      label: localAvailableVersions[index].gameVersion,
+                      isSelected: index == localSelectedVersionIndex,
                       onTap: () {
-                        setState(() {
-                          _selectedVersionIndex = index;
-                          _selectedEncounter = null; // Reset selection
-                          _transformationController.value = Matrix4.identity();
-                        });
+                        if (onVersionSelected != null) {
+                          onVersionSelected(index);
+                        } else {
+                          setState(() {
+                            _selectedVersionIndex = index;
+                            _selectedEncounter = null; // Reset selection
+                            _transformationController.value = Matrix4.identity();
+                          });
+                        }
                       },
                     ),
                   ),
@@ -340,6 +1127,159 @@ class _RegionMapViewerState extends State<RegionMapViewer> {
 
   String _formatRegionName(String region) {
     return region[0].toUpperCase() + region.substring(1);
+  }
+}
+
+class _FullscreenRegionMapPage extends StatefulWidget {
+  const _FullscreenRegionMapPage({
+    required this.region,
+    required this.encounters,
+    required this.locationPoints,
+    required this.availableVersions,
+    required this.initialSelectedVersionIndex,
+    required this.parsedMap,
+    required this.mapBoundsPx,
+    required this.mapMarginPx,
+    required this.onAreaTap,
+    required this.onMarkerTap,
+    required this.debugMode,
+    required this.debugSpawns,
+    required this.buildMapContainer,
+    required this.buildVersionSelector,
+    required this.handleAreaTap,
+  });
+
+  final String region;
+  final List<PokemonEncounter> encounters;
+  final List<PokemonLocationPoint>? locationPoints;
+  final List<RegionMapData> availableVersions;
+  final int initialSelectedVersionIndex;
+  final ParsedMap? parsedMap;
+  final Rect? mapBoundsPx;
+  final double mapMarginPx;
+  final void Function(ClickableArea area)? onAreaTap;
+  final Function(PokemonEncounter)? onMarkerTap;
+  final bool debugMode;
+  final List<Map<String, dynamic>>? debugSpawns;
+  final Widget Function(
+    ThemeData theme, {
+    double? height,
+    bool showFullscreenButton,
+    PokemonEncounter? selectedEncounter,
+    ValueChanged<PokemonEncounter?>? onEncounterChange,
+    TransformationController? transformationController,
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ParsedMap? parsedMap,
+    List<PokemonEncounter>? encounters,
+    List<PokemonLocationPoint>? locationPoints,
+    bool? debugMode,
+    List<Map<String, dynamic>>? debugSpawns,
+    Rect? mapBoundsPx,
+    double? mapMarginPx,
+    void Function(ClickableArea area, BuildContext context)? onAreaTapHandler,
+    VoidCallback? onOpenFullscreen,
+  }) buildMapContainer;
+  final Widget Function(
+    ThemeData theme, {
+    List<RegionMapData>? availableVersions,
+    int? selectedVersionIndex,
+    ValueChanged<int>? onVersionSelected,
+  }) buildVersionSelector;
+  final void Function(ClickableArea area, BuildContext context) handleAreaTap;
+
+  @override
+  State<_FullscreenRegionMapPage> createState() =>
+      _FullscreenRegionMapPageState();
+}
+
+class _FullscreenRegionMapPageState extends State<_FullscreenRegionMapPage> {
+  PokemonEncounter? _selectedEncounter;
+  late int _selectedVersionIndex;
+  late final TransformationController _transformationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedVersionIndex = widget.initialSelectedVersionIndex;
+    _transformationController = TransformationController();
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: Text('Mapa de ${widget.region[0].toUpperCase()}${widget.region.substring(1)}'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Cerrar pantalla completa',
+            icon: const Icon(Icons.close_fullscreen),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              if (widget.availableVersions.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: widget.buildVersionSelector(
+                    theme,
+                    availableVersions: widget.availableVersions,
+                    selectedVersionIndex: _selectedVersionIndex,
+                    onVersionSelected: (index) {
+                      setState(() {
+                        _selectedVersionIndex = index;
+                        _selectedEncounter = null;
+                        _transformationController.value = Matrix4.identity();
+                      });
+                    },
+                  ),
+                ),
+              Expanded(
+                child: widget.buildMapContainer(
+                  theme,
+                  height: null,
+                  showFullscreenButton: false,
+                  selectedEncounter: _selectedEncounter,
+                  onEncounterChange: (encounter) {
+                    setState(() {
+                      _selectedEncounter = encounter;
+                    });
+                    if (encounter != null) {
+                      widget.onMarkerTap?.call(encounter);
+                    }
+                  },
+                  transformationController: _transformationController,
+                  availableVersions: widget.availableVersions,
+                  selectedVersionIndex: _selectedVersionIndex,
+                  parsedMap: widget.parsedMap,
+                  encounters: widget.encounters,
+                  locationPoints: widget.locationPoints,
+                  debugMode: widget.debugMode,
+                  debugSpawns: widget.debugSpawns,
+                  mapBoundsPx: widget.mapBoundsPx,
+                  mapMarginPx: widget.mapMarginPx,
+                  onAreaTapHandler: widget.handleAreaTap,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -397,43 +1337,176 @@ class _VersionChip extends StatelessWidget {
 class RegionMarkerWidget extends StatelessWidget {
   const RegionMarkerWidget({
     super.key,
+    required this.encounters,
     this.isSelected = false,
     this.color = const Color(0xFFEF5350),
     this.size = 40.0,
   });
 
+  final List<PokemonEncounter> encounters;
   final bool isSelected;
   final Color color;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final visibleEncounters = encounters.take(3).toList();
+    final markerScale = isSelected ? 1.12 : 1.0;
+    final spriteSize = size * markerScale;
+    final overlapOffset = spriteSize * 0.32;
+    final markerWidth = spriteSize + overlapOffset * (visibleEncounters.length - 1);
+    final markerHeight = spriteSize;
+
+    Widget badge() {
+      if (encounters.length <= visibleEncounters.length) return const SizedBox();
+
+      return Positioned(
+        right: -4,
+        bottom: -4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white, width: 1.5),
+          ),
+          child: Text(
+            '+${encounters.length - visibleEncounters.length}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      );
+    }
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: size * (isSelected ? 1.2 : 1.0),
-      height: size * (isSelected ? 1.2 : 1.0),
+      width: markerWidth,
+      height: markerHeight,
+      transform: Matrix4.translationValues(-markerWidth / 2, -markerHeight / 2, 0),
       decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+        color: color.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(markerHeight / 2),
         border: Border.all(
           color: Colors.white,
-          width: 3,
+          width: 2.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: isSelected ? 12 : 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: isSelected ? 14 : 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Icon(
-        Icons.place,
-        color: Colors.white,
-        size: size * 0.6 * (isSelected ? 1.2 : 1.0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visibleEncounters.length; i++)
+            Positioned(
+              left: overlapOffset * i,
+              child: _SpriteBubble(
+                encounter: visibleEncounters[i],
+                size: spriteSize,
+                isSelected: isSelected,
+              ),
+            ),
+          badge(),
+        ],
       ),
     );
   }
+}
+
+class _SpriteBubble extends StatelessWidget {
+  const _SpriteBubble({
+    required this.encounter,
+    required this.size,
+    required this.isSelected,
+  });
+
+  final PokemonEncounter encounter;
+  final double size;
+  final bool isSelected;
+
+  Color _typeColor() {
+    if (encounter.pokemonTypes.isEmpty) {
+      return pokemonTypeColors['unknown'] ?? Colors.grey.shade600;
+    }
+
+    final primaryType = encounter.pokemonTypes.first.toLowerCase();
+    return pokemonTypeColors[primaryType] ?? Colors.grey.shade600;
+  }
+
+  Widget _buildFallbackIcon(Color accent) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            accent.withOpacity(0.14),
+            accent.withOpacity(0.42),
+          ],
+        ),
+      ),
+      child: Icon(
+        Icons.catching_pokemon,
+        color: accent,
+        size: size * 0.55,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _typeColor();
+    final hasSprite = encounter.spriteUrl.isNotEmpty;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(
+          color: accent.withOpacity(isSelected ? 0.9 : 0.65),
+          width: isSelected ? 3 : 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.35),
+            blurRadius: isSelected ? 12 : 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: hasSprite
+            ? Image.network(
+                encounter.spriteUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(accent),
+              )
+            : _buildFallbackIcon(accent),
+      ),
+    );
+  }
+}
+
+class _MarkerGroup {
+  _MarkerGroup({
+    required this.marker,
+    required this.encounters,
+  });
+
+  final RegionMarker marker;
+  final List<PokemonEncounter> encounters;
 }
 
 /// Popup que se muestra al tocar un marcador
@@ -449,6 +1522,7 @@ class _MarkerPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasSprite = encounter.spriteUrl.isNotEmpty;
 
     return Card(
       elevation: 8,
@@ -458,7 +1532,7 @@ class _MarkerPopup extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(
           maxWidth: 280,
-          minWidth: 200,
+          minWidth: 160,
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -493,55 +1567,150 @@ class _MarkerPopup extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Juegos donde aparece
-            if (encounter.allVersions.isNotEmpty) ...[
-              Row(
+            GestureDetector(
+              onTap: () => _openDetail(context),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.videogame_asset,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
+                  if (hasSprite)
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.network(
+                        encounter.spriteUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.catching_pokemon,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  if (hasSprite) const SizedBox(width: 12),
                   Expanded(
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: encounter.allVersions.take(3).map((version) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatPokemonName(encounter.pokemonName),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _formatVersion(version),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: encounter.pokemonTypes
+                              .map((type) => _TypeChip(type: type))
+                              .toList(),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              if (encounter.allVersions.length > 3) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '  +${encounter.allVersions.length - 3} más',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
+            ),
+            const SizedBox(height: 12),
+
+            if (encounter.methodSummaries.isNotEmpty) ...[
+              Text(
+                'Métodos de encuentro',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...encounter.versionDetails.map((versionDetail) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        versionDetail.displayVersion,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...versionDetail.encounterDetails.map(
+                        (detail) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.catching_pokemon,
+                                size: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '${detail.displayMethod} · ${detail.chance}% · ${detail.levelRange}',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (encounter.allVersions.isNotEmpty)
+                  Expanded(
+                    child: Text(
+                      _buildVersionsLabel(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () => _openDetail(context),
+                  icon: const Icon(Icons.open_in_new, size: 18),
+                  label: const Text('Ver detalles'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
-            ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DetailScreen(
+          pokemonId: encounter.pokemonId,
+          pokemonName: encounter.pokemonName,
+          initialPokemon: PokemonListItem(
+            id: encounter.pokemonId,
+            name: encounter.pokemonName,
+            imageUrl: encounter.spriteUrl,
+            types: encounter.pokemonTypes,
+          ),
         ),
       ),
     );
@@ -553,6 +1722,189 @@ class _MarkerPopup extends StatelessWidget {
         .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
   }
+
+  String _buildVersionsLabel() {
+    final primary = encounter.allVersions.take(2).map(_formatVersion).join(', ');
+    final hasMore = encounter.allVersions.length > 2;
+    return 'Versiones: $primary${hasMore ? ' +' : ''}';
+  }
+
+  String _formatPokemonName(String name) {
+    if (name.isEmpty) return 'Desconocido';
+    return name
+        .split('-')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+}
+
+class _AreaInfoDialog extends StatelessWidget {
+  const _AreaInfoDialog({
+    required this.areaName,
+    required this.locationLabel,
+    required this.linkUri,
+  });
+
+  final String areaName;
+  final String locationLabel;
+  final Uri? linkUri;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final linkText = linkUri?.toString() ?? 'Enlace no disponible';
+
+    return AlertDialog(
+      title: Text(areaName),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.place_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  locationLabel,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: linkUri != null ? () => _openLink(context) : null,
+            icon: const Icon(Icons.link),
+            label: Text(linkText),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openLink(BuildContext context) async {
+    if (linkUri == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final success = await launchUrl(linkUri!, mode: LaunchMode.externalApplication);
+    if (!success) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el enlace'),
+        ),
+      );
+    }
+  }
+}
+
+class _PolygonAreaWidget extends StatelessWidget {
+  const _PolygonAreaWidget({required this.points, required this.onTap});
+
+  final List<Offset> points;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      onTap: onTap,
+      child: CustomPaint(
+        painter: _PolygonAreaPainter(points: points),
+      ),
+    );
+  }
+}
+
+class _PolygonAreaPainter extends CustomPainter {
+  _PolygonAreaPainter({required List<Offset> points})
+      : _points = points,
+        _path = _buildPath(points);
+
+  final List<Offset> _points;
+  final Path _path;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (_points.length < 3) return;
+
+    final fillPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawPath(_path, fillPaint);
+    canvas.drawPath(_path, borderPaint);
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return _points.length >= 3 && _path.contains(position);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PolygonAreaPainter oldDelegate) {
+    return oldDelegate._points != _points;
+  }
+
+  static Path _buildPath(List<Offset> points) {
+    final path = Path();
+    if (points.isEmpty) return path;
+
+    path.moveTo(points.first.dx, points.first.dy);
+    for (final point in points.skip(1)) {
+      path.lineTo(point.dx, point.dy);
+    }
+    path.close();
+    return path;
+  }
+}
+
+class _CircleAreaPainter extends CustomPainter {
+  const _CircleAreaPainter({required this.center, required this.radius});
+
+  final Offset center;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = Colors.blueAccent.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(center, radius, fillPaint);
+    canvas.drawCircle(center, radius, borderPaint);
+  }
+
+  @override
+  bool hitTest(Offset position) {
+    return (position - center).distance <= radius;
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircleAreaPainter oldDelegate) {
+    return oldDelegate.center != center || oldDelegate.radius != radius;
+  }
 }
 
 /// Botón de control del mapa
@@ -560,33 +1912,73 @@ class _MapControlButton extends StatelessWidget {
   const _MapControlButton({
     required this.icon,
     required this.onPressed,
+    this.tooltip,
   });
 
   final IconData icon;
   final VoidCallback onPressed;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: theme.colorScheme.surface,
-      elevation: 4,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: theme.colorScheme.surface,
+        elevation: 4,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            color: theme.colorScheme.onSurface,
-            size: 24,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              color: theme.colorScheme.onSurface,
+              size: 24,
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalizedType = _formatType(type);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+      ),
+      child: Text(
+        normalizedType,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+
+  String _formatType(String value) {
+    return value
+        .split('-')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 }

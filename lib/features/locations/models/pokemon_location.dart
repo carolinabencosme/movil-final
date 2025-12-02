@@ -1,9 +1,48 @@
 /// Clase simple para coordenadas X/Y en el mapa de región
+import 'dart:ui';
+
 class MapCoordinates {
   const MapCoordinates(this.x, this.y);
 
   final double x;
   final double y;
+}
+
+/// Coordenadas normalizadas y en píxeles para ubicar un Pokémon en el mapa
+class PokemonLocationCoordinates {
+  const PokemonLocationCoordinates({
+    required this.normalizedX,
+    required this.normalizedY,
+    this.rawX,
+    this.rawY,
+    this.mapSize,
+  });
+
+  /// Coordenada X normalizada (0-1)
+  final double normalizedX;
+
+  /// Coordenada Y normalizada (0-1)
+  final double normalizedY;
+
+  /// Coordenadas originales en píxeles si están disponibles
+  final double? rawX;
+  final double? rawY;
+
+  /// Tamaño del mapa usado para calcular las coordenadas
+  final Size? mapSize;
+
+  /// Convierte las coordenadas normalizadas a píxeles dentro de [mapBoundsPx].
+  ///
+  /// Siempre mantiene el punto dentro del rectángulo recibido.
+  Offset toPixels(Rect mapBoundsPx) {
+    final clampedX = normalizedX.clamp(0.0, 1.0);
+    final clampedY = normalizedY.clamp(0.0, 1.0);
+
+    return Offset(
+      mapBoundsPx.left + mapBoundsPx.width * clampedX,
+      mapBoundsPx.top + mapBoundsPx.height * clampedY,
+    );
+  }
 }
 
 /// Modelo para un encuentro de Pokémon en una ubicación específica
@@ -13,6 +52,10 @@ class PokemonEncounter {
     required this.versionDetails,
     this.region,
     this.coordinates,
+    this.pokemonId = 0,
+    this.pokemonName = 'unknown',
+    this.spriteUrl = '',
+    this.pokemonTypes = const [],
   });
 
   /// Nombre del área de ubicación (ej: "route-1-area", "viridian-forest-area")
@@ -27,8 +70,25 @@ class PokemonEncounter {
   /// Coordenadas X/Y en el mapa de región si están disponibles
   final MapCoordinates? coordinates;
 
+  /// ID del Pokémon al que pertenece el encuentro
+  final int pokemonId;
+
+  /// Nombre del Pokémon
+  final String pokemonName;
+
+  /// Sprite del Pokémon (oficial o mini)
+  final String spriteUrl;
+
+  /// Tipos del Pokémon
+  final List<String> pokemonTypes;
+
   /// Factory para crear desde JSON de PokéAPI
-  factory PokemonEncounter.fromJson(Map<String, dynamic> json) {
+  factory PokemonEncounter.fromJson(
+    Map<String, dynamic> json, {
+    EncounterPokemonInfo? pokemon,
+    String? region,
+    MapCoordinates? coordinates,
+  }) {
     final locationArea = json['location_area'] as Map<String, dynamic>?;
     final locationAreaName = locationArea?['name'] as String? ?? 'unknown';
 
@@ -37,38 +97,16 @@ class PokemonEncounter {
         .map((detail) => EncounterVersionDetail.fromJson(detail as Map<String, dynamic>))
         .toList();
 
-    // Intentar inferir la región del nombre del área
-    final region = _inferRegionFromLocationArea(locationAreaName);
-
     return PokemonEncounter(
       locationArea: locationAreaName,
       versionDetails: versionDetails,
       region: region,
+      coordinates: coordinates,
+      pokemonId: pokemon?.id ?? 0,
+      pokemonName: pokemon?.name ?? 'unknown',
+      spriteUrl: pokemon?.spriteUrl ?? '',
+      pokemonTypes: pokemon?.types ?? const [],
     );
-  }
-
-  /// Infiere la región desde el nombre del área
-  static String? _inferRegionFromLocationArea(String locationArea) {
-    // Mapeo simple basado en rutas y ubicaciones conocidas
-    if (locationArea.contains('route-') || locationArea.contains('viridian') ||
-        locationArea.contains('pewter') || locationArea.contains('cerulean')) {
-      final routeNum = _extractRouteNumber(locationArea);
-      if (routeNum != null) {
-        if (routeNum <= 28) return 'kanto';
-        if (routeNum <= 48) return 'johto';
-        if (routeNum <= 134) return 'hoenn';
-        if (routeNum <= 230) return 'sinnoh';
-      }
-    }
-    return null;
-  }
-
-  static int? _extractRouteNumber(String locationArea) {
-    final match = RegExp(r'route-(\d+)').firstMatch(locationArea);
-    if (match != null) {
-      return int.tryParse(match.group(1) ?? '');
-    }
-    return null;
   }
 
   /// Obtiene el nombre legible del área
@@ -86,6 +124,50 @@ class PokemonEncounter {
         .map((detail) => detail.version)
         .toSet()
         .toList();
+  }
+
+  /// Resumen plano de métodos de encuentro para mostrar en UI.
+  List<EncounterMethodSummary> get methodSummaries {
+    final List<EncounterMethodSummary> summaries = [];
+
+    for (final versionDetail in versionDetails) {
+      for (final detail in versionDetail.encounterDetails) {
+        summaries.add(
+          EncounterMethodSummary(
+            version: versionDetail.displayVersion,
+            method: detail.displayMethod,
+            chance: detail.chance,
+            levelRange: detail.levelRange,
+          ),
+        );
+      }
+    }
+
+    summaries.sort((a, b) => b.chance.compareTo(a.chance));
+    return summaries;
+  }
+
+  /// Crea una copia con modificaciones de campos opcionales.
+  PokemonEncounter copyWith({
+    String? locationArea,
+    List<EncounterVersionDetail>? versionDetails,
+    String? region,
+    MapCoordinates? coordinates,
+    int? pokemonId,
+    String? pokemonName,
+    String? spriteUrl,
+    List<String>? pokemonTypes,
+  }) {
+    return PokemonEncounter(
+      locationArea: locationArea ?? this.locationArea,
+      versionDetails: versionDetails ?? this.versionDetails,
+      region: region ?? this.region,
+      coordinates: coordinates ?? this.coordinates,
+      pokemonId: pokemonId ?? this.pokemonId,
+      pokemonName: pokemonName ?? this.pokemonName,
+      spriteUrl: spriteUrl ?? this.spriteUrl,
+      pokemonTypes: pokemonTypes ?? this.pokemonTypes,
+    );
   }
 }
 
@@ -185,12 +267,99 @@ class EncounterDetail {
   }
 }
 
+/// Información básica del Pokémon asociada al encuentro
+class EncounterPokemonInfo {
+  const EncounterPokemonInfo({
+    required this.id,
+    required this.name,
+    required this.spriteUrl,
+    this.types = const [],
+  });
+
+  final int id;
+  final String name;
+  final String spriteUrl;
+  final List<String> types;
+}
+
+/// DTO especializado para representar ubicaciones de un Pokémon
+class PokemonLocationPoint {
+  const PokemonLocationPoint({
+    required this.pokemonId,
+    required this.pokemonName,
+    required this.spriteUrl,
+    required this.locationArea,
+    required this.region,
+    required this.versions,
+    this.coordinates,
+  });
+
+  /// Identificador del Pokémon
+  final int pokemonId;
+
+  /// Nombre del Pokémon
+  final String pokemonName;
+
+  /// Sprite del Pokémon (arte oficial o sprite base)
+  final String spriteUrl;
+
+  /// Nombre del área de encuentro
+  final String locationArea;
+
+  /// Región inferida para la ubicación
+  final String? region;
+
+  /// Versiones de juego donde aparece el encuentro
+  final List<String> versions;
+
+  /// Coordenadas normalizadas y opcionalmente en píxeles
+  final PokemonLocationCoordinates? coordinates;
+
+  /// Versión legible de la región
+  String get displayRegion {
+    if (region == null || region!.isEmpty) return 'Unknown Region';
+    return region![0].toUpperCase() + region!.substring(1);
+  }
+
+  /// Nombre legible del área
+  String get displayArea {
+    return locationArea
+        .replaceAll('-', ' ')
+        .split(' ')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
+  /// Coordenadas del marcador en píxeles dentro del mapa renderizado
+  MapCoordinates? toPixelCoordinates(Rect mapBoundsPx) {
+    final pixelOffset = coordinates?.toPixels(mapBoundsPx);
+    if (pixelOffset == null) return null;
+    return MapCoordinates(pixelOffset.dx, pixelOffset.dy);
+  }
+}
+
+/// Resumen plano de un método de encuentro
+class EncounterMethodSummary {
+  const EncounterMethodSummary({
+    required this.version,
+    required this.method,
+    required this.chance,
+    required this.levelRange,
+  });
+
+  final String version;
+  final String method;
+  final int chance;
+  final String levelRange;
+}
+
 /// Datos agrupados de ubicaciones por región
 class LocationsByRegion {
   const LocationsByRegion({
     required this.region,
     required this.encounters,
-    required this.coordinates,
+    this.locationPoints = const [],
+    this.coordinates,
   });
 
   /// Nombre de la región
@@ -199,17 +368,31 @@ class LocationsByRegion {
   /// Lista de encuentros en esta región
   final List<PokemonEncounter> encounters;
 
+  /// Lista de ubicaciones con coordenadas enriquecidas
+  final List<PokemonLocationPoint> locationPoints;
+
   /// Coordenadas X/Y del centro de la región en el mapa
-  final MapCoordinates coordinates;
+  final MapCoordinates? coordinates;
 
   /// Obtiene todas las versiones únicas en esta región
   List<String> get allVersions {
-    return encounters
+    final encounterVersions = encounters
         .expand((encounter) => encounter.allVersions)
         .toSet()
         .toList();
+
+    final pointVersions = locationPoints
+        .expand((point) => point.versions)
+        .where((version) => version.isNotEmpty)
+        .toSet()
+        .toList();
+
+    return {...encounterVersions, ...pointVersions}.toList();
   }
 
   /// Cuenta total de áreas en esta región
-  int get areaCount => encounters.length;
+  int get areaCount =>
+      locationPoints.isNotEmpty ? locationPoints.length : encounters.length;
 }
+
+

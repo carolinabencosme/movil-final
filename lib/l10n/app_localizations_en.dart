@@ -805,6 +805,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailTabMoves => 'Moves';
 
   @override
+  String get detailTabLocations => 'Locations';
+
+  @override
   String get detailMovesTitle => 'Moves';
 
   @override

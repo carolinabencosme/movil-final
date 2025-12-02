@@ -1,0 +1,90 @@
+<p align="center"><img border="0" src="/pokearth/kanto.png" usemap="#kanto" width="200" height="618"><map name="kanto">
+
+<area href="/pokearth/kanto/pallettown.shtml" shape="rect" coords="47, 112, 56, 103" title="Pallet Town">
+<area href="/pokearth/kanto/viridiancity.shtml" shape="rect" coords="47, 92, 56, 76" title="Viridian City">
+<area href="/pokearth/kanto/viridianforest.shtml" shape="rect" coords="47, 64, 56, 71" title="Viridian Forest">
+<area href="/pokearth/kanto/pewtercity.shtml" shape="rect" coords="47, 62, 56, 46" title="Pewter City">
+<area href="/pokearth/kanto/pewtercity.shtml" shape="rect" coords="47, 47, 62, 56" title="Pewter City">
+<area href="/pokearth/kanto/mt.moon.shtml" shape="rect" coords="88, 39, 96, 48" title="Mt. Moon">
+<area href="/pokearth/kanto/ceruleancity.shtml" shape="rect" coords="127, 39, 137, 48" title="Cerulean City">
+<area href="/pokearth/kanto/rocktunnel.shtml" shape="rect" coords="160, 40, 168, 47" title="Rock Tunnel">
+<area href="/pokearth/kanto/powerplant.shtml" shape="rect" coords="160, 50, 168, 57" title="Power Plant">
+<area href="/pokearth/kanto/lavendertown.shtml" shape="rect" coords="160, 64, 168, 71" title="Lavender Town">
+<area href="/pokearth/kanto/pokemontower.shtml" shape="rect" coords="168, 74, 176, 82" title="Pokémon Tower">
+<area href="/pokearth/kanto/saffroncity.shtml" shape="rect" coords="124, 62, 138, 76" title="Saffron City">
+<area href="/pokearth/kanto/celadoncity.shtml" shape="rect" coords="104, 64, 111, 72" title="Celadon City">
+<area href="/pokearth/kanto/vermilioncity.shtml" shape="rect" coords="128, 88, 136, 96" title="Vermilion City">
+<area href="/pokearth/kanto/diglett'scave.shtml" shape="rect" coords="136, 88, 144, 96" title="Diglett's Cave">
+<area href="/pokearth/kanto/fuchsiacity.shtml" shape="rect" coords="112, 112, 120, 120" title="Fuchsia City">
+<area href="/pokearth/kanto/seafoamislands.shtml" shape="rect" coords="75, 128, 88, 135" title="Seafoam Islands">
+<area href="/pokearth/kanto/cinnabarisland.shtml" shape="rect" coords="47, 128, 55, 136" title="Cinnabar Island">
+<area href="/pokearth/kanto/victoryroad.shtml" shape="rect" coords="23, 55, 31, 48" title="Victory Road">
+<area href="/pokearth/kanto/indigoplateau.shtml" shape="rect" coords="23, 39, 31, 47" title="Indigo Plateau">
+<area href="/pokearth/kanto/tohjofalls.shtml" shape="rect" coords="2, 109, 10, 116" title="Tohjo Falls">
+<area href="/pokearth/johto/mt.silver.shtml" shape="rect" coords="0, 80, 8, 88" title="Mt. Silver (Johto)">
+<area href="/pokearth/kanto/route1.shtml" shape="rect" coords="47, 103, 56, 92" title="Route 1">
+<area href="/pokearth/kanto/route2.shtml" shape="rect" coords="47, 76, 56, 71" title="Route 2">
+<area href="/pokearth/kanto/route3.shtml" shape="rect" coords="63, 47, 88, 56" title="Route 3">
+<area href="/pokearth/kanto/route4.shtml" shape="rect" coords="79, 39, 88, 48" title="Route 4">
+<area href="/pokearth/kanto/route4.shtml" shape="rect" coords="95, 39, 128, 48" title="Route 4">
+<area href="/pokearth/kanto/route5.shtml" shape="rect" coords="127, 48, 137, 61" title="Route 5">
+<area href="/pokearth/kanto/route6.shtml" shape="rect" coords="127, 77, 137, 88" title="Route 6">
+<area href="/pokearth/kanto/route7.shtml" shape="rect" coords="139, 63, 159, 72" title="Route 7">
+<area href="/pokearth/kanto/route8.shtml" shape="rect" coords="112, 63, 123, 72" title="Route 8">
+<area href="/pokearth/kanto/route9.shtml" shape="rect" coords="136, 39, 159, 48" title="Route 9">
+<area href="/pokearth/kanto/route10.shtml" shape="rect" coords="159, 39, 168, 64" title="Route 10">
+<area href="/pokearth/kanto/route11.shtml" shape="rect" coords="144, 87, 159, 96" title="Route 11">
+<area href="/pokearth/kanto/route12.shtml" shape="rect" coords="159, 72, 168, 104" title="Route 12">
+<area href="/pokearth/kanto/route13.shtml" shape="rect" coords="143, 103, 168, 112" title="Route 13">
+<area href="/pokearth/kanto/route14.shtml" shape="rect" coords="135, 103, 145, 120" title="Route 14">
+<area href="/pokearth/kanto/route15.shtml" shape="rect" coords="120, 111, 135, 120" title="Route 15">
+<area href="/pokearth/kanto/route16.shtml" shape="rect" coords="71, 63, 103, 72" title="Route 16">
+<area href="/pokearth/kanto/route17.shtml" shape="rect" coords="71, 72, 80, 112" title="Route 17">
+<area href="/pokearth/kanto/route18.shtml" shape="rect" coords="71, 111, 112, 120" title="Route 18">
+<area href="/pokearth/kanto/route19.shtml" shape="rect" coords="111, 120, 121, 136" title="Route 19">
+<area href="/pokearth/kanto/route20.shtml" shape="rect" coords="55, 127, 111, 137" title="Route 20">
+<area href="/pokearth/kanto/route21.shtml" shape="rect" coords="47, 127, 56, 112" title="Route 21">
+<area href="/pokearth/kanto/route22.shtml" shape="rect" coords="48, 79, 31, 88" title="Route 22">
+<area href="/pokearth/kanto/route23.shtml" shape="rect" coords="22, 55, 32, 79" title="Route 23">
+<area href="/pokearth/kanto/route24.shtml" shape="rect" coords="127, 40, 136, 23" title="Route 24">
+<area href="/pokearth/kanto/route25.shtml" shape="rect" coords="136, 23, 152, 33" title="Route 25">
+<area href="/pokearth/kanto/route27.shtml" shape="rect" coords="0, 103, 32, 118" title="Route 27">
+<area href="/pokearth/kanto/route26.shtml" shape="rect" coords="22, 88, 32, 108" title="Route 26">
+<area href="/pokearth/kanto/route28.shtml" shape="rect" coords="8, 79, 23, 88" title="Route 28">
+
+
+
+
+<area href="/pokearth/kanto/oneisland.shtml" shape="rect" coords="19, 235, 26, 243" title="One Island">
+<area href="/pokearth/kanto/treasurebeach.shtml" shape="rect" coords="17, 243, 27, 259" title="Treasure Beach">
+<area href="/pokearth/kanto/kindleroad.shtml" shape="rect" coords="26, 203, 35, 423" title="Kindle Road">
+<area href="/pokearth/kanto/mt.ember.shtml" shape="rect" coords="26, 194, 35, 202" title="Mt. Ember">
+<area href="/pokearth/kanto/twoisland.shtml" shape="rect" coords="82, 243, 90, 251" title="Two Island">
+<area href="/pokearth/kanto/capebrink.shtml" shape="rect" coords="82, 243, 90, 226" title="Cape Brink">
+<area href="/pokearth/kanto/threeisland.shtml" shape="rect" coords="155, 266, 163, 274" title="Three Island">
+<area href="/pokearth/kanto/threeisleport.shtml" shape="rect" coords="154, 274, 172, 284" title="Three Isle Port">
+<area href="/pokearth/kanto/bondbridge.shtml" shape="rect" coords="131, 266, 154, 275" title="Bond Bridge">
+<area href="/pokearth/kanto/berryforest.shtml" shape="rect" coords="121, 266, 130, 275" title="Berry Forest">
+<area href="/pokearth/kanto/fourisland.shtml" shape="rect" coords="35, 363, 43, 371" title="Four Island">
+<area href="/pokearth/kanto/fiveisland.shtml" shape="rect" coords="138, 419, 146, 427" title="Five Island">
+<area href="/pokearth/kanto/fiveislemeadow.shtml" shape="rect" coords="146, 417, 154, 436" title="Five Isle Meadow">
+<area href="/pokearth/kanto/memorialpillar.shtml" shape="rect" coords="154, 426, 163, 452" title="Memorial Pillar">
+<area href="/pokearth/kanto/waterlabyrinth.shtml" shape="rect" coords="122, 410, 147, 419" title="Water Labyrinth">
+<area href="/pokearth/kanto/lostcave.shtml" shape="rect" coords="155, 402, 162, 410" title="Lost Cave">
+<area href="/pokearth/kanto/resortgorgeous.shtml" shape="rect" coords="138, 402, 163, 412" title="Resort Gorgeous">
+<area href="/pokearth/kanto/navelrock.shtml" shape="rect" coords="86, 391, 103, 406" title="Navel Rock">
+<area href="/pokearth/kanto/sixisland.shtml" shape="rect" coords="146, 530, 155, 540" title="Six Island">
+<area href="/pokearth/kanto/waterpath.shtml" shape="rect" coords="154, 514, 163, 556" title="Water Path">
+<area href="/pokearth/kanto/dottedhole.shtml" shape="rect" coords="139, 555, 146, 563" title="Dotted Hole">
+<area href="/pokearth/kanto/ruinvalley.shtml" shape="rect" coords="138, 546, 155, 564" title="Ruin Valley">
+<area href="/pokearth/kanto/greenpath.shtml" shape="rect" coords="130, 514, 147, 423" title="Green Path">
+<area href="/pokearth/kanto/patternbush.shtml" shape="rect" coords="147, 514, 154, 523" title="Pattern Bush">
+<area href="/pokearth/kanto/outcastisland.shtml" shape="rect" coords="130, 514, 139, 499" title="Outcast Island">
+<area href="/pokearth/kanto/alteringcave.shtml" shape="rect" coords="130, 490, 139, 499" title="Altering Cave">
+<area href="/pokearth/kanto/sevenisland.shtml" shape="rect" coords="50, 555, 60, 563" title="Seven Island">
+<area href="/pokearth/kanto/trainertower.shtml" shape="rect" coords="50, 555, 60, 538" title="Trainer Tower">
+<area href="/pokearth/kanto/canyonentrance.shtml" shape="rect" coords="50, 563, 60, 571" title="Canyon Entrance">
+<area href="/pokearth/kanto/seavaultcanyon.shtml" shape="rect" coords="58, 562, 67, 586" title="Seavault Canyon">
+<area href="/pokearth/kanto/tanobyruins.shtml" shape="rect" coords="34, 586, 92, 596" title="Tanoby Ruins">
+<area href="/pokearth/kanto/birthisland.shtml" shape="rect" coords="150, 558, 168, 607" title="Birth Island">
+</map></p>

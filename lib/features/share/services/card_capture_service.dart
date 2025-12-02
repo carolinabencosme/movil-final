@@ -1,25 +1,39 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+class CapturedCardImage {
+  const CapturedCardImage({
+    required this.bytes,
+    required this.width,
+    required this.height,
+  });
+
+  final Uint8List bytes;
+  final int width;
+  final int height;
+}
+
 /// Servicio para capturar widgets como imágenes y compartirlas.
-/// 
+///
 /// Utiliza RepaintBoundary y RenderRepaintBoundary para convertir
 /// un widget en una imagen PNG que puede ser guardada y compartida.
 class CardCaptureService {
   /// Captura un widget como imagen usando su GlobalKey.
-  /// 
+  ///
   /// El widget debe estar envuelto en un RepaintBoundary con el GlobalKey
   /// para que este método pueda acceder al RenderObject y renderizarlo.
-  /// 
-  /// Retorna los bytes de la imagen en formato PNG, o null si falla.
-  Future<Uint8List?> captureWidget(GlobalKey key) async {
+  ///
+  /// Retorna la imagen capturada (bytes + dimensiones) o null si falla.
+  Future<CapturedCardImage?> captureWidget(GlobalKey key) async {
     try {
       // Buscar el RenderRepaintBoundary del widget
       final boundary = key.currentContext?.findRenderObject()
@@ -30,8 +44,15 @@ class CardCaptureService {
         return null;
       }
 
-      // Capturar la imagen con alta calidad (pixelRatio 3.0)
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      // Esperar a que el widget esté completamente pintado
+      // Si debugNeedsPaint es true, esperamos al siguiente frame
+      if (boundary.debugNeedsPaint) {
+        debugPrint('[CardCaptureService] Widget necesita ser pintado, esperando...');
+        await _waitForPaint();
+      }
+
+      // Capturar la imagen con tamaño real (1080x1920) y pixelRatio 1.0
+      final image = await boundary.toImage(pixelRatio: 1.0);
       
       // Convertir a bytes PNG
       final byteData = await image.toByteData(
@@ -43,12 +64,25 @@ class CardCaptureService {
         return null;
       }
 
-      return byteData.buffer.asUint8List();
+      return CapturedCardImage(
+        bytes: byteData.buffer.asUint8List(),
+        width: image.width,
+        height: image.height,
+      );
     } catch (e, stackTrace) {
       debugPrint('[CardCaptureService] Error al capturar widget: $e');
       debugPrint('[CardCaptureService] StackTrace: $stackTrace');
       return null;
     }
+  }
+
+  /// Espera a que el próximo frame sea pintado.
+  Future<void> _waitForPaint() async {
+    final completer = Completer<void>();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      completer.complete();
+    });
+    await completer.future;
   }
 
   /// Guarda los bytes de una imagen en un archivo temporal.
@@ -87,6 +121,7 @@ class CardCaptureService {
     String? text,
   }) async {
     try {
+      debugPrint('[CardCaptureService] Preparando archivo para compartir: $imagePath');
       final xFile = XFile(imagePath);
 
       final result = await Share.shareXFiles(
@@ -116,25 +151,46 @@ class CardCaptureService {
     String? text,
   }) async {
     // 1. Capturar el widget como imagen
-    final imageBytes = await captureWidget(key);
-    if (imageBytes == null) {
-      debugPrint('[CardCaptureService] No se pudo capturar el widget');
+    final capturedImage = await captureWidget(key);
+    if (capturedImage == null) {
+      debugPrint('[CardCaptureService] Falló la captura del widget');
+      return false;
+    }
+
+    final hasFullHdSize =
+        capturedImage.width >= 1080 && capturedImage.height >= 1920;
+    if (!hasFullHdSize) {
+      debugPrint(
+        '[CardCaptureService] Imagen capturada con tamaño incorrecto: '
+        '${capturedImage.width}x${capturedImage.height}',
+      );
       return false;
     }
 
     // 2. Guardar en archivo temporal
-    final imagePath = await saveImageToTemp(imageBytes, filename: filename);
+    final imagePath =
+        await saveImageToTemp(capturedImage.bytes, filename: filename);
     if (imagePath == null) {
-      debugPrint('[CardCaptureService] No se pudo guardar la imagen');
+      debugPrint('[CardCaptureService] Falló al guardar la imagen capturada');
+      return false;
+    }
+
+    final tempFile = File(imagePath);
+    final exists = await tempFile.exists();
+    if (!exists) {
+      debugPrint(
+        '[CardCaptureService] El archivo temporal no existe en la ruta: $imagePath',
+      );
       return false;
     }
 
     // 3. Compartir usando el diálogo nativo
     final shareResult = await shareImage(imagePath, text: text);
-    final shared = shareResult.status == ShareResultStatus.success ||
-        shareResult.status == ShareResultStatus.unavailable; // unavailable = shared
+    final shared = shareResult.status == ShareResultStatus.success;
     if (!shared) {
-      debugPrint('[CardCaptureService] No se pudo compartir la imagen');
+      debugPrint(
+        '[CardCaptureService] Falló el envío del archivo. Estado: ${shareResult.status}',
+      );
       return false;
     }
 

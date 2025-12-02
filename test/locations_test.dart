@@ -1,8 +1,14 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pokedex/features/locations/data/location_service.dart';
 import 'package:pokedex/features/locations/data/region_coordinates.dart';
 import 'package:pokedex/features/locations/data/region_map_data.dart';
 import 'package:pokedex/features/locations/data/region_map_markers.dart';
 import 'package:pokedex/features/locations/models/pokemon_location.dart';
+import 'package:pokedex/features/locations/widgets/region_map_viewer.dart';
 
 void main() {
   group('Region Map Data', () {
@@ -51,13 +57,13 @@ void main() {
     test('should return multiple versions for a region', () {
       final kantoVersions = getRegionMapVersions('kanto');
       expect(kantoVersions, isNotEmpty);
-      expect(kantoVersions.length, equals(3)); // RBY, FRLG, Let's Go
-      
+      expect(kantoVersions.length, equals(4)); // RBY, FRLG, Let's Go, Vector
+
       final johtoVersions = getRegionMapVersions('johto');
-      expect(johtoVersions.length, equals(2)); // GSC, HGSS
-      
+      expect(johtoVersions.length, equals(3)); // GSC, HGSS, Vector
+
       final galarVersions = getRegionMapVersions('galar');
-      expect(galarVersions.length, equals(3)); // SwSh, IoA, CT
+      expect(galarVersions.length, equals(4)); // SwSh, IoA, CT, Vector
     });
 
     test('should return empty list for unknown region versions', () {
@@ -82,24 +88,24 @@ void main() {
     });
 
     test('should count versions correctly', () {
-      expect(getRegionMapVersionCount('kanto'), equals(3));
-      expect(getRegionMapVersionCount('johto'), equals(2));
-      expect(getRegionMapVersionCount('kalos'), equals(1));
-      expect(getRegionMapVersionCount('hisui'), equals(1));
+      expect(getRegionMapVersionCount('kanto'), equals(4));
+      expect(getRegionMapVersionCount('johto'), equals(3));
+      expect(getRegionMapVersionCount('kalos'), equals(2));
+      expect(getRegionMapVersionCount('hisui'), equals(2));
       expect(getRegionMapVersionCount('unknown'), equals(0));
     });
 
     test('should include Hisui region', () {
       expect(getRegionMapData('hisui'), isNotNull);
       final hisuiVersions = getRegionMapVersions('hisui');
-      expect(hisuiVersions.length, equals(1));
+      expect(hisuiVersions.length, equals(2));
       expect(hisuiVersions.first.gameVersion, equals('Legends: Arceus'));
     });
 
     test('should have all Paldea DLC maps', () {
       final paldeaVersions = getRegionMapVersions('paldea');
-      expect(paldeaVersions.length, equals(3));
-      
+      expect(paldeaVersions.length, equals(4));
+
       final versionNames = paldeaVersions.map((v) => v.gameVersion).toList();
       expect(versionNames, contains('Scarlet/Violet'));
       expect(versionNames, contains('The Teal Mask'));
@@ -108,7 +114,7 @@ void main() {
 
     test('should have all Galar DLC maps', () {
       final galarVersions = getRegionMapVersions('galar');
-      expect(galarVersions.length, equals(3));
+      expect(galarVersions.length, equals(4));
       
       final versionNames = galarVersions.map((v) => v.gameVersion).toList();
       expect(versionNames, contains('Sword/Shield'));
@@ -152,6 +158,150 @@ void main() {
       expect(regions.length, greaterThanOrEqualTo(9));
       expect(regions, contains('kanto'));
       expect(regions, contains('johto'));
+    });
+  });
+
+  group('Region map assets bundle', () {
+    testWidgets('asset manifest includes all defined map assets', (tester) async {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final manifest = jsonDecode(manifestContent) as Map<String, dynamic>;
+
+      final missingAssets = <String>[];
+
+      for (final regionEntry in regionMapsByVersion.values) {
+        for (final map in regionEntry) {
+          if (!manifest.containsKey(map.assetPath)) {
+            missingAssets.add(map.assetPath);
+          }
+        }
+      }
+
+      expect(
+        missingAssets,
+        isEmpty,
+        reason: 'Missing map assets in manifest: ${missingAssets.join(', ')}',
+      );
+    });
+
+    testWidgets('RegionMapViewer renders Kanto map without errorBuilder', (tester) async {
+      const encounters = [
+        PokemonEncounter(
+          locationArea: 'pallet-town-area',
+          versionDetails: [
+            EncounterVersionDetail(
+              version: 'red',
+              maxChance: 100,
+              encounterDetails: [
+                EncounterDetail(
+                  chance: 100,
+                  method: 'walk',
+                ),
+              ],
+            ),
+          ],
+          coordinates: MapCoordinates(100, 100),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'kanto',
+              encounters: encounters,
+              height: 200,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Imagen del mapa no disponible'), findsNothing);
+
+      final image = tester.widget<Image>(find.byType(Image));
+      final assetImage = image.image as AssetImage;
+      expect(assetImage.assetName, startsWith('assets/maps/regions/kanto/'));
+    });
+
+    testWidgets('RegionMapViewer renders fallback map when no version data', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'unknown-region',
+              encounters: [],
+              height: 200,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Imagen del mapa no disponible'), findsNothing);
+
+      final image = tester.widget<Image>(find.byType(Image));
+      final assetImage = image.image as AssetImage;
+      expect(assetImage.assetName, 'assets/maps/regions/kanto/kanto_rby.png');
+    });
+
+    testWidgets('shows sprite, types and encounter methods in popup',
+        (tester) async {
+      const encounter = PokemonEncounter(
+        locationArea: 'route-1-area',
+        versionDetails: [
+          EncounterVersionDetail(
+            version: 'red',
+            maxChance: 50,
+            encounterDetails: [
+              EncounterDetail(
+                chance: 50,
+                method: 'walk',
+                minLevel: 2,
+                maxLevel: 5,
+              ),
+            ],
+          ),
+        ],
+        region: 'kanto',
+        pokemonId: 25,
+        pokemonName: 'pikachu',
+        spriteUrl: 'https://img.pokemondb.net/sprites/home/normal/pikachu.png',
+        pokemonTypes: ['electric'],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RegionMapViewer(
+              region: 'kanto',
+              encounters: const [encounter],
+              height: 300,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.tap(find.byType(RegionMarkerWidget));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pikachu'), findsOneWidget);
+      expect(find.text('Electric'), findsOneWidget);
+      expect(find.textContaining('Walk · 50% · Lv. 2-5'), findsOneWidget);
+
+      final imageFinder = find.byWidgetPredicate(
+        (widget) => widget is Image && widget.image is NetworkImage,
+      );
+      expect(imageFinder, findsOneWidget);
+      final image = tester.widget<Image>(imageFinder);
+      expect(
+        (image.image as NetworkImage).url,
+        equals('https://img.pokemondb.net/sprites/home/normal/pikachu.png'),
+      );
     });
   });
 
@@ -286,6 +436,23 @@ void main() {
   });
 
   group('RegionMapMarkers', () {
+    test('should select marker by version when provided', () {
+      final redMarker = getRegionMarker('kanto', 'route-1', gameVersion: 'Red');
+      final frlgMarker =
+          getRegionMarker('kanto', 'route-1', gameVersion: 'FireRed/LeafGreen');
+
+      expect(redMarker?.game, equals('Red'));
+      expect(frlgMarker?.game, equals('FireRed'));
+    });
+
+    test('should fallback to default marker when version is missing', () {
+      final marker =
+          getRegionMarker('kanto', 'route-1', gameVersion: 'unknown-version');
+
+      expect(marker, isNotNull);
+      expect(marker?.area, equals('Route 1'));
+    });
+
     test('should return marker for known areas', () {
       final marker = getRegionMarker('kanto', 'route-1');
       expect(marker, isNotNull);
@@ -337,6 +504,54 @@ void main() {
       expect(marker.x, equals(400));
       expect(marker.y, equals(300));
     });
+
+    test('should have markers for every API area per supported version', () {
+      final apiAreasByVersion = <String, Map<String, List<String>>>{
+        'kanto': {
+          'red': regionMarkersByRegion['kanto']!.keys.toList(),
+          'firered': regionMarkersByRegion['kanto']!.keys.toList(),
+          'lets-go-pikachu': regionMarkersByRegion['kanto']!.keys.toList(),
+        },
+        'johto': {
+          'gold': regionMarkersByRegion['johto']!.keys.toList(),
+          'heartgold': regionMarkersByRegion['johto']!.keys.toList(),
+        },
+        'hoenn': {
+          'ruby': regionMarkersByRegion['hoenn']!.keys.toList(),
+          'emerald': regionMarkersByRegion['hoenn']!.keys.toList(),
+        },
+        'sinnoh': {
+          'diamond': regionMarkersByRegion['sinnoh']!.keys.toList(),
+          'platinum': regionMarkersByRegion['sinnoh']!.keys.toList(),
+          'brilliant-diamond': regionMarkersByRegion['sinnoh']!.keys.toList(),
+        },
+        'unova': {
+          'black': regionMarkersByRegion['unova']!.keys.toList(),
+          'black-2': regionMarkersByRegion['unova']!.keys.toList(),
+        },
+        'kalos': {
+          'x': regionMarkersByRegion['kalos']!.keys.toList(),
+        },
+        'alola': {
+          'sun': regionMarkersByRegion['alola']!.keys.toList(),
+          'ultra-sun': regionMarkersByRegion['alola']!.keys.toList(),
+        },
+        'galar': {
+          'sword': regionMarkersByRegion['galar']!.keys.toList(),
+        },
+      };
+
+      apiAreasByVersion.forEach((region, versions) {
+        versions.forEach((version, areas) {
+          for (final area in areas) {
+            final marker =
+                getRegionMarker(region, area, gameVersion: version);
+            expect(marker, isNotNull,
+                reason: 'Missing marker for $region/$version -> $area');
+          }
+        });
+      });
+    });
   });
 
   group('LocationsByRegion Model', () {
@@ -373,6 +588,28 @@ void main() {
       expect(location.allVersions, hasLength(2));
       expect(location.allVersions, containsAll(['red', 'blue']));
       expect(location.areaCount, equals(2));
+    });
+  });
+
+  group('LocationService grouping', () {
+    test('should keep encounters even when coordinates are missing', () {
+      final service = LocationService();
+
+      final encounters = [
+        PokemonEncounter.fromJson(
+          {
+            'location_area': {'name': 'hidden-area', 'url': ''},
+            'version_details': [],
+          },
+          region: 'unknown-region',
+        ),
+      ];
+
+      final grouped = service.groupEncountersByRegion(encounters);
+
+      expect(grouped, hasLength(1));
+      expect(grouped.first.region, equals('unknown-region'));
+      expect(grouped.first.coordinates, isNull);
     });
   });
 }
