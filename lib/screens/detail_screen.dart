@@ -216,37 +216,6 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     return null;
   }
 
-  Widget _buildOfflineBanner(BuildContext context, ThemeData theme) {
-    final l10n = AppLocalizations.of(context)!;
-    final Color backgroundColor =
-        theme.colorScheme.surfaceVariant.withOpacity(0.9);
-    final Color foregroundColor = theme.colorScheme.onSurfaceVariant;
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.cloud_off_rounded, color: foregroundColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              l10n.detailOfflineBanner,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: foregroundColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -472,16 +441,6 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
           );
         }
 
-        final ThemeData theme = Theme.of(context);
-        final Widget finalBody = _isOfflineMode
-            ? Column(
-                children: [
-                  _buildOfflineBanner(context, theme),
-                  Expanded(child: body),
-                ],
-              )
-            : body;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(appBarTitle),
@@ -490,7 +449,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                 _DetailFavoriteButton(pokemon: favoriteTarget),
             ],
           ),
-          body: finalBody,
+          body: body,
           floatingActionButton: pokemonDetail != null
               ? FloatingActionButton.extended(
                   onPressed: () => _showShareDialog(context, pokemonDetail!),
