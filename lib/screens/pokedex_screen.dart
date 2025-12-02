@@ -101,7 +101,8 @@ class PokedexScreen extends StatefulWidget {
 /// - Búsqueda: con debounce de 350ms para optimizar las queries
 /// - Filtros: tipos, generaciones, regiones y formas
 /// - Ordenamiento: por diferentes criterios y direcciones
-class _PokedexScreenState extends State<PokedexScreen> {
+class _PokedexScreenState extends State<PokedexScreen>
+    with WidgetsBindingObserver {
   /// Tamaño de cada página de resultados
   /// Se cargan 30 Pokémon a la vez para balance entre rendimiento y UX
   /// Tamaño de cada página de resultados
@@ -150,6 +151,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   bool _offlineSnackShown = false;     // Controla los avisos de modo offline
   bool _hasInitializedOfflineState = false; // Controla la inicialización offline
   bool _connectivityUiReady = false;   // Evita mostrar SnackBars antes del primer build
+  bool _hasHydratedFavorites = false;
   StreamSubscription<bool>? _connectivitySubscription;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
 
@@ -169,6 +171,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
     _connectivitySubscription =
         _connectivityService.isOfflineStream.listen((bool isOffline) {
@@ -194,6 +197,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _favoritesController?.removeListener(_onFavoritesChanged);
       _favoritesController = favoritesController;
       _favoritesController?.addListener(_onFavoritesChanged);
+      _hasHydratedFavorites = false;
+      unawaited(_hydrateFavoritesFromCache());
       if (favoritesController != null && _pokemons.isNotEmpty) {
         setState(() {
           _pokemons =
@@ -225,7 +230,16 @@ class _PokedexScreenState extends State<PokedexScreen> {
     _debounce?.cancel();
     _connectivitySubscription?.cancel();
     _favoritesController?.removeListener(_onFavoritesChanged);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && _connectivityService.isOffline) {
+      unawaited(_hydrateFavoritesFromCache(forceReload: true));
+    }
   }
 
   /// Callback para detectar cuando el usuario hace scroll cerca del final
@@ -254,6 +268,68 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _pokemons =
           favoritesController.applyFavoriteStateToList(_pokemons);
     });
+  }
+
+  Future<void> _hydrateFavoritesFromCache({bool forceReload = false}) async {
+    final FavoritesController? favoritesController =
+        _favoritesController ?? FavoritesScope.maybeOf(context);
+    if (favoritesController == null) {
+      return;
+    }
+
+    if (_hasHydratedFavorites && !forceReload) {
+      return;
+    }
+
+    if ((_connectivityService.isOffline || forceReload) && !_isFetching) {
+      setState(() => _isFetching = true);
+      await _loadPokemonsFromCache(
+        reset: true,
+        offset: 0,
+        showOfflineMessage: false,
+      );
+      if (!mounted) return;
+      setState(() => _hasHydratedFavorites = true);
+      return;
+    }
+
+    final List<PokemonListItem> cachedPokemons =
+        _pokemonCacheService.getAll(sorted: false);
+    if (!mounted) return;
+
+    if (cachedPokemons.isEmpty) {
+      setState(() {
+        if (_pokemons.isNotEmpty) {
+          _pokemons =
+              favoritesController.applyFavoriteStateToList(_pokemons);
+        }
+        _hasHydratedFavorites = true;
+      });
+      return;
+    }
+
+    final List<PokemonListItem> normalizedFavorites =
+        favoritesController.applyFavoriteStateToList(cachedPokemons);
+
+    setState(() {
+      final List<PokemonListItem> filtered =
+          _applyOfflineFilters(normalizedFavorites);
+      final bool shouldReplaceList =
+          _pokemons.isEmpty || _connectivityService.isOffline;
+
+      if (shouldReplaceList) {
+        _pokemons = filtered;
+        _totalCount = filtered.length;
+        _hasMore = false;
+        _isInitialLoading = false;
+        _errorMessage = '';
+      } else {
+        _pokemons = favoritesController.applyFavoriteStateToList(_pokemons);
+      }
+      _hasHydratedFavorites = true;
+    });
+
+    _updateOfflineMode(_connectivityService.isOffline, showMessage: false);
   }
 
   /// Maneja cambios en el campo de búsqueda con debounce
