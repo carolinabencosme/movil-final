@@ -249,20 +249,29 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
   }
 
   void _openRanking() {
+    final repository = ref.read(triviaRepositoryProvider);
+
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => TriviaRankingScreen(
-          accentColor: Theme.of(context).colorScheme.secondary,
-        ),
-      ),
-    );
-  }
+        MaterialPageRoute(
+            builder: (_) => TriviaRepositoryScope(
+              notifier: repository,
+              child: TriviaRankingScreen(
+                accentColor: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+          ),
+        );
+    }
 
   void _openAchievements() {
+    final repository = ref.read(triviaRepositoryProvider);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => TriviaAchievementsScreen(
-          accentColor: Theme.of(context).colorScheme.secondary,
+        builder: (_) => TriviaRepositoryScope(
+          notifier: repository,
+          child: TriviaAchievementsScreen(
+            accentColor: Theme.of(context).colorScheme.secondary,
+          ),
         ),
       ),
     );

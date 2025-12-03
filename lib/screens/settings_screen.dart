@@ -168,6 +168,7 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             )
                             .toList(),
+                        //cambio de idioma
                         onChanged: (locale) {
                           if (locale != null) {
                             ref.read(localeControllerProvider).updateLocale(locale);
