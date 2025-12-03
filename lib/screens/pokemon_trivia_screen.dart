@@ -275,6 +275,7 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
     final PokemonListItem? pokemon = _currentPokemon;
     final bool isLoading = ref.watch(triviaLoadingProvider);
     final bool filterActive = !_showSolution;
+    final EdgeInsets viewInsets = MediaQuery.viewInsetsOf(context);
 
     final appBar = AppBar(
       title: Text(l10n.triviaTitle),
@@ -313,8 +314,10 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
     return Scaffold(
       appBar: appBar,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20).add(
+            EdgeInsets.only(bottom: viewInsets.bottom),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -329,7 +332,8 @@ class _PokemonTriviaScreenState extends ConsumerState<PokemonTriviaScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
+              SizedBox(
+                height: 220,
                 child: Center(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 450),
