@@ -602,61 +602,83 @@ class _PokemonSilhouette extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget image = ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            height: 260,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primaryContainer,
-                  Theme.of(context).colorScheme.secondaryContainer,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 400),
-              scale: filterActive ? 0.95 : 1.02,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 400),
-                opacity: filterActive ? 0.65 : 1,
-                child: ColorFiltered(
-                  colorFilter: filterActive
-                      ? const ColorFilter.matrix(<double>[
-                          0, 0, 0, 0, 0, // Red
-                          0, 0, 0, 0, 0, // Green
-                          0, 0, 0, 0, 0, // Blue
-                          0, 0, 0, 1, 0, // Alpha
-                        ])
-                      : const ColorFilter.mode(
-                          Colors.transparent, BlendMode.multiply),
-                  child: Image.network(
-                    pokemon.imageUrl,
-                    fit: BoxFit.contain,
-                    height: 240,
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double availableHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.of(context).size.height;
+        final double maxSilhouetteHeight =
+            (availableHeight * 0.45).clamp(180.0, 260.0);
+
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxSilhouetteHeight),
+          child: AspectRatio(
+            aspectRatio: 1.15,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(24),
+              clipBehavior: Clip.antiAlias,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primaryContainer,
+                              Theme.of(context).colorScheme.secondaryContainer,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: LayoutBuilder(
+                        builder: (context, innerConstraints) {
+                          final double imageHeight =
+                              (innerConstraints.maxHeight * 0.85)
+                                  .clamp(120.0, maxSilhouetteHeight);
+
+                          return AnimatedScale(
+                            duration: const Duration(milliseconds: 400),
+                            scale: filterActive ? 0.95 : 1.02,
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 400),
+                              opacity: filterActive ? 0.65 : 1,
+                              child: ColorFiltered(
+                                colorFilter: filterActive
+                                    ? const ColorFilter.matrix(<double>[
+                                        0, 0, 0, 0, 0, // Red
+                                        0, 0, 0, 0, 0, // Green
+                                        0, 0, 0, 0, 0, // Blue
+                                        0, 0, 0, 1, 0, // Alpha
+                                      ])
+                                    : const ColorFilter.mode(
+                                        Colors.transparent, BlendMode.multiply),
+                                child: Image.network(
+                                  pokemon.imageUrl,
+                                  fit: BoxFit.contain,
+                                  height: imageHeight,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
-    );
-
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(24),
-      clipBehavior: Clip.antiAlias,
-      child: image,
+        );
+      },
     );
   }
 }
