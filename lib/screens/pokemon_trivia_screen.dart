@@ -715,22 +715,26 @@ class _StatChip extends StatelessWidget {
             child: Icon(icon, size: 20),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-              Text(
-                value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
-              ),
-            ],
+                Text(
+                  value,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
